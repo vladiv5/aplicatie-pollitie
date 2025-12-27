@@ -1,81 +1,91 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import './styles/TableStyles.css';
 
-const PolitistiList = () => {
+// Primim onAddClick de la PolitistiPage (pentru Modal)
+const PolitistiList = ({ onAddClick }) => {
     const [politisti, setPolitisti] = useState([]);
     const [termenCautare, setTermenCautare] = useState('');
 
     useEffect(() => {
-        axios.get('http://localhost:8080/api/politisti')
-            .then(response => {
-                setPolitisti(response.data);
-                console.log("Date primite:", response.data); // Pentru verificare în consolă
-            })
-            .catch(error => {
-                console.error("A apărut o eroare la preluarea datelor!", error);
-            });
+        loadPolitisti();
     }, []);
 
-    const handleDelete = (id) => {
-        axios.delete(`http://localhost:8080/api/politisti/${id}`)
-            .then(() => {
-                console.log("Stergere reusita pentru ID-ul:", id);
-                setPolitisti(politisti.filter(p => p.idPolitist !== id));
+    // Funcția care aduce datele (Toate sau Căutate)
+    const loadPolitisti = (termen = '') => {
+        const token = localStorage.getItem('token');
+        let url = 'http://localhost:8080/api/politisti';
+
+        // Daca avem termen, schimbam URL-ul catre endpoint-ul de cautare
+        if (termen) {
+            url = `http://localhost:8080/api/politisti/cauta?termen=${termen}`;
+        }
+
+        axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(response => {
+                setPolitisti(response.data);
             })
             .catch(error => {
-                console.error("A aparut o eroare la stergerea datelor:", error);
+                console.error("Eroare la preluarea datelor!", error);
             });
     };
 
     const handleSearch = (e) => {
         const valoare = e.target.value;
         setTermenCautare(valoare);
+        loadPolitisti(valoare); // Căutăm direct în backend
+    };
 
-        if (valoare.length > 0) {
-            axios.get(`http://localhost:8080/api/politisti/cauta?termen=${valoare}`)
-                .then((response) => {
-                    setPolitisti(response.data);
+    const handleDelete = (id) => {
+        if(window.confirm("Ești sigur că vrei să ștergi acest polițist?")) {
+            const token = localStorage.getItem('token');
+            axios.delete(`http://localhost:8080/api/politisti/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(() => {
+                    // Reîncărcăm lista local sau o filtrăm
+                    setPolitisti(politisti.filter(p => p.idPolitist !== id));
                 })
-                .catch(error => console.error(error));
-        } else {
-            axios.get('http://localhost:8080/api/politisti')
-                .then((response) => {
-                    setPolitisti(response.data);
-                })
-                .catch(error => console.error(error));
+                .catch(error => console.error("Eroare la stergere:", error));
         }
     };
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h2>Lista Polițiștilor (Din SQL Server)</h2>
+        <div className="page-container">
+            <h2 className="page-title">Gestiune Polițiști</h2>
 
-            <div style={{ marginBottom: '20px' }}>
+            {/* --- BARA DE CONTROL STANDARD --- */}
+            <div className="controls-container">
+                {/* 1. Căutarea (Stil standardizat) */}
                 <input
                     type="text"
-                    placeholder="Cauta dupa nume sau prenume..."
+                    className="search-input"
+                    placeholder="Caută (Nume, Prenume, Grad)..."
                     value={termenCautare}
                     onChange={handleSearch}
-                    style={{ padding: '8px', width: '300px' }}
                 />
+
+                {/* 2. Butonul de Adăugare (Acum deschide Modalul) */}
+                <button className="add-btn-primary" onClick={onAddClick}>
+                    <span>+</span> Adaugă Polițist
+                </button>
             </div>
 
-
-            <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            {/* Tabelul */}
+            <table className="styled-table">
                 <thead>
-                <tr style={{ backgroundColor: '#f2f2f2' }}>
+                <tr>
                     <th>ID</th>
                     <th>Nume</th>
                     <th>Prenume</th>
                     <th>Grad</th>
                     <th>Funcție</th>
                     <th>Telefon</th>
-                    <th>Actiuni</th>
+                    <th>Acțiuni</th>
                 </tr>
                 </thead>
                 <tbody>
-
                 {politisti.map(politist => (
                     <tr key={politist.idPolitist}>
                         <td>{politist.idPolitist}</td>
@@ -85,17 +95,17 @@ const PolitistiList = () => {
                         <td>{politist.functie}</td>
                         <td>{politist.telefon_serviciu}</td>
                         <td>
-                            <Link to={`/politisti/edit/${politist.idPolitist}`} style={{ textDecoration: 'none' }}>
-                                <button style={{ marginRight: '10px', backgroundColor: '#ffa500', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
-                                    Edit
+                            <div className="action-buttons-container">
+                                <Link to={`/politisti/edit/${politist.idPolitist}`}>
+                                    <button className="action-btn edit-btn">Edit</button>
+                                </Link>
+                                <button
+                                    onClick={() => handleDelete(politist.idPolitist)}
+                                    className="action-btn delete-btn"
+                                >
+                                    Șterge
                                 </button>
-                            </Link>
-                            <button
-                                onClick={() => handleDelete(politist.idPolitist)}
-                                style={{ color: 'red'}}
-                            >
-                                Sterge
-                            </button>
+                            </div>
                         </td>
                     </tr>
                 ))}

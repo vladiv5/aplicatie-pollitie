@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/persoane")
@@ -20,6 +21,7 @@ public class PersoanaController {
         return persoanaRepository.findAll();
     }
 
+    // 1. ADĂUGARE (Formular) - Am păstrat doar această metodă pentru POST
     @PostMapping
     public Persoana createPersoana(@RequestBody Persoana persoana) {
         return persoanaRepository.save(persoana);
@@ -28,5 +30,14 @@ public class PersoanaController {
     @DeleteMapping("/{id}")
     public void deletePersoana(@PathVariable Integer id) {
         persoanaRepository.deleteById(id);
+    }
+
+    @GetMapping("/cauta")
+    public List<Persoana> cautaPersoane(@RequestParam String termen) {
+        if (termen == null || termen.trim().isEmpty()) {
+            return persoanaRepository.findAll();
+        }
+        // Apelăm metoda SQL din Repository
+        return persoanaRepository.cautaDupaInceput(termen);
     }
 }

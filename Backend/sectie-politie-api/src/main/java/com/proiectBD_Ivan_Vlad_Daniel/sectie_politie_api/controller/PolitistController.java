@@ -63,7 +63,12 @@ public class PolitistController {
 
     // 5. SEARCH
     @GetMapping("/cauta")
-    public List<Politist> searchPolitisti(@RequestParam String termen) {
-        return politistRepository.cautaPolitistiDupaNume(termen);
+    public List<Politist> cautaPolitisti(@RequestParam String termen) {
+        if (termen == null || termen.trim().isEmpty()) {
+            // Aici poți folosi metoda ta nativă dacă vrei, sau findAll standard
+            return politistRepository.toataListaPolitisti();
+        }
+        // AICI APELĂM NOUA METODĂ
+        return politistRepository.cautaDupaInceput(termen);
     }
 }

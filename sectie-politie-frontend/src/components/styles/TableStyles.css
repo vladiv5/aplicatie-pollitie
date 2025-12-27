@@ -1,0 +1,295 @@
+/* src/components/styles/TableStyles.css */
+
+/* Containerul principal al paginii */
+.page-container {
+    padding: 30px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9f9f9; /* Un fundal ușor gri pentru contrast */
+    min-height: 100vh;
+}
+
+/* Titlul paginii */
+.page-title {
+    color: #333;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #0056b3; /* Linie albastră de poliție */
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+/* Tabelul propriu-zis */
+.styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    min-width: 100%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15); /* Umbră fină */
+    background-color: white;
+    border-radius: 5px 5px 0 0;
+    overflow: hidden; /* Pentru colțuri rotunjite */
+}
+
+/* Antetul tabelului (Header) */
+.styled-table thead tr {
+    background-color: #0056b3; /* Albastru închis */
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Celulele */
+.styled-table th,
+.styled-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #dddddd;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Efect zebra (rânduri alternative) */
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+/* Efect la hover (când treci cu mouse-ul) */
+.styled-table tbody tr:hover {
+    background-color: #e6f7ff; /* Albastru foarte deschis */
+    cursor: default;
+}
+
+/* Ultimul rând să aibă o linie mai groasă */
+.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #0056b3;
+}
+
+/* Butoanele de acțiune (Edit/Delete) */
+.action-btn {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.edit-btn {
+    background-color: #ffc107; /* Galben */
+    color: #333;
+}
+.edit-btn:hover { background-color: #e0a800; }
+
+.delete-btn {
+    background-color: #dc3545; /* Roșu */
+    color: white;
+}
+.delete-btn:hover { background-color: #c82333; }
+
+action-buttons-container {
+    display: flex;
+    justify-content: center; /* Le aliniază orizontal la centru */
+    align-items: center;     /* Le aliniază vertical */
+    gap: 10px;               /* Pune spațiu egal între butoane automat */
+}
+
+.controls-container {
+    display: flex;
+    justify-content: space-between; /* Le împinge la capete opuse */
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* O umbră foarte fină */
+}
+
+/* Stil pentru Input-ul de Căutare */
+.search-input {
+    padding: 10px 15px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #0056b3; /* Albastru când scrii */
+    box-shadow: 0 0 5px rgba(0, 86, 179, 0.2);
+}
+
+/* Butonul Standard de "Adăugare Nou" (Verde) */
+.add-btn-primary {
+    background-color: #28a745; /* Verde plăcut */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Spațiu între iconiță (+) și text */
+    transition: background-color 0.3s;
+    font-size: 14px;
+}
+
+.add-btn-primary:hover {
+    background-color: #218838; /* Verde mai închis la hover */
+}
+
+/* 1. Fundalul întunecat (Overlay) */
+.modal-overlay {
+    position: fixed; /* Rămâne fix pe ecran */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Negru semi-transparent */
+    display: flex;
+    justify-content: center; /* Centrează orizontal */
+    align-items: center; /* Centrează vertical */
+    z-index: 1000; /* Z-Index mare ca să fie peste tot */
+    backdrop-filter: blur(2px); /* Un efect modern de blur în spate (opțional) */
+}
+
+/* 2. Fereastra propriu-zisă */
+.modal-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 10px; /* Colțuri rotunjite, exact ca la tabele */
+    width: 450px; /* Lățime fixă sau procentuală */
+    max-width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative; /* Pentru a poziționa butonul X */
+    animation: slideDown 0.3s ease-out; /* Mică animație de intrare */
+}
+
+/* 3. Header-ul Modalei (Titlu + X) */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #0056b3; /* Linia albastră specifică temei */
+    padding-bottom: 10px;
+}
+
+.modal-title {
+    margin: 0;
+    color: #333;
+}
+
+/* 4. Butonul X (Închidere) */
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: #dc3545; /* Roșu la hover */
+}
+
+/* 5. Corpul formularului (Input-uri unul sub altul) */
+.form-group {
+    display: flex;
+    flex-direction: column; /* Le așază vertical */
+    gap: 15px;
+}
+
+.modal-input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: #0056b3;
+    box-shadow: 0 0 4px rgba(0, 86, 179, 0.2);
+}
+
+/* 6. Footer-ul (Butonul Salvează) */
+.modal-footer {
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-end; /* Butonul în dreapta jos */
+}
+
+.save-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+}
+
+.save-btn:disabled {
+    background-color: #ccc; /* Gri când e dezactivat */
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.save-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+/* Animație simplă */
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Container pentru Input-ul cu Search Live */
+.live-search-container {
+    position: relative; /* Ca să putem poziționa lista absolut față de el */
+    width: 100%;
+}
+
+/* Lista de sugestii care apare sub input */
+.suggestions-list {
+    position: absolute;
+    top: 100%; /* Imediat sub input */
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    max-height: 200px; /* Dacă sunt multe, facem scroll */
+    overflow-y: auto;
+    z-index: 1050; /* Să fie PESTE tot, chiar și peste modal */
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Un element din listă */
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+}
+
+.suggestion-item:hover {
+    background-color: #f0f8ff; /* Albastru deschis la hover */
+    color: #0056b3;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}

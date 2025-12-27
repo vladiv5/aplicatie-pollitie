@@ -20,8 +20,21 @@ public class AmendaController {
         return amendaRepository.findAll();
     }
 
+    // --- NOUL ENDPOINT DE CĂUTARE ---
+    @GetMapping("/cauta")
+    public List<Amenda> cautaAmenzi(@RequestParam String termen) {
+        if (termen == null || termen.trim().isEmpty()) {
+            return amendaRepository.findAll();
+        }
+        return amendaRepository.cautaDupaInceput(termen);
+    }
+
     @PostMapping
     public Amenda addAmenda(@RequestBody Amenda amenda) {
+        // Asigurăm data curentă dacă nu e trimisă
+        if (amenda.getDataEmitere() == null) {
+            amenda.setDataEmitere(java.time.LocalDateTime.now());
+        }
         return amendaRepository.save(amenda);
     }
 
@@ -31,5 +44,7 @@ public class AmendaController {
     }
 
     @GetMapping("/statistici")
-    public List<Map<String, Object>> raportAmenzi() {return amendaRepository.raportAmenzi(); }
+    public List<Map<String, Object>> raportAmenzi() {
+        return amendaRepository.raportAmenzi();
+    }
 }

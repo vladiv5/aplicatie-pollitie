@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.time.*;
 
 @RestController
 @RequestMapping("/api/incidente")
@@ -22,6 +23,10 @@ public class IncidentController {
 
     @PostMapping
     public Incident createIncident(@RequestBody Incident incident) {
+        if(incident.getDataEmitere() == null) {
+            incident.setDataEmitere(LocalDateTime.now());
+        }
+
         return incidentRepository.save(incident);
     }
 
@@ -29,4 +34,14 @@ public class IncidentController {
     public void deleteIncident(@PathVariable Integer id) {
         incidentRepository.deleteById(id);
     }
+
+    @GetMapping("/cauta")
+    public List<Incident> cautaIncidente(@RequestParam String termen) {
+        if (termen == null || termen.trim().isEmpty()) {
+            return incidentRepository.findAll();
+        }
+        return incidentRepository.cautaDupaInceput(termen);
+    }
+
+
 }

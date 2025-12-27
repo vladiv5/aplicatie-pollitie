@@ -1,45 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const AddPolitist = () => {
+const AddPolitist = ({ onSaveSuccess, onCancel }) => { // Primim funcții de la părinte
     const [formData, setFormData] = useState({
         nume: '',
         prenume: '',
         grad: '',
         functie: '',
-        telefon_serviciu: ''
+        telefon: ''
     });
 
-    // Gestioneaza schimbarea arrayului starii temporare formData
+    const [isValid, setIsValid] = useState(false);
+
+    // Verificăm validarea la fiecare schimbare
+    useEffect(() => {
+        const { nume, prenume, grad, functie, telefon } = formData;
+        // Validare simplă: toate câmpurile să nu fie goale
+        const valid = nume.trim() && prenume.trim() && grad.trim() && functie.trim() && telefon.trim();
+        setIsValid(valid);
+    }, [formData]);
+
     const handleChange = (e) => {
-        setFormData({
-            ...formData, // Pastrez ce era in obiectul initial
-            [e.target.name]: e.target.value // Modific doar campul in care utilizatorul scrie inputul
-        });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Gestioneaza adaugarea efectiva in baza de date prin formData
-    const handleSubmit = (e) => {
-        e.preventDefault() // Previne reloadul automat
-        axios.post('http://localhost:8080/api/politisti', formData)
+    const handleSave = () => {
+        axios.post('http://localhost:8080/api/politisti', {
+            nume: formData.nume,
+            prenume: formData.prenume,
+            grad: formData.grad,
+            functie: formData.functie,
+            telefon_serviciu: formData.telefon // Atenție la numele din backend!
+        })
             .then(() => {
-                alert("Adaugat cu succes!");
-                window.location.reload();
+                // Curățăm formularul și anunțăm părintele
+                setFormData({ nume: '', prenume: '', grad: '', functie: '', telefon: '' });
+                onSaveSuccess();
             })
-            .catch(err => console.error(err));
+            .catch(error => console.error("Eroare la salvare:", error));
     };
+
     return (
         <div>
-            <h3>Adauga Politist</h3>
-            <form onSubmit={handleSubmit}>
-                <input type="text" name="nume" placeholder="Nume" value={formData.nume} onChange={handleChange} />
-                <input type="text" name="prenume" placeholder="Prenume" value={formData.prenume} onChange={handleChange} />
-                <input type="text" name="grad" placeholder="Grad" value={formData.grad} onChange={handleChange} />
-                <input type="text" name="functie" placeholder="Functie" value={formData.functie} onChange={handleChange} />
-                <input type="text" name="telefon_serviciu" placeholder="Telefon Serviciu" value={formData.telefon_serviciu} onChange={handleChange} />
+            <div className="form-group">
+                <input type="text" name="nume" placeholder="Nume" className="modal-input" value={formData.nume} onChange={handleChange} />
+                <input type="text" name="prenume" placeholder="Prenume" className="modal-input" value={formData.prenume} onChange={handleChange} />
+                <input type="text" name="grad" placeholder="Grad" className="modal-input" value={formData.grad} onChange={handleChange} />
+                <input type="text" name="functie" placeholder="Funcție" className="modal-input" value={formData.functie} onChange={handleChange} />
+                <input type="text" name="telefon" placeholder="Telefon Serviciu" className="modal-input" value={formData.telefon} onChange={handleChange} />
+            </div>
 
-                <button type="submit">Salveaza</button>
-            </form>
+            <div className="modal-footer">
+                <button
+                    className="save-btn"
+                    onClick={handleSave}
+                    disabled={!isValid} // Butonul e gri dacă nu e valid
+                >
+                    Salvează
+                </button>
+            </div>
         </div>
     );
 };
