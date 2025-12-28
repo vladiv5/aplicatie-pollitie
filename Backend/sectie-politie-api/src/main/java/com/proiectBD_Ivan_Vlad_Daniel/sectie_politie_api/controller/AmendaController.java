@@ -47,4 +47,27 @@ public class AmendaController {
     public List<Map<String, Object>> raportAmenzi() {
         return amendaRepository.raportAmenzi();
     }
+
+    // 1. GET ONE (Pentru a pre-completa formularul de editare)
+    @GetMapping("/{id}")
+    public Amenda getAmendaById(@PathVariable Integer id) {
+        return amendaRepository.findById(id).orElse(null);
+    }
+
+    // 2. UPDATE (Pentru a salva modificările)
+    @PutMapping("/{id}")
+    public Amenda updateAmenda(@PathVariable Integer id, @RequestBody Amenda amendaNoua) {
+        return amendaRepository.findById(id).map(amenda -> {
+            amenda.setMotiv(amendaNoua.getMotiv());
+            amenda.setSuma(amendaNoua.getSuma());
+            amenda.setStarePlata(amendaNoua.getStarePlata());
+            amenda.setDataEmitere(amendaNoua.getDataEmitere());
+
+            // Aici e important: JPA va face update la Foreign Key doar pe baza ID-ului din obiect
+            amenda.setPolitist(amendaNoua.getPolitist());
+            amenda.setPersoana(amendaNoua.getPersoana());
+
+            return amendaRepository.save(amenda);
+        }).orElseThrow(() -> new RuntimeException("Amenda nu a fost găsită!"));
+    }
 }

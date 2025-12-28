@@ -2,6 +2,7 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Table(name = "Incidente")
@@ -15,6 +16,7 @@ public class Incident {
     private String tipIncident;
 
     @Column(name = "data_emitere")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataEmitere;
 
     @Column(name = "descriere_locatie")

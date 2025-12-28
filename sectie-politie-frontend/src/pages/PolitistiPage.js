@@ -1,35 +1,75 @@
 import React, { useState } from "react";
 import PolitistiList from '../components/PolitistiList';
 import AddPolitist from "../components/AddPolitist";
-import Modal from "../components/Modal"; // Importăm Modalul Generic
+import EditPolitist from "../components/EditPolitist"; // Importam componenta noua
+import Modal from "../components/Modal";
 
 const PolitistiPage = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0); // Un truc pentru a reîncărca lista după adăugare
+    // --- STATE PENTRU ADAUGARE ---
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const handleOpenModal = () => setIsModalOpen(true);
-    const handleCloseModal = () => setIsModalOpen(false);
+    // --- STATE PENTRU EDITARE (Nou) ---
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editId, setEditId] = useState(null); // ID-ul politistului pe care il editam
 
-    const handleSaveSuccess = () => {
-        setIsModalOpen(false); // Închidem modalul
-        setRefreshKey(prev => prev + 1); // Forțăm reîncărcarea listei
+    // --- REFRESH LISTA ---
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    // HANDLERS ADAUGARE
+    const handleOpenAddModal = () => setIsAddModalOpen(true);
+    const handleCloseAddModal = () => setIsAddModalOpen(false);
+
+    const handleAddSuccess = () => {
+        setIsAddModalOpen(false);
+        setRefreshKey(prev => prev + 1); // Refresh lista
         alert("Polițist adăugat cu succes!");
+    };
+
+    // HANDLERS EDITARE (Sablonul pentru viitoarele pagini)
+    const handleOpenEditModal = (id) => {
+        setEditId(id); // Setam ID-ul selectat
+        setIsEditModalOpen(true); // Deschidem modalul
+    };
+
+    const handleCloseEditModal = () => {
+        setEditId(null);
+        setIsEditModalOpen(false);
+    };
+
+    const handleEditSuccess = () => {
+        setIsEditModalOpen(false);
+        setEditId(null);
+        setRefreshKey(prev => prev + 1); // Refresh lista pentru a vedea modificarile
+        alert("Polițist modificat cu succes!");
     };
 
     return (
         <div>
-            {/* Trimitem funcția handleOpenModal către listă */}
+            {/* Lista primeste acum si functia de editare */}
             <PolitistiList
-                key={refreshKey} // Când se schimbă cheia, lista se reîncarcă
-                onAddClick={handleOpenModal}
+                key={refreshKey}
+                onAddClick={handleOpenAddModal}
+                onEditClick={handleOpenEditModal}
             />
 
-            {/* Fereastra Modală care conține Formularul */}
-            <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Adaugă Polițist Nou">
+            {/* --- MODAL ADAUGARE --- */}
+            <Modal isOpen={isAddModalOpen} onClose={handleCloseAddModal} title="Adaugă Polițist Nou">
                 <AddPolitist
-                    onSaveSuccess={handleSaveSuccess}
-                    onCancel={handleCloseModal}
+                    onSaveSuccess={handleAddSuccess}
+                    onCancel={handleCloseAddModal}
                 />
+            </Modal>
+
+            {/* --- MODAL EDITARE (Nou) --- */}
+            <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title="Editează Polițist">
+                {/* Randam componenta doar daca avem un ID setat */}
+                {editId && (
+                    <EditPolitist
+                        id={editId}
+                        onSaveSuccess={handleEditSuccess}
+                        onCancel={handleCloseEditModal}
+                    />
+                )}
             </Modal>
         </div>
     );

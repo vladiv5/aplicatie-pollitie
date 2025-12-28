@@ -1,78 +1,78 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import './styles/TableStyles.css';
 
-const IncidenteList = ({ onAddClick }) => {
+// Adaugam onViewClick in props
+const IncidenteList = ({ onAddClick, onEditClick, onViewClick }) => {
     const [incidente, setIncidente] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [termenCautare, setTermenCautare] = useState('');
 
     useEffect(() => {
         loadIncidente();
     }, []);
 
-    // 1. MODIFICARE: Funcția acceptă un termen de căutare
     const loadIncidente = (termen = '') => {
         const token = localStorage.getItem('token');
-
-        // Default: luăm toate incidentele
         let url = 'http://localhost:8080/api/incidente';
 
-        // Dacă avem termen, schimbăm URL-ul către endpoint-ul de căutare
         if (termen) {
             url = `http://localhost:8080/api/incidente/cauta?termen=${termen}`;
         }
 
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        })
+        axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(response => {
-                if (!response.ok) throw new Error("Eroare la server sau lipsă acces!");
-                return response.json();
-            })
-            .then(data => {
-                setIncidente(data);
+                setIncidente(response.data);
                 setLoading(false);
             })
             .catch(err => {
-                console.error(err);
-                setError(err.message);
+                console.error("Eroare incarcare:", err);
                 setLoading(false);
             });
     };
 
-    // 2. MODIFICARE: Funcția care se apelează când scrii în input
     const handleSearch = (e) => {
         const val = e.target.value;
         setTermenCautare(val);
-        loadIncidente(val); // Apelăm serverul cu noul termen
+        loadIncidente(val);
     };
 
-    // 3. MODIFICARE: Am ȘTERS filtrarea locală (const incidenteleAfisate = ...)
-    // Datele vin deja filtrate din backend.
+    const handleDelete = (id) => {
+        if(window.confirm("Ești sigur că vrei să ștergi acest incident?")) {
+            const token = localStorage.getItem('token');
+            axios.delete(`http://localhost:8080/api/incidente/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(() => {
+                    setIncidente(incidente.filter(item => item.idIncident !== id));
+                })
+                .catch(error => {
+                    console.error("Eroare la stergere:", error);
+                    alert("Eroare la ștergere!");
+                });
+        }
+    };
 
-    if (loading) return <p>Se încarcă incidentele...</p>;
-    if (error) return <p style={{color:'red'}}>{error}</p>;
+    // Funcție utilitară pentru formatare data
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ro-RO').replace(/\./g, '/');
+    };
 
     return (
         <div className="page-container">
             <h2 className="page-title">Registru Incidente</h2>
 
             <div className="controls-container">
-                {/* 1. Input Search */}
                 <input
                     type="text"
                     className="search-input"
-                    placeholder="Caută incident (tip, locație, polițist)..."
+                    placeholder="Caută după tip, locație sau incident..."
                     value={termenCautare}
-                    onChange={handleSearch} // Apelăm noua funcție
+                    onChange={handleSearch}
                 />
 
-                {/* 2. Butonul Verde de Adăugare */}
                 <button className="add-btn-primary" onClick={onAddClick}>
                     <span>+</span> Adaugă Incident
                 </button>
@@ -81,39 +81,67 @@ const IncidenteList = ({ onAddClick }) => {
             <table className="styled-table">
                 <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Tip</th>
                     <th>Data & Ora</th>
-                    <th>Locație (Descriere)</th>
-                    <th>Adresă Exactă</th>
+                    <th>Locație (Scurt)</th>
+                    <th>Adresă</th>
                     <th>Polițist</th>
-                    <th>Detalii Incident</th>
+                    {/* Am scos coloana veche de Detalii text */}
+                    <th>Acțiuni</th>
                 </tr>
                 </thead>
                 <tbody>
-                {/* 4. MODIFICARE: Mapăm direct 'incidente' */}
                 {incidente.map((incident) => (
                     <tr key={incident.idIncident}>
-                        <td>{incident.idIncident}</td>
                         <td>{incident.tipIncident}</td>
                         <td>
                             {incident.dataEmitere
-                                ? new Date(incident.dataEmitere).toLocaleString()
+                                ? new Date(incident.dataEmitere).toLocaleString('ro-RO').substring(0, 17)
                                 : '-'}
                         </td>
                         <td>{incident.descriereLocatie}</td>
+
+                        {/* CORECTIE ADRESA: Doar variabilele, fara "Str." in fata */}
                         <td>
                             {incident.adresaIncident
-                                ? `${incident.adresaIncident.strada || ''} ${incident.adresaIncident.numar || ''}`
-                                : <span style={{color: 'gray'}}>Nespecificată</span>}
+                                ? `${incident.adresaIncident.strada} ${incident.adresaIncident.numar}`
+                                : '-'}
                         </td>
+
                         <td>
                             {incident.politistResponsabil
                                 ? `${incident.politistResponsabil.nume} ${incident.politistResponsabil.prenume}`
-                                : <span style={{color:'red'}}>Nealocat</span>}
+                                : 'Nealocat'}
                         </td>
-                        <td style={{ maxWidth: '300px' }}>
-                            {incident.descriereIncident}
+
+                        <td>
+                            <div className="action-buttons-container">
+                                {/* 1. Buton VEZI DETALII (Albastru) */}
+                                <button
+                                    className="action-btn"
+                                    style={{ backgroundColor: '#17a2b8', color: 'white' }}
+                                    onClick={() => onViewClick(incident)}
+                                    title="Vezi detalii complete"
+                                >
+                                    Vezi
+                                </button>
+
+                                {/* 2. Buton EDIT (Galben/Standard) */}
+                                <button
+                                    className="action-btn edit-btn"
+                                    onClick={() => onEditClick(incident.idIncident)}
+                                >
+                                    Edit
+                                </button>
+
+                                {/* 3. Buton DELETE (Rosu) */}
+                                <button
+                                    className="action-btn delete-btn"
+                                    onClick={() => handleDelete(incident.idIncident)}
+                                >
+                                    Șterge
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 ))}

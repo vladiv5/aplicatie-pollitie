@@ -1,32 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
 
-const EditPolitist = () => {
-    const { id } = useParams(); // Luăm ID-ul din URL (ex: 5)
-    const navigate = useNavigate(); // Unealta pentru a ne întoarce la listă
+// ACUM: Primim ID-ul si functiile direct de la parinte (PolitistiPage), nu din URL
+const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
 
-    // 1. Starea formularului (inițial goală)
     const [formData, setFormData] = useState({
         nume: '',
         prenume: '',
         grad: '',
         functie: '',
-        telefonServiciu: '' // Atenție: camelCase ca în Java
+        telefon_serviciu: ''
     });
 
-    // 2. Încărcăm datele existente când deschidem pagina
+    // Incarcam datele cand componenta se monteaza sau se schimba ID-ul
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/politisti/${id}`)
-            .then(response => {
-                // Pre-completăm formularul cu datele primite de la Java
-                console.log("Ce am primit de la Java:", response.data);
-                setFormData(response.data);
-            })
-            .catch(error => console.error("Eroare la încărcare:", error));
+        if (id) {
+            axios.get(`http://localhost:8080/api/politisti/${id}`)
+                .then(response => {
+                    setFormData(response.data);
+                })
+                .catch(error => console.error("Eroare la încărcare date polițist:", error));
+        }
     }, [id]);
 
-    // 3. Gestionăm tastarea (la fel ca la Add)
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -34,14 +30,12 @@ const EditPolitist = () => {
         });
     };
 
-    // 4. Gestionăm Salvarea (PUT în loc de POST)
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Atenție: URL-ul include ID-ul pentru PUT
+    const handleSubmit = () => {
+        // PUT request catre backend
         axios.put(`http://localhost:8080/api/politisti/${id}`, formData)
             .then(() => {
-                alert("Modificare reușită!");
-                navigate('/politisti'); // Ne întoarcem la tabel
+                // Nu mai facem navigate, ci anuntam parintele ca am terminat
+                onSaveSuccess();
             })
             .catch(error => {
                 console.error("Eroare la update:", error);
@@ -50,34 +44,32 @@ const EditPolitist = () => {
     };
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h3>Editează Polițist (ID: {id})</h3>
-            <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Nume: </label>
-                    <input type="text" name="nume" value={formData.nume} onChange={handleChange} />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Prenume: </label>
-                    <input type="text" name="prenume" value={formData.prenume} onChange={handleChange} />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Grad: </label>
-                    <input type="text" name="grad" value={formData.grad} onChange={handleChange} />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Funcție: </label>
-                    <input type="text" name="functie" value={formData.functie} onChange={handleChange} />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label>Telefon: </label>
-                    <input type="text" name="telefon_serviciu" value={formData.telefon_serviciu} onChange={handleChange} />
-                </div>
+        <div>
+            {/* Am refolosit clasele din AddPolitist pentru design consistent */}
+            <div className="form-group">
+                <label>Nume</label>
+                <input type="text" name="nume" className="modal-input" value={formData.nume} onChange={handleChange} />
 
-                <button type="submit" style={{ backgroundColor: 'orange', padding: '10px 20px', border: 'none', cursor: 'pointer' }}>
-                    Actualizează
+                <label>Prenume</label>
+                <input type="text" name="prenume" className="modal-input" value={formData.prenume} onChange={handleChange} />
+
+                <label>Grad</label>
+                <input type="text" name="grad" className="modal-input" value={formData.grad} onChange={handleChange} />
+
+                <label>Funcție</label>
+                <input type="text" name="functie" className="modal-input" value={formData.functie} onChange={handleChange} />
+
+                <label>Telefon</label>
+                <input type="text" name="telefon_serviciu" className="modal-input" value={formData.telefon_serviciu} onChange={handleChange} />
+            </div>
+
+            <div className="modal-footer">
+                <button className="save-btn" onClick={handleSubmit}>
+                    Salvează Modificări
                 </button>
-            </form>
+                {/* Optional: Buton de Anuleaza daca vrei sa fie explicit */}
+                {/* <button className="cancel-btn" onClick={onCancel}>Anulează</button> */}
+            </div>
         </div>
     );
 };

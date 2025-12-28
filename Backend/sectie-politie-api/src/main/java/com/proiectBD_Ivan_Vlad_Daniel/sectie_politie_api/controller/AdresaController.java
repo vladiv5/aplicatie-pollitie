@@ -37,4 +37,24 @@ public class AdresaController {
         }
         return adresaRepository.cautaDupaInceput(termen);
     }
+
+    // 1. PENTRU EDITARE: Aducem datele unei singure adrese
+    @GetMapping("/{id}")
+    public Adresa getAdresaById(@PathVariable Integer id) {
+        return adresaRepository.findById(id).orElse(null);
+    }
+
+    // 2. PENTRU SALVARE MODIFICĂRI (UPDATE)
+    @PutMapping("/{id}")
+    public Adresa updateAdresa(@PathVariable Integer id, @RequestBody Adresa adresaNoua) {
+        return adresaRepository.findById(id).map(adresa -> {
+            adresa.setJudetSauSector(adresaNoua.getJudetSauSector());
+            adresa.setLocalitate(adresaNoua.getLocalitate());
+            adresa.setStrada(adresaNoua.getStrada());
+            adresa.setNumar(adresaNoua.getNumar());
+            adresa.setBloc(adresaNoua.getBloc());
+            adresa.setApartament(adresaNoua.getApartament());
+            return adresaRepository.save(adresa);
+        }).orElse(null);
+    }
 }

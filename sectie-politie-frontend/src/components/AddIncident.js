@@ -14,7 +14,6 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
     });
 
     const handleSave = () => {
-        // Validare simplă
         if (!formData.tipIncident || !formData.politistId) {
             alert("Te rog completează Tipul și alege un Polițist!");
             return;
@@ -22,31 +21,34 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
 
         const token = localStorage.getItem('token');
 
-        // LOGICA PENTRU DATĂ:
-        // Dacă utilizatorul a ales o dată în calendar, o convertim în format ISO.
-        // Dacă nu, folosim data și ora curentă (new Date()).
-        let dataFinala;
-        if (formData.dataEmitere) {
-            dataFinala = new Date(formData.dataEmitere).toISOString();
-        } else {
-            dataFinala = new Date().toISOString();
+        // REZOLVARE EROARE 400:
+        // Input-ul 'datetime-local' ne dă formatul "2024-05-20T14:30" (perfect pentru Java)
+        // Nu mai folosim toISOString() pentru că strică formatul pentru LocalDatetime
+
+        let dataFinala = formData.dataEmitere;
+
+        // Dacă userul nu a ales nicio dată, punem data curentă formatată corect
+        if (!dataFinala) {
+            const now = new Date();
+            // Hack rapid pentru a obține formatul local YYYY-MM-DDTHH:mm
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            dataFinala = now.toISOString().slice(0, 16);
         }
 
         const payload = {
             tipIncident: formData.tipIncident,
-            dataEmitere: dataFinala, // <--- Trimitem data calculată sus
+            dataEmitere: dataFinala, // Trimitem string-ul simplu
             descriereLocatie: formData.descriereLocatie,
             descriereIncident: formData.descriereIncident,
             politistResponsabil: { idPolitist: formData.politistId },
+            // Trimitem null explicit dacă nu e selectată adresa
             adresaIncident: formData.adresaId ? { idAdresa: formData.adresaId } : null
         };
 
         axios.post('http://localhost:8080/api/incidente', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
-                onSaveSuccess();
-            })
+            .then(() => onSaveSuccess())
             .catch(error => {
                 console.error("Eroare salvare:", error);
                 alert("Eroare la salvare! Verifică consola.");
@@ -92,7 +94,7 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     label="Adresa Incidentului"
                     placeholder="Caută stradă..."
                     apiUrl="http://localhost:8080/api/adrese/cauta"
-                    displayKey={(a) => `Str. ${a.strada} Nr. ${a.numar}, ${a.localitate}`}
+                    displayKey={(a) => `${a.strada} Nr. ${a.numar}, ${a.localitate}`}
                     onSelect={(item) => setFormData({...formData, adresaId: item ? item.idAdresa : null})}
                 />
 
