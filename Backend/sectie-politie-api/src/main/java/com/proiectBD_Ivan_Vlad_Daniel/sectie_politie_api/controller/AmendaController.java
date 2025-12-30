@@ -19,57 +19,71 @@ public class AmendaController {
 
     @GetMapping
     public List<Amenda> getAllAmenzi() {
-        return amendaRepository.findAll();
+        return amendaRepository.getAllAmenziNative();
     }
 
-    // GET BY ID (Modelat dupa Incident)
     @GetMapping("/{id}")
     public Amenda getAmendaById(@PathVariable Integer id) {
-        return amendaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Amenda nu a fost găsită cu id: " + id));
-    }
-
-    // CREATE (Modelat exact dupa Incident - primeste Entitatea, nu DTO)
-    @PostMapping
-    public Amenda createAmenda(@RequestBody Amenda amenda) {
-        if (amenda.getDataEmitere() == null) {
-            amenda.setDataEmitere(LocalDateTime.now());
-        }
-        return amendaRepository.save(amenda);
-    }
-
-    // UPDATE (Modelat dupa Incident)
-    @PutMapping("/{id}")
-    public Amenda updateAmenda(@PathVariable Integer id, @RequestBody Amenda detaliiAmenda) {
-        Amenda amenda = amendaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Amenda nu există cu id: " + id));
-
-        // Actualizam campurile simple
-        amenda.setMotiv(detaliiAmenda.getMotiv());
-        amenda.setSuma(detaliiAmenda.getSuma());
-        amenda.setStarePlata(detaliiAmenda.getStarePlata());
-        amenda.setDataEmitere(detaliiAmenda.getDataEmitere());
-
-        // Actualizam relatiile (Politist si Persoana) - exact cum faci la Incident cu Adresa
-        amenda.setPolitist(detaliiAmenda.getPolitist());
-        amenda.setPersoana(detaliiAmenda.getPersoana());
-
-        return amendaRepository.save(amenda);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteAmenda(@PathVariable Integer id) {
-        amendaRepository.deleteById(id);
+        return amendaRepository.getAmendaByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Amenda nu a fost gasita!"));
     }
 
     @GetMapping("/cauta")
     public List<Amenda> cautaAmenzi(@RequestParam String termen) {
         if (termen == null || termen.trim().isEmpty()) {
-            return amendaRepository.findAll();
+            return amendaRepository.getAllAmenziNative();
         }
         return amendaRepository.cautaDupaInceput(termen);
     }
 
+    // INSERT SQL
+    @PostMapping
+    public String createAmenda(@RequestBody Amenda amenda) {
+        LocalDateTime data = amenda.getDataEmitere() != null ? amenda.getDataEmitere() : LocalDateTime.now();
+
+        // Extragem FK
+        Integer idPolitist = (amenda.getPolitist() != null) ? amenda.getPolitist().getIdPolitist() : null;
+        Integer idPersoana = (amenda.getPersoana() != null) ? amenda.getPersoana().getIdPersoana() : null;
+
+        amendaRepository.insertAmenda(
+                amenda.getMotiv(),
+                amenda.getSuma(),
+                amenda.getStarePlata(),
+                data,
+                idPolitist,
+                idPersoana
+        );
+        return "Amenda salvată prin SQL!";
+    }
+
+    // UPDATE SQL
+    @PutMapping("/{id}")
+    public String updateAmenda(@PathVariable Integer id, @RequestBody Amenda detalii) {
+        amendaRepository.getAmendaByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Amenda nu exista!"));
+
+        Integer idPolitist = (detalii.getPolitist() != null) ? detalii.getPolitist().getIdPolitist() : null;
+        Integer idPersoana = (detalii.getPersoana() != null) ? detalii.getPersoana().getIdPersoana() : null;
+
+        amendaRepository.updateAmenda(
+                id,
+                detalii.getMotiv(),
+                detalii.getSuma(),
+                detalii.getStarePlata(),
+                detalii.getDataEmitere(),
+                idPolitist,
+                idPersoana
+        );
+        return "Amenda modificată prin SQL!";
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteAmenda(@PathVariable Integer id) {
+        amendaRepository.deleteAmendaNative(id);
+        return "Amenda ștearsă prin SQL!";
+    }
+
+    // Metodele pentru rapoarte (rămân la fel)
     @GetMapping("/statistici")
     public List<Map<String, Object>> raportAmenzi() {
         return amendaRepository.raportAmenzi();

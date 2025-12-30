@@ -47,16 +47,14 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
                         @Param("functie") String functie,
                         @Param("telefon_serviciu") String telefon_serviciu);
 
-    // --- 5. SEARCH (NOUL SEARCH STANDARDIZAT) ---
-    // Am înlocuit vechea ta metodă cu aceasta care folosește JPQL
-    // Avantaje:
-    // 1. Folosește LOWER() -> găsește "Sabin" chiar dacă scrii "sa" sau "SA"
-    // 2. Caută și după GRAD (ex: dacă scrii "Age" găsește "Agent")
-    // 3. Folosește 'LIKE ... %' -> Găsește doar ce ÎNCEPE cu textul dat
-    @Query("SELECT p FROM Politist p WHERE " +
-            "LOWER(p.nume) LIKE LOWER(CONCAT(:termen, '%')) OR " +
-            "LOWER(p.prenume) LIKE LOWER(CONCAT(:termen, '%')) OR " +
-            "LOWER(p.grad) LIKE LOWER(CONCAT(:termen, '%'))")
+    // --- 5. SEARCH (SQL NATIV - FĂRĂ JPQL) ---
+    @Query(value = "SELECT * FROM Politisti WHERE " +
+            "LOWER(nume) LIKE LOWER(CONCAT(:termen, '%')) OR " +
+            "LOWER(prenume) LIKE LOWER(CONCAT(:termen, '%')) OR " +
+            "LOWER(grad) LIKE LOWER(CONCAT(:termen, '%'))", nativeQuery = true)
     List<Politist> cautaDupaInceput(@Param("termen") String termen);
+
+    @Query(value = "SELECT * FROM Politisti WHERE id_politist = :id", nativeQuery = true)
+    java.util.Optional<Politist> findByIdNative(@Param("id") Integer id);
 
 }

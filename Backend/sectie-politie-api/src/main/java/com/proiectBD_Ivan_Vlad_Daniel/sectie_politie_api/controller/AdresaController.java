@@ -11,50 +11,65 @@ import java.util.List;
 @RequestMapping("/api/adrese")
 @CrossOrigin(origins = "http://localhost:3000")
 public class AdresaController {
+
     @Autowired
     private AdresaRepository adresaRepository;
 
     @GetMapping
     public List<Adresa> getAllAdrese() {
-        return adresaRepository.findAll();
+        return adresaRepository.getAllAdreseNative();
     }
 
-    @PostMapping
-    public Adresa addAdresa(@RequestBody Adresa adresa) {
-        return adresaRepository.save(adresa);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteAdresa(@PathVariable Integer id) {
-        adresaRepository.deleteById(id);
-    }
-
-    // MODIFICAT: Acum folosește SQL-ul din Repository ("Starts With")
     @GetMapping("/cauta")
-    public List<Adresa> cautaAdresa(@RequestParam String termen) {
+    public List<Adresa> cautaAdrese(@RequestParam String termen) {
         if (termen == null || termen.trim().isEmpty()) {
-            return adresaRepository.findAll();
+            return adresaRepository.getAllAdreseNative();
         }
         return adresaRepository.cautaDupaInceput(termen);
     }
 
-    // 1. PENTRU EDITARE: Aducem datele unei singure adrese
     @GetMapping("/{id}")
     public Adresa getAdresaById(@PathVariable Integer id) {
-        return adresaRepository.findById(id).orElse(null);
+        return adresaRepository.getAdresaByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Adresa nu exista!"));
     }
 
-    // 2. PENTRU SALVARE MODIFICĂRI (UPDATE)
+    // INSERT SQL
+    @PostMapping
+    public String addAdresa(@RequestBody Adresa a) {
+        adresaRepository.insertAdresa(
+                a.getJudetSauSector(),
+                a.getLocalitate(),
+                a.getStrada(),
+                a.getNumar(),
+                a.getBloc(),
+                a.getApartament()
+        );
+        return "Adresa salvată prin SQL!";
+    }
+
+    // UPDATE SQL
     @PutMapping("/{id}")
-    public Adresa updateAdresa(@PathVariable Integer id, @RequestBody Adresa adresaNoua) {
-        return adresaRepository.findById(id).map(adresa -> {
-            adresa.setJudetSauSector(adresaNoua.getJudetSauSector());
-            adresa.setLocalitate(adresaNoua.getLocalitate());
-            adresa.setStrada(adresaNoua.getStrada());
-            adresa.setNumar(adresaNoua.getNumar());
-            adresa.setBloc(adresaNoua.getBloc());
-            adresa.setApartament(adresaNoua.getApartament());
-            return adresaRepository.save(adresa);
-        }).orElse(null);
+    public String updateAdresa(@PathVariable Integer id, @RequestBody Adresa a) {
+        adresaRepository.getAdresaByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Adresa nu exista!"));
+
+        adresaRepository.updateAdresa(
+                id,
+                a.getJudetSauSector(),
+                a.getLocalitate(),
+                a.getStrada(),
+                a.getNumar(),
+                a.getBloc(),
+                a.getApartament()
+        );
+        return "Adresa actualizată prin SQL!";
+    }
+
+    // DELETE SQL
+    @DeleteMapping("/{id}")
+    public String deleteAdresa(@PathVariable Integer id) {
+        adresaRepository.deleteAdresaNative(id);
+        return "Adresa ștearsă prin SQL!";
     }
 }

@@ -21,28 +21,30 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
 
         const token = localStorage.getItem('token');
 
-        // REZOLVARE EROARE 400:
-        // Input-ul 'datetime-local' ne dă formatul "2024-05-20T14:30" (perfect pentru Java)
-        // Nu mai folosim toISOString() pentru că strică formatul pentru LocalDatetime
-
         let dataFinala = formData.dataEmitere;
 
-        // Dacă userul nu a ales nicio dată, punem data curentă formatată corect
+        // Dacă userul nu a ales data, punem acum
         if (!dataFinala) {
             const now = new Date();
-            // Hack rapid pentru a obține formatul local YYYY-MM-DDTHH:mm
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             dataFinala = now.toISOString().slice(0, 16);
         }
 
+        // --- FIX CRITIC: Adăugăm secunde ":00" dacă lipsesc ---
+        // Java crapă dacă primește "2024-05-12T14:30". Vrea "2024-05-12T14:30:00"
+        if (dataFinala.length === 16) {
+            dataFinala += ":00";
+        }
+
+        // --- PAYLOAD SIMPLIFICAT (DTO) ---
+        // Trimitem structura "plată" pe care o așteaptă noul Controller
         const payload = {
             tipIncident: formData.tipIncident,
-            dataEmitere: dataFinala, // Trimitem string-ul simplu
+            dataEmitere: dataFinala,
             descriereLocatie: formData.descriereLocatie,
             descriereIncident: formData.descriereIncident,
-            politistResponsabil: { idPolitist: formData.politistId },
-            // Trimitem null explicit dacă nu e selectată adresa
-            adresaIncident: formData.adresaId ? { idAdresa: formData.adresaId } : null
+            idPolitist: formData.politistId, // Trimitem direct ID (Integer)
+            idAdresa: formData.adresaId      // Trimitem direct ID (Integer)
         };
 
         axios.post('http://localhost:8080/api/incidente', payload, {
@@ -51,7 +53,7 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
             .then(() => onSaveSuccess())
             .catch(error => {
                 console.error("Eroare salvare:", error);
-                alert("Eroare la salvare! Verifică consola.");
+                alert("Eroare la salvare! Verifică consola (Network Tab).");
             });
     };
 

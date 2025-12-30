@@ -15,53 +15,62 @@ public class PersoanaController {
     @Autowired
     private PersoanaRepository persoanaRepository;
 
-    // 1. GET ALL
+    // SELECT SQL
     @GetMapping
     public List<Persoana> getAllPersoane() {
-        return persoanaRepository.findAll();
+        return persoanaRepository.getAllPersoaneNative();
     }
 
-    // 2. GET BY ID (Asta lipsea pentru pre-completarea formularului!)
-    @GetMapping("/{id}")
-    public Persoana getPersoanaById(@PathVariable Integer id) {
-        return persoanaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Persoana nu a fost gasită cu id: " + id));
-    }
-
-    // 3. ADĂUGARE
-    @PostMapping
-    public Persoana createPersoana(@RequestBody Persoana persoana) {
-        return persoanaRepository.save(persoana);
-    }
-
-    // 4. UPDATE (Asta lipsea pentru salvarea modificărilor!)
-    @PutMapping("/{id}")
-    public Persoana updatePersoana(@PathVariable Integer id, @RequestBody Persoana detaliiPersoana) {
-        Persoana persoana = persoanaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Persoana nu există cu id: " + id));
-
-        // Actualizăm câmpurile
-        persoana.setNume(detaliiPersoana.getNume());
-        persoana.setPrenume(detaliiPersoana.getPrenume());
-        persoana.setCnp(detaliiPersoana.getCnp());
-        persoana.setDataNasterii(detaliiPersoana.getDataNasterii());
-        persoana.setTelefon(detaliiPersoana.getTelefon());
-
-        return persoanaRepository.save(persoana);
-    }
-
-    // 5. STERGERE
-    @DeleteMapping("/{id}")
-    public void deletePersoana(@PathVariable Integer id) {
-        persoanaRepository.deleteById(id);
-    }
-
-    // 6. CAUTARE
+    // SEARCH SQL
     @GetMapping("/cauta")
     public List<Persoana> cautaPersoane(@RequestParam String termen) {
         if (termen == null || termen.trim().isEmpty()) {
-            return persoanaRepository.findAll();
+            return persoanaRepository.getAllPersoaneNative();
         }
         return persoanaRepository.cautaDupaInceput(termen);
+    }
+
+    @GetMapping("/{id}")
+    public Persoana getPersoanaById(@PathVariable Integer id) {
+        return persoanaRepository.getPersoanaByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Persoana nu exista!"));
+    }
+
+    // INSERT SQL (MANUAL)
+    @PostMapping
+    public String addPersoana(@RequestBody Persoana p) {
+        persoanaRepository.insertPersoana(
+                p.getNume(),
+                p.getPrenume(),
+                p.getCnp(),
+                p.getDataNasterii(),
+                p.getTelefon()
+        );
+        return "Persoana adăugată cu succes prin SQL!";
+    }
+
+    // UPDATE SQL (MANUAL)
+    @PutMapping("/{id}")
+    public String updatePersoana(@PathVariable Integer id, @RequestBody Persoana p) {
+        // Verificăm dacă există (opțional, dar bun pentru siguranță)
+        persoanaRepository.getPersoanaByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Persoana nu exista!"));
+
+        persoanaRepository.updatePersoana(
+                id,
+                p.getNume(),
+                p.getPrenume(),
+                p.getCnp(),
+                p.getDataNasterii(),
+                p.getTelefon()
+        );
+        return "Persoana modificată cu succes prin SQL!";
+    }
+
+    // DELETE SQL (MANUAL)
+    @DeleteMapping("/{id}")
+    public String deletePersoana(@PathVariable Integer id) {
+        persoanaRepository.deletePersoanaNative(id);
+        return "Persoana ștearsă prin SQL!";
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -18,53 +19,83 @@ public class IncidentController {
 
     @GetMapping
     public List<Incident> getAllIncidente() {
-        return incidentRepository.findAll();
+        return incidentRepository.getAllIncidenteNative();
     }
 
-    // --- METODA NOUA: GET BY ID (Necesara pentru Editare) ---
     @GetMapping("/{id}")
     public Incident getIncidentById(@PathVariable Integer id) {
-        return incidentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Incidentul nu a fost gasit cu id: " + id));
-    }
-
-    @PostMapping
-    public Incident createIncident(@RequestBody Incident incident) {
-        if(incident.getDataEmitere() == null) {
-            incident.setDataEmitere(LocalDateTime.now());
-        }
-        return incidentRepository.save(incident);
-    }
-
-    // --- METODA NOUA: UPDATE (PUT) ---
-    @PutMapping("/{id}")
-    public Incident updateIncident(@PathVariable Integer id, @RequestBody Incident detaliiIncident) {
-        Incident incident = incidentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Incidentul nu exista cu id: " + id));
-
-        // Actualizam campurile
-        incident.setTipIncident(detaliiIncident.getTipIncident());
-        incident.setDataEmitere(detaliiIncident.getDataEmitere());
-        incident.setDescriereLocatie(detaliiIncident.getDescriereLocatie());
-        incident.setDescriereIncident(detaliiIncident.getDescriereIncident());
-
-        // Actualizam relatiile (Politist si Adresa)
-        incident.setPolitistResponsabil(detaliiIncident.getPolitistResponsabil());
-        incident.setAdresaIncident(detaliiIncident.getAdresaIncident());
-
-        return incidentRepository.save(incident);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteIncident(@PathVariable Integer id) {
-        incidentRepository.deleteById(id);
+        return incidentRepository.getIncidentByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Incidentul nu a fost gasit!"));
     }
 
     @GetMapping("/cauta")
     public List<Incident> cautaIncidente(@RequestParam String termen) {
         if (termen == null || termen.trim().isEmpty()) {
-            return incidentRepository.findAll();
+            return incidentRepository.getAllIncidenteNative();
         }
         return incidentRepository.cautaDupaInceput(termen);
+    }
+
+    // --- INSERT SQL FOLOSIND DTO (REPARAT EROAREA 400) ---
+    @PostMapping
+    public String createIncident(@RequestBody IncidentRequest req) {
+        // 1. Parsăm data manual ca să fim siguri (Java vrea secunde, React uneori nu le trimite)
+        LocalDateTime data;
+        try {
+            // Încercăm formatul standard
+            data = LocalDateTime.parse(req.dataEmitere);
+        } catch (Exception e) {
+            // Fallback: dacă vine fără secunde, adăugăm noi
+            data = LocalDateTime.now();
+        }
+
+        // 2. Apelăm SQL-ul manual cu ID-urile primite direct
+        incidentRepository.insertIncident(
+                req.tipIncident,
+                data,
+                req.descriereLocatie,
+                req.descriereIncident,
+                req.idPolitist, // ID direct (Integer)
+                req.idAdresa    // ID direct (Integer)
+        );
+        return "Incident creat prin SQL!";
+    }
+
+    // --- UPDATE SQL ---
+    @PutMapping("/{id}")
+    public String updateIncident(@PathVariable Integer id, @RequestBody IncidentRequest req) {
+        incidentRepository.getIncidentByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Incidentul nu exista!"));
+
+        LocalDateTime data = (req.dataEmitere != null) ? LocalDateTime.parse(req.dataEmitere) : LocalDateTime.now();
+
+        incidentRepository.updateIncident(
+                id,
+                req.tipIncident,
+                data,
+                req.descriereLocatie,
+                req.descriereIncident,
+                req.idPolitist,
+                req.idAdresa
+        );
+        return "Incident modificat prin SQL!";
+    }
+
+    // DELETE SQL
+    @DeleteMapping("/{id}")
+    public String deleteIncident(@PathVariable Integer id) {
+        incidentRepository.deleteIncidentNative(id);
+        return "Incident șters prin SQL!";
+    }
+
+    // === CLASA DTO (Data Transfer Object) ===
+    // Aceasta ne ajută să primim JSON-ul curat, fără erori de mapare
+    public static class IncidentRequest {
+        public String tipIncident;
+        public String dataEmitere; // Primim ca String, convertim noi
+        public String descriereLocatie;
+        public String descriereIncident;
+        public Integer idPolitist; // Primim direct ID-ul
+        public Integer idAdresa;   // Primim direct ID-ul
     }
 }
