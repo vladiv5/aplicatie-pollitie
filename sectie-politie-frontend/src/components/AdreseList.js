@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios'; // Folosim axios pentru consistență la ștergere
 import './styles/TableStyles.css';
 
-const AdreseList = ({ onAddClick, onEditClick }) => {
+const AdreseList = ({ onAddClick, onEditClick, onViewLocatariClick }) => {
     const [adrese, setAdrese] = useState([]);
     const [loading, setLoading] = useState(true);
     const [termenCautare, setTermenCautare] = useState('');
@@ -90,7 +90,7 @@ const AdreseList = ({ onAddClick, onEditClick }) => {
                         <td>{adresa.judetSauSector}</td>
                         <td>{adresa.localitate}</td>
                         <td>{adresa.strada}</td>
-                        <td>{adresa.numar}</td>
+                        <td>{adresa.numar ? adresa.numar : '-'}</td>
                         <td>{adresa.bloc ? adresa.bloc : '-'}</td>
                         <td>{adresa.apartament ? adresa.apartament : '-'}</td>
 
@@ -108,6 +108,14 @@ const AdreseList = ({ onAddClick, onEditClick }) => {
                                     onClick={() => handleDelete(adresa.idAdresa)}
                                 >
                                     Șterge
+                                </button>
+                                <button
+                                    className="action-btn"
+                                    style={{ backgroundColor: '#fd7e14', color: 'white', marginRight: '5px' }}
+                                    onClick={() => onViewLocatariClick(adresa.idAdresa)}
+                                    title="Vezi cine locuiește aici"
+                                >
+                                    <i className="fa fa-users"></i> Locatari
                                 </button>
                             </div>
                         </td>

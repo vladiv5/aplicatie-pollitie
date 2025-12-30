@@ -1,35 +1,25 @@
 import React, { useState } from 'react';
 import AdreseList from '../components/AdreseList';
 import AddAdresa from '../components/AddAdresa';
-import EditAdresa from '../components/EditAdresa'; // Importăm componenta de editare
+import EditAdresa from '../components/EditAdresa';
+// 1. Importam componenta noua
+import ViewLocatariAdresa from '../components/ViewLocatariAdresa';
 import Modal from '../components/Modal';
 
 const AdresePage = () => {
-    // State pentru Add
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-    // State pentru Edit
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editId, setEditId] = useState(null);
 
+    // 2. State pentru ID-ul adresei la care vedem locatarii
+    const [locatariAdresaId, setLocatariAdresaId] = useState(null);
+
+    const [editId, setEditId] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // --- ADD Logic ---
     const handleAddSuccess = () => {
         setIsAddModalOpen(false);
         setRefreshKey(k => k + 1);
         alert("Adresă adăugată cu succes!");
-    };
-
-    // --- EDIT Logic ---
-    const handleOpenEdit = (id) => {
-        setEditId(id);
-        setIsEditModalOpen(true);
-    };
-
-    const handleCloseEdit = () => {
-        setEditId(null);
-        setIsEditModalOpen(false);
     };
 
     const handleEditSuccess = () => {
@@ -44,24 +34,29 @@ const AdresePage = () => {
             <AdreseList
                 key={refreshKey}
                 onAddClick={() => setIsAddModalOpen(true)}
-                onEditClick={handleOpenEdit} // Trimitem funcția către List
+                onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
+                // 3. Trimitem functia
+                onViewLocatariClick={(id) => setLocatariAdresaId(id)}
             />
 
-            {/* Modal ADAUGĂ */}
-            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Adresă Nouă">
-                <AddAdresa
-                    onSaveSuccess={handleAddSuccess}
-                    onCancel={() => setIsAddModalOpen(false)}
-                />
+            {/* Modal Add */}
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Adresă">
+                <AddAdresa onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* Modal EDITEAZĂ */}
-            <Modal isOpen={isEditModalOpen} onClose={handleCloseEdit} title="Editează Adresa">
+            {/* Modal Edit */}
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editează Adresă">
                 {editId && (
-                    <EditAdresa
-                        id={editId}
-                        onSaveSuccess={handleEditSuccess}
-                        onCancel={handleCloseEdit}
+                    <EditAdresa id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />
+                )}
+            </Modal>
+
+            {/* 4. Modal NOU: Locatari */}
+            <Modal isOpen={!!locatariAdresaId} onClose={() => setLocatariAdresaId(null)} title="Locatari la această adresă">
+                {locatariAdresaId && (
+                    <ViewLocatariAdresa
+                        adresaId={locatariAdresaId}
+                        onClose={() => setLocatariAdresaId(null)}
                     />
                 )}
             </Modal>

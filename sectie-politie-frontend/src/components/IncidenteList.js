@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './styles/TableStyles.css';
+import GestionareParticipanti from "./GestionareParticipanti";
+import Modal from "./Modal";
 
 // Adaugam onViewClick in props
 const IncidenteList = ({ onAddClick, onEditClick, onViewClick }) => {
     const [incidente, setIncidente] = useState([]);
     const [loading, setLoading] = useState(true);
     const [termenCautare, setTermenCautare] = useState('');
+    const [selectedIncidentForParticipants, setSelectedIncidentForParticipants] = useState(null);
 
     useEffect(() => {
         loadIncidente();
@@ -141,12 +144,32 @@ const IncidenteList = ({ onAddClick, onEditClick, onViewClick }) => {
                                 >
                                     Șterge
                                 </button>
+                                <button
+                                    className="action-btn"
+                                    style={{ backgroundColor: '#6f42c1', color: 'white', marginLeft: '5px' }}
+                                    onClick={() => setSelectedIncidentForParticipants(incident.idIncident)}
+                                    title="Gestionează Martori/Suspecți"
+                                >
+                                    <i className="fa fa-users"></i> Pers
+                                </button>
                             </div>
                         </td>
                     </tr>
                 ))}
                 </tbody>
             </table>
+            <Modal
+                isOpen={!!selectedIncidentForParticipants}
+                onClose={() => setSelectedIncidentForParticipants(null)}
+                title="Gestionare Participanți"
+            >
+                {selectedIncidentForParticipants && (
+                    <GestionareParticipanti
+                        incidentId={selectedIncidentForParticipants}
+                        onClose={() => setSelectedIncidentForParticipants(null)}
+                    />
+                )}
+            </Modal>
         </div>
     );
 };

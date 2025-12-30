@@ -7,46 +7,35 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         motiv: '',
         suma: '',
-        starePlata: 'Neachitat',
+        // MODIFICARE AICI: Default-ul trebuie să fie exact ca în baza de date
+        starePlata: 'Neplatita',
         dataEmitere: '',
         politistId: null,
         persoanaId: null
     });
 
     const handleSave = () => {
-        // 1. Validare câmpuri obligatorii
         if (!formData.motiv || !formData.suma || !formData.persoanaId || !formData.politistId) {
-            alert("Te rog completează motivul, suma, polițistul și persoana amendată!");
+            alert("Te rog completează toate câmpurile obligatorii!");
             return;
         }
 
         const token = localStorage.getItem('token');
-
-        // 2. Validare numerică pentru Sumă
         const sumaNumar = parseFloat(formData.suma);
+
         if (isNaN(sumaNumar)) {
             alert("Suma trebuie să fie un număr valid!");
             return;
         }
 
-        // 3. LOGICA DATĂ (CRITIC PENTRU EROAREA 400)
+        // Logica Dată (Formatată corect)
         let dataFinala = formData.dataEmitere;
-
         if (!dataFinala) {
-            // Cazul 1: Nu a ales data -> Punem data curentă
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            // slice(0, 19) păstrează secundele: "YYYY-MM-DDTHH:mm:ss"
-            dataFinala = now.toISOString().slice(0, 19);
-        } else {
-            // Cazul 2: A ales data din calendar HTML (vine ca "2024-12-28T16:00")
-            // Trebuie să adăugăm secundele manual, altfel Java dă eroare 400
-            if (dataFinala.length === 16) {
-                dataFinala += ':00';
-            }
+            dataFinala = now.toISOString().slice(0, 16);
         }
 
-        // 4. Construim obiectul
         const payload = {
             motiv: formData.motiv,
             suma: sumaNumar,
@@ -56,18 +45,16 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
             persoana: { idPersoana: formData.persoanaId }
         };
 
-        // 5. Trimitem cererea (O SINGURĂ DATĂ)
         axios.post('http://localhost:8080/api/amenzi', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(() => {
                 onSaveSuccess();
             })
-            .catch(err => {
-                console.error("Eroare salvare:", err);
-                if (err.response && err.response.data) {
-                    // Afișăm eroarea exactă de la server pentru debugging
-                    alert(`Eroare server: ${JSON.stringify(err.response.data)}`);
+            .catch(error => {
+                console.error("Eroare salvare:", error);
+                if (error.response && error.response.data) {
+                    alert(`Eroare server: ${JSON.stringify(error.response.data)}`);
                 } else {
                     alert("Eroare la salvare! Verifică consola.");
                 }
@@ -87,13 +74,15 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
                     value={formData.suma}
                     onChange={(e) => setFormData({...formData, suma: e.target.value})}
                 />
+
+                {/* MODIFICARE AICI: Valorile trebuie să fie fix "Neplatita" și "Platita" */}
                 <select
                     className="modal-input"
                     value={formData.starePlata}
                     onChange={(e) => setFormData({...formData, starePlata: e.target.value})}
                 >
-                    <option value="Neachitat">Neachitat</option>
-                    <option value="Achitat">Achitat</option>
+                    <option value="Neplatita">Neplatita</option>
+                    <option value="Platita">Platita</option>
                 </select>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>

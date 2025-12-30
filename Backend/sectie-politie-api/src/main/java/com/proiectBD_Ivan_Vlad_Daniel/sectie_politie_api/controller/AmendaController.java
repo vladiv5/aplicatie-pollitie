@@ -5,6 +5,7 @@ import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.AmendaReposi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import java.util.Map;
 @RequestMapping("/api/amenzi")
 @CrossOrigin(origins = "http://localhost:3000")
 public class AmendaController {
+
     @Autowired
     private AmendaRepository amendaRepository;
 
@@ -20,21 +22,38 @@ public class AmendaController {
         return amendaRepository.findAll();
     }
 
-    // --- NOUL ENDPOINT DE CĂUTARE ---
-    @GetMapping("/cauta")
-    public List<Amenda> cautaAmenzi(@RequestParam String termen) {
-        if (termen == null || termen.trim().isEmpty()) {
-            return amendaRepository.findAll();
-        }
-        return amendaRepository.cautaDupaInceput(termen);
+    // GET BY ID (Modelat dupa Incident)
+    @GetMapping("/{id}")
+    public Amenda getAmendaById(@PathVariable Integer id) {
+        return amendaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Amenda nu a fost găsită cu id: " + id));
     }
 
+    // CREATE (Modelat exact dupa Incident - primeste Entitatea, nu DTO)
     @PostMapping
-    public Amenda addAmenda(@RequestBody Amenda amenda) {
-        // Asigurăm data curentă dacă nu e trimisă
+    public Amenda createAmenda(@RequestBody Amenda amenda) {
         if (amenda.getDataEmitere() == null) {
-            amenda.setDataEmitere(java.time.LocalDateTime.now());
+            amenda.setDataEmitere(LocalDateTime.now());
         }
+        return amendaRepository.save(amenda);
+    }
+
+    // UPDATE (Modelat dupa Incident)
+    @PutMapping("/{id}")
+    public Amenda updateAmenda(@PathVariable Integer id, @RequestBody Amenda detaliiAmenda) {
+        Amenda amenda = amendaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Amenda nu există cu id: " + id));
+
+        // Actualizam campurile simple
+        amenda.setMotiv(detaliiAmenda.getMotiv());
+        amenda.setSuma(detaliiAmenda.getSuma());
+        amenda.setStarePlata(detaliiAmenda.getStarePlata());
+        amenda.setDataEmitere(detaliiAmenda.getDataEmitere());
+
+        // Actualizam relatiile (Politist si Persoana) - exact cum faci la Incident cu Adresa
+        amenda.setPolitist(detaliiAmenda.getPolitist());
+        amenda.setPersoana(detaliiAmenda.getPersoana());
+
         return amendaRepository.save(amenda);
     }
 
@@ -43,31 +62,16 @@ public class AmendaController {
         amendaRepository.deleteById(id);
     }
 
+    @GetMapping("/cauta")
+    public List<Amenda> cautaAmenzi(@RequestParam String termen) {
+        if (termen == null || termen.trim().isEmpty()) {
+            return amendaRepository.findAll();
+        }
+        return amendaRepository.cautaDupaInceput(termen);
+    }
+
     @GetMapping("/statistici")
     public List<Map<String, Object>> raportAmenzi() {
         return amendaRepository.raportAmenzi();
-    }
-
-    // 1. GET ONE (Pentru a pre-completa formularul de editare)
-    @GetMapping("/{id}")
-    public Amenda getAmendaById(@PathVariable Integer id) {
-        return amendaRepository.findById(id).orElse(null);
-    }
-
-    // 2. UPDATE (Pentru a salva modificările)
-    @PutMapping("/{id}")
-    public Amenda updateAmenda(@PathVariable Integer id, @RequestBody Amenda amendaNoua) {
-        return amendaRepository.findById(id).map(amenda -> {
-            amenda.setMotiv(amendaNoua.getMotiv());
-            amenda.setSuma(amendaNoua.getSuma());
-            amenda.setStarePlata(amendaNoua.getStarePlata());
-            amenda.setDataEmitere(amendaNoua.getDataEmitere());
-
-            // Aici e important: JPA va face update la Foreign Key doar pe baza ID-ului din obiect
-            amenda.setPolitist(amendaNoua.getPolitist());
-            amenda.setPersoana(amendaNoua.getPersoana());
-
-            return amendaRepository.save(amenda);
-        }).orElseThrow(() -> new RuntimeException("Amenda nu a fost găsită!"));
     }
 }

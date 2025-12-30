@@ -1,72 +1,73 @@
 import React, { useState } from 'react';
 import PersoaneList from '../components/PersoaneList';
 import AddPersoana from '../components/AddPersoana';
-import EditPersoana from '../components/EditPersoana'; // Importam componenta noua
+import EditPersoana from '../components/EditPersoana';
+import ViewIncidentePersoana from '../components/ViewIncidentePersoana';
+// 1. Importam noua componenta
+import ViewAdresePersoana from '../components/ViewAdresePersoana';
 import Modal from '../components/Modal';
 
 const PersoanePage = () => {
-    // --- STATE PENTRU ADAUGARE ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-    // --- STATE PENTRU EDITARE (Nou) ---
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editId, setEditId] = useState(null);
+    const [historyId, setHistoryId] = useState(null);
 
-    // --- REFRESH LISTA ---
+    // 2. State nou pentru ID-ul persoanei la care vedem adresele
+    const [adreseId, setAdreseId] = useState(null);
+
+    const [editId, setEditId] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // -- Handlers Adaugare --
-    const handleOpenAdd = () => setIsAddModalOpen(true);
-    const handleCloseAdd = () => setIsAddModalOpen(false);
-
+    // ... functiile handleAddSuccess, handleEditSuccess raman la fel ...
     const handleAddSuccess = () => {
         setIsAddModalOpen(false);
-        setRefreshKey(prev => prev + 1);
+        setRefreshKey(k => k + 1);
         alert("Persoană adăugată cu succes!");
-    };
-
-    // -- Handlers Editare (Sablonul) --
-    const handleOpenEdit = (id) => {
-        setEditId(id);
-        setIsEditModalOpen(true);
-    };
-
-    const handleCloseEdit = () => {
-        setEditId(null);
-        setIsEditModalOpen(false);
     };
 
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditId(null);
-        setRefreshKey(prev => prev + 1); // Fortam reincarcarea listei
-        alert("Datele persoanei au fost actualizate!");
+        setRefreshKey(k => k + 1);
+        alert("Persoană modificată cu succes!");
     };
 
     return (
         <div>
-            {/* Lista primeste acum si functia de editare */}
             <PersoaneList
                 key={refreshKey}
-                onAddClick={handleOpenAdd}
-                onEditClick={handleOpenEdit}
+                onAddClick={() => setIsAddModalOpen(true)}
+                onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
+                onViewHistoryClick={(id) => setHistoryId(id)}
+                // 3. Trimitem functia
+                onViewAdreseClick={(id) => setAdreseId(id)}
             />
 
-            {/* Modal Adaugare */}
-            <Modal isOpen={isAddModalOpen} onClose={handleCloseAdd} title="Adaugă Persoană Nouă">
-                <AddPersoana
-                    onSaveSuccess={handleAddSuccess}
-                    onCancel={handleCloseAdd}
-                />
+            {/* ... Modal Add ... */}
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Persoană">
+                <AddPersoana onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* Modal Editare (Nou) */}
-            <Modal isOpen={isEditModalOpen} onClose={handleCloseEdit} title="Editează Persoană">
+            {/* ... Modal Edit ... */}
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editează Persoană">
                 {editId && (
-                    <EditPersoana
-                        id={editId}
-                        onSaveSuccess={handleEditSuccess}
-                        onCancel={handleCloseEdit}
+                    <EditPersoana id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />
+                )}
+            </Modal>
+
+            {/* ... Modal Istoric ... */}
+            <Modal isOpen={!!historyId} onClose={() => setHistoryId(null)} title="Istoric Incidente">
+                {historyId && (
+                    <ViewIncidentePersoana persoanaId={historyId} onClose={() => setHistoryId(null)} />
+                )}
+            </Modal>
+
+            {/* 4. Modal NOU: Adrese */}
+            <Modal isOpen={!!adreseId} onClose={() => setAdreseId(null)} title="Adrese Asociate">
+                {adreseId && (
+                    <ViewAdresePersoana
+                        persoanaId={adreseId}
+                        onClose={() => setAdreseId(null)}
                     />
                 )}
             </Modal>

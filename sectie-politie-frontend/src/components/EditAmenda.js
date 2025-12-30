@@ -7,13 +7,12 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         motiv: '',
         suma: '',
-        starePlata: 'Neachitat',
+        starePlata: 'Neplatita', // Default corect
         dataEmitere: '',
         politistId: null,
         persoanaId: null
     });
 
-    // Stări pentru textele inițiale din LiveSearch
     const [initialPolitistName, setInitialPolitistName] = useState('');
     const [initialPersoanaName, setInitialPersoanaName] = useState('');
 
@@ -28,13 +27,13 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                     setFormData({
                         motiv: data.motiv || '',
                         suma: data.suma || '',
-                        starePlata: data.starePlata || 'Neachitat',
+                        // Aici preluam valoarea din DB. Dacă e null, punem default 'Neplatita'
+                        starePlata: data.starePlata || 'Neplatita',
                         dataEmitere: data.dataEmitere || '',
-                        politistId: data.politist?.idPolitist || null,
-                        persoanaId: data.persoana?.idPersoana || null
+                        politistId: data.politist ? data.politist.idPolitist : null,
+                        persoanaId: data.persoana ? data.persoana.idPersoana : null
                     });
 
-                    // Setăm numele pentru a apărea în input-urile de căutare
                     if (data.politist) {
                         setInitialPolitistName(`${data.politist.nume} ${data.politist.prenume} (${data.politist.grad})`);
                     }
@@ -42,28 +41,19 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                         setInitialPersoanaName(`${data.persoana.nume} ${data.persoana.prenume} (CNP: ${data.persoana.cnp})`);
                     }
                 })
-                .catch(err => console.error("Eroare încărcare amendă:", err));
+                .catch(error => console.error("Eroare încărcare amendă:", error));
         }
     }, [id]);
 
     const handleSave = () => {
         const token = localStorage.getItem('token');
-
-        // Validare sumă
         const sumaNumar = parseFloat(formData.suma);
-        if (isNaN(sumaNumar)) {
-            alert("Suma introdusă nu este validă!");
-            return;
-        }
 
         const payload = {
             motiv: formData.motiv,
             suma: sumaNumar,
             starePlata: formData.starePlata,
-            // Păstrăm data așa cum e în state (format YYYY-MM-DDTHH:mm)
             dataEmitere: formData.dataEmitere,
-
-            // Verificăm strict ID-urile
             politist: formData.politistId ? { idPolitist: formData.politistId } : null,
             persoana: formData.persoanaId ? { idPersoana: formData.persoanaId } : null
         };
@@ -74,9 +64,9 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
             .then(() => {
                 onSaveSuccess();
             })
-            .catch(err => {
-                console.error("Eroare update:", err);
-                alert("Eroare la modificare! (Cod 500 - verifică dacă toate câmpurile obligatorii sunt completate)");
+            .catch(error => {
+                console.error("Eroare update:", error);
+                alert("Eroare la modificare!");
             });
     };
 
@@ -98,13 +88,14 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                 />
 
                 <label>Stare Plată</label>
+                {/* Select actualizat cu valorile din DB */}
                 <select
                     className="modal-input"
                     value={formData.starePlata}
                     onChange={(e) => setFormData({...formData, starePlata: e.target.value})}
                 >
-                    <option value="Neachitat">Neachitat</option>
-                    <option value="Achitat">Achitat</option>
+                    <option value="Neplatita">Neplătită</option>
+                    <option value="Platita">Plătită</option>
                 </select>
 
                 <label>Data și Ora</label>

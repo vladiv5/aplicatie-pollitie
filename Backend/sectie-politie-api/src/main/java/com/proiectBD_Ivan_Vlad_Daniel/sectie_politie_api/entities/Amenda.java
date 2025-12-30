@@ -3,6 +3,7 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat; // <--- IMPORT ESENȚIAL
 
 @Entity
 @Table(name = "Amenzi")
@@ -11,9 +12,6 @@ public class Amenda {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_amenda")
     private Integer idAmenda;
-
-    @Column(name = "data_emitere")
-    private LocalDateTime dataEmitere;
 
     @Column(name = "motiv")
     private String motiv;
@@ -24,76 +22,40 @@ public class Amenda {
     @Column(name = "stare_plata")
     private String starePlata;
 
-    // Relatie N:1
-    // O amenda ii este acordata unei persoane
-    // O persoana poate avea N amenzi
-    @ManyToOne
-    @JoinColumn(name = "id_persoana")
-    private Persoana persoana;
+    @Column(name = "data_emitere")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm") // <--- FIX-UL PENTRU DATĂ (Exact ca la Incident)
+    private LocalDateTime dataEmitere;
 
-    // Relatie N:1
-    // O amenda este data de un politist
-    // Un politist poate da N amenzi
+    // Relatie N:1 (Similar cu Politistul de la Incident)
     @ManyToOne
     @JoinColumn(name = "id_politist")
     private Politist politist;
 
+    // Relatie N:1 (Similar cu Adresa de la Incident, dar aici e Persoana)
+    @ManyToOne
+    @JoinColumn(name = "id_persoana")
+    private Persoana persoana;
+
     // --- Getters și Setters ---
 
+    public Integer getIdAmenda() { return idAmenda; }
+    public void setIdAmenda(Integer idAmenda) { this.idAmenda = idAmenda; }
 
-    public Integer getIdAmenda() {
-        return idAmenda;
-    }
+    public String getMotiv() { return motiv; }
+    public void setMotiv(String motiv) { this.motiv = motiv; }
 
-    public LocalDateTime getDataEmitere() {
-        return dataEmitere;
-    }
+    public BigDecimal getSuma() { return suma; }
+    public void setSuma(BigDecimal suma) { this.suma = suma; }
 
-    public String getMotiv() {
-        return motiv;
-    }
+    public String getStarePlata() { return starePlata; }
+    public void setStarePlata(String starePlata) { this.starePlata = starePlata; }
 
-    public BigDecimal getSuma() {
-        return suma;
-    }
+    public LocalDateTime getDataEmitere() { return dataEmitere; }
+    public void setDataEmitere(LocalDateTime dataEmitere) { this.dataEmitere = dataEmitere; }
 
-    public String getStarePlata() {
-        return starePlata;
-    }
+    public Politist getPolitist() { return politist; }
+    public void setPolitist(Politist politist) { this.politist = politist; }
 
-    public Persoana getPersoana() {
-        return persoana;
-    }
-
-    public Politist getPolitist() {
-        return politist;
-    }
-
-    public void setIdAmenda(Integer idAmenda) {
-        this.idAmenda = idAmenda;
-    }
-
-    public void setDataEmitere(LocalDateTime dataEmitere) {
-        this.dataEmitere = dataEmitere;
-    }
-
-    public void setMotiv(String motiv) {
-        this.motiv = motiv;
-    }
-
-    public void setSuma(BigDecimal suma) {
-        this.suma = suma;
-    }
-
-    public void setStarePlata(String starePlata) {
-        this.starePlata = starePlata;
-    }
-
-    public void setPersoana(Persoana persoana) {
-        this.persoana = persoana;
-    }
-
-    public void setPolitist(Politist politist) {
-        this.politist = politist;
-    }
+    public Persoana getPersoana() { return persoana; }
+    public void setPersoana(Persoana persoana) { this.persoana = persoana; }
 }
