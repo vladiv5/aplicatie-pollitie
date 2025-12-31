@@ -5,6 +5,11 @@ import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.PersoanaRepo
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 
 @RestController
@@ -72,5 +77,23 @@ public class PersoanaController {
     public String deletePersoana(@PathVariable Integer id) {
         persoanaRepository.deletePersoanaNative(id);
         return "Persoana ștearsă prin SQL!";
+    }
+
+    // --- ENDPOINT NOU ---
+    @GetMapping("/lista-paginata")
+    public Page<Persoana> getPersoanePaginat(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nume") String sortBy,
+            @RequestParam(defaultValue = "asc") String dir
+    ) {
+        Sort.Direction direction = dir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        // Sortare Primara: Nume, Secundara: Prenume
+        Sort sortare = Sort.by(direction, sortBy)
+                .and(Sort.by(Sort.Direction.ASC, "prenume"));
+
+        Pageable pageable = PageRequest.of(page, size, sortare);
+        return persoanaRepository.findAllNativePaginat(pageable);
     }
 }

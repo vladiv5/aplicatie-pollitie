@@ -8,7 +8,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,59 +19,70 @@ import java.util.Optional;
 @Repository
 public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
 
-    // --- 1. SELECT ALL ---
+    // --- METODA NOUA PENTRU PAGINARE ---
+    @Query(value = "SELECT * FROM Persoane",
+            countQuery = "SELECT count(*) FROM Persoane",
+            nativeQuery = true)
+    Page<Persoana> findAllNativePaginat(Pageable pageable);
+
+    // --- METODE STANDARD (NU LE MODIFICĂM) ---
     @Query(value = "SELECT * FROM Persoane", nativeQuery = true)
     List<Persoana> getAllPersoaneNative();
 
-    // --- 2. SELECT BY ID ---
     @Query(value = "SELECT * FROM Persoane WHERE id_persoana = :id", nativeQuery = true)
     Optional<Persoana> getPersoanaByIdNative(@Param("id") Integer id);
 
-    // --- 3. INSERT (Creare) ---
     @Modifying
     @Transactional
-    @Query(value = "INSERT INTO Persoane (nume, prenume, cnp, data_nasterii, telefon) " +
-            "VALUES (:nume, :prenume, :cnp, :dataNasterii, :telefon)", nativeQuery = true)
-    void insertPersoana(@Param("nume") String nume,
-                        @Param("prenume") String prenume,
-                        @Param("cnp") String cnp,
-                        @Param("dataNasterii") LocalDate dataNasterii,
-                        @Param("telefon") String telefon);
+    @Query(value = "INSERT INTO Persoane (nume, prenume, cnp, data_nasterii, telefon) VALUES (:nume, :prenume, :cnp, :dataNasterii, :telefon)", nativeQuery = true)
+    void insertPersoana(@Param("nume") String nume, @Param("prenume") String prenume, @Param("cnp") String cnp, @Param("dataNasterii") LocalDate dataNasterii, @Param("telefon") String telefon);
 
-    // --- 4. UPDATE (Modificare) ---
     @Modifying
     @Transactional
-    @Query(value = "UPDATE Persoane SET nume = :nume, prenume = :prenume, cnp = :cnp, " +
-            "data_nasterii = :dataNasterii, telefon = :telefon WHERE id_persoana = :id", nativeQuery = true)
-    void updatePersoana(@Param("id") Integer id,
-                        @Param("nume") String nume,
-                        @Param("prenume") String prenume,
-                        @Param("cnp") String cnp,
-                        @Param("dataNasterii") LocalDate dataNasterii,
-                        @Param("telefon") String telefon);
+    @Query(value = "UPDATE Persoane SET nume = :nume, prenume = :prenume, cnp = :cnp, data_nasterii = :dataNasterii, telefon = :telefon WHERE id_persoana = :id", nativeQuery = true)
+    void updatePersoana(@Param("id") Integer id, @Param("nume") String nume, @Param("prenume") String prenume, @Param("cnp") String cnp, @Param("dataNasterii") LocalDate dataNasterii, @Param("telefon") String telefon);
 
-    // --- 5. DELETE ---
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane WHERE id_persoana = :id", nativeQuery = true)
     void deletePersoanaNative(@Param("id") Integer id);
 
-    // --- 6. CAUTARE (Search) ---
-    @Query(value = "SELECT * FROM Persoane WHERE " +
-            "LOWER(nume) LIKE LOWER(CONCAT(:termen, '%')) OR " +
-            "LOWER(prenume) LIKE LOWER(CONCAT(:termen, '%')) OR " +
-            "cnp LIKE CONCAT(:termen, '%')", nativeQuery = true)
+    @Query(value = "SELECT * FROM Persoane WHERE LOWER(nume) LIKE LOWER(CONCAT(:termen, '%')) OR LOWER(prenume) LIKE LOWER(CONCAT(:termen, '%')) OR cnp LIKE CONCAT(:termen, '%')", nativeQuery = true)
     List<Persoana> cautaDupaInceput(@Param("termen") String termen);
 
-    // --- RAPORT 3: Lista Rău-Platnicilor (Persoane cu amenzi neachitate) ---
-    // NOTA: Verifică dacă în baza ta de date statusul e 'Neplatita' sau 'Neachitata'!
+    // =================================================================================
+    // === 📊 RAPOARTE SIMPLE (Refactorizate cu Filtru de Dată) ===
+    // =================================================================================
+
+    // --- RAPORT 3: Rău-Platnici (Cu filtru pe data emiterii amenzii) ---
     @Query(value = "SELECT p.nume, p.prenume, p.cnp, SUM(a.suma) as datorie_totala " +
             "FROM persoane p " +
             "JOIN amenzi a ON p.id_persoana = a.id_persoana " +
             "WHERE a.stare_plata = 'Neplatita' " +
+            "  AND (:startDate IS NULL OR a.data_emitere >= :startDate) " +
+            "  AND (:endDate IS NULL OR a.data_emitere <= :endDate) " +
             "GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp " +
             "ORDER BY datorie_totala DESC", nativeQuery = true)
-    List<Map<String, Object>> getRauPlatnici();
+    List<Map<String, Object>> getRauPlatnici(@Param("startDate") LocalDateTime startDate,
+                                             @Param("endDate") LocalDateTime endDate);
 
+    // =================================================================================
+    // === 🧠 INTEROGARE COMPLEXĂ (SUBCERERE 4) ===
+    // =================================================================================
 
+    // --- Recidiviști: Persoane care au un nr. de amenzi > media generală de amenzi per persoană ---
+    @Query(value = "SELECT p.nume, p.prenume, p.cnp, COUNT(a.id_amenda) as nr_abateri " +
+            "FROM Persoane p " +
+            "JOIN Amenzi a ON p.id_persoana = a.id_persoana " +
+            "WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) " +
+            "  AND (:endDate IS NULL OR a.data_emitere <= :endDate) " +
+            "GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp " +
+            "HAVING COUNT(a.id_amenda) > (" +
+            "   SELECT CAST(COUNT(*) AS FLOAT) / COUNT(DISTINCT id_persoana) " +
+            "   FROM Amenzi a2 " +
+            "   WHERE (:startDate IS NULL OR a2.data_emitere >= :startDate) " +
+            "     AND (:endDate IS NULL OR a2.data_emitere <= :endDate) " +
+            ")", nativeQuery = true)
+    List<Map<String, Object>> getRecidivisti(@Param("startDate") LocalDateTime startDate,
+                                             @Param("endDate") LocalDateTime endDate);
 }

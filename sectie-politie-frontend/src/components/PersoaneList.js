@@ -1,39 +1,65 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Pagination from './Pagination';
 import './styles/TableStyles.css';
 
-const PersoaneList = ({ onAddClick, onEditClick, onViewHistoryClick, onViewAdreseClick }) => {
+const PersoaneList = ({
+                          refreshTrigger,
+                          onAddClick,
+                          onEditClick,
+                          onViewHistoryClick,
+                          onViewAdreseClick
+                      }) => {
+    // --- STATE INTERN ---
     const [persoane, setPersoane] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [termenCautare, setTermenCautare] = useState('');
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        loadPersoane();
-    }, []);
+    // Sortare default
+    const [sortBy] = useState('nume');
 
-    const loadPersoane = (termen = '') => {
+    // --- FETCH DATA ---
+    const loadPersoane = (page, term = '') => {
         const token = localStorage.getItem('token');
-        let url = 'http://localhost:8080/api/persoane';
 
-        if (termen) {
-            url = `http://localhost:8080/api/persoane/cauta?termen=${termen}`;
+        // Default: Paginare Server-Side
+        let url = `http://localhost:8080/api/persoane/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
+
+        // Daca cautam: Endpoint Cautare (fara paginare server-side momentan)
+        if (term) {
+            url = `http://localhost:8080/api/persoane/cauta?termen=${term}`;
         }
 
         axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
-                setPersoane(res.data);
-                setLoading(false);
+                if(term) {
+                    setPersoane(res.data);
+                    setTotalPages(1); // Ascundem paginarea la cautare
+                } else {
+                    setPersoane(res.data.content);
+                    setTotalPages(res.data.totalPages);
+                }
+                setCurrentPage(page);
             })
-            .catch(err => {
-                console.error("Eroare incarcare persoane:", err);
-                setLoading(false);
-            });
+            .catch(err => console.error("Eroare incarcare persoane:", err));
     };
 
-    const handleSearch = (e) => {
+    // --- EFFECT (Mount + Refresh) ---
+    useEffect(() => {
+        loadPersoane(currentPage, searchTerm);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshTrigger]);
+
+    // --- HANDLERS ---
+    const handlePageChange = (newPage) => {
+        loadPersoane(newPage, searchTerm);
+    };
+
+    const handleSearchChange = (e) => {
         const val = e.target.value;
-        setTermenCautare(val);
-        loadPersoane(val);
+        setSearchTerm(val);
+        loadPersoane(0, val);
     };
 
     const handleDelete = (id) => {
@@ -43,27 +69,20 @@ const PersoaneList = ({ onAddClick, onEditClick, onViewHistoryClick, onViewAdres
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(() => {
-                    setPersoane(persoane.filter(p => p.idPersoana !== id));
+                    loadPersoane(currentPage, searchTerm);
                 })
-                .catch(err => {
-                    console.error("Eroare stergere:", err);
-                    alert("Nu se poate șterge persoana (are amenzi sau incidente asociate).");
-                });
+                .catch(err => alert("Nu se poate șterge (posibil are istoric)!"));
         }
     };
 
-    // --- FUNCȚIE FORMATARE DATĂ (Cu Puncte și Centrată) ---
     const formatDataNasterii = (dateString) => {
         if (!dateString) return '-';
         const date = new Date(dateString);
         const zi = String(date.getDate()).padStart(2, '0');
         const luna = String(date.getMonth() + 1).padStart(2, '0');
         const an = date.getFullYear();
-        // Returnăm explicit cu punct
         return `${zi}.${luna}.${an}`;
     };
-
-    if (loading) return <p>Se încarcă persoanele...</p>;
 
     return (
         <div className="page-container">
@@ -74,8 +93,8 @@ const PersoaneList = ({ onAddClick, onEditClick, onViewHistoryClick, onViewAdres
                     type="text"
                     className="search-input"
                     placeholder="Caută după nume, prenume sau CNP..."
-                    value={termenCautare}
-                    onChange={handleSearch}
+                    value={searchTerm}
+                    onChange={handleSearchChange}
                 />
                 <button className="add-btn-primary" onClick={onAddClick}>
                     <span>+</span> Adaugă Persoană
@@ -88,61 +107,56 @@ const PersoaneList = ({ onAddClick, onEditClick, onViewHistoryClick, onViewAdres
                     <th>Nume</th>
                     <th>Prenume</th>
                     <th>CNP</th>
-                    {/* Centram si titlul coloanei */}
                     <th style={{ textAlign: 'center' }}>Data Nașterii</th>
                     <th>Telefon</th>
-                    <th>Acțiuni</th>
+                    <th style={{textAlign: 'center'}}>Acțiuni</th>
                 </tr>
                 </thead>
                 <tbody>
-                {persoane.map((p) => (
-                    <tr key={p.idPersoana}>
-                        <td>{p.nume}</td>
-                        <td>{p.prenume}</td>
-                        <td>{p.cnp}</td>
+                {persoane && persoane.length > 0 ? (
+                    persoane.map((p) => (
+                        <tr key={p.idPersoana}>
+                            <td>{p.nume}</td>
+                            <td>{p.prenume}</td>
+                            <td>{p.cnp}</td>
+                            <td style={{ textAlign: 'center' }}>{formatDataNasterii(p.dataNasterii)}</td>
+                            <td>{p.telefon}</td>
+                            <td>
+                                <div className="action-buttons-container" style={{justifyContent:'center'}}>
+                                    <button className="action-btn edit-btn" onClick={() => onEditClick(p.idPersoana)}>Edit</button>
+                                    <button className="action-btn delete-btn" onClick={() => handleDelete(p.idPersoana)}>Șterge</button>
 
-                        {/* AICI E MODIFICAREA: Formatare + Centrare */}
-                        <td style={{ textAlign: 'center' }}>
-                            {formatDataNasterii(p.dataNasterii)}
-                        </td>
+                                    <button className="action-btn"
+                                            style={{ backgroundColor: '#17a2b8', color: 'white', marginRight: '5px' }}
+                                            onClick={() => onViewHistoryClick(p.idPersoana)}
+                                            title="Vezi Istoric"
+                                    >
+                                        <i className="fa fa-history"></i> Istoric
+                                    </button>
 
-                        <td>{p.telefon}</td>
-                        <td>
-                            <div className="action-buttons-container">
-                                <button
-                                    className="action-btn edit-btn"
-                                    onClick={() => onEditClick(p.idPersoana)}
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    className="action-btn delete-btn"
-                                    onClick={() => handleDelete(p.idPersoana)}
-                                >
-                                    Șterge
-                                </button>
-                                <button
-                                    className="action-btn"
-                                    style={{ backgroundColor: '#17a2b8', color: 'white', marginRight: '5px' }}
-                                    onClick={() => onViewHistoryClick(p.idPersoana)}
-                                    title="Vezi Istoric Incidente"
-                                >
-                                    <i className="fa fa-history"></i> Istoric
-                                </button>
-                                <button
-                                    className="action-btn"
-                                    style={{ backgroundColor: '#28a745', color: 'white', marginRight: '5px' }}
-                                    onClick={() => onViewAdreseClick(p.idPersoana)}
-                                    title="Vezi Adrese Asociate"
-                                >
-                                    <i className="fa fa-home"></i> Adrese
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                ))}
+                                    <button className="action-btn"
+                                            style={{ backgroundColor: '#28a745', color: 'white', marginRight: '5px' }}
+                                            onClick={() => onViewAdreseClick(p.idPersoana)}
+                                            title="Vezi Adrese"
+                                    >
+                                        <i className="fa fa-home"></i> Adrese
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))) : (
+                    <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
+                )}
                 </tbody>
             </table>
+
+            {!searchTerm && totalPages > 1 && (
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                />
+            )}
         </div>
     );
 };

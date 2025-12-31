@@ -5,6 +5,11 @@ import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.AdresaReposi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import java.util.List;
 
 @RestController
@@ -71,5 +76,22 @@ public class AdresaController {
     public String deleteAdresa(@PathVariable Integer id) {
         adresaRepository.deleteAdresaNative(id);
         return "Adresa ștearsă prin SQL!";
+    }
+
+    // --- ENDPOINT PAGINARE ---
+    @GetMapping("/lista-paginata")
+    public Page<Adresa> getAdresePaginat(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        // Sortare Tripla: Localitate -> Judet -> Strada
+        // Nota: Folosim numele coloanelor din Baza de Date pentru siguranta la Query Nativ
+        Sort sortare = Sort.by(Sort.Direction.ASC, "localitate")
+                .and(Sort.by(Sort.Direction.ASC, "judet_sau_sector"))
+                .and(Sort.by(Sort.Direction.ASC, "strada"));
+
+        Pageable pageable = PageRequest.of(page, size, sortare);
+
+        return adresaRepository.findAllNativePaginat(pageable);
     }
 }

@@ -10,9 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
+
+    // --- METODA NOUA PENTRU PAGINARE ---
+    @Query(value = "SELECT * FROM Adrese",
+            countQuery = "SELECT count(*) FROM Adrese",
+            nativeQuery = true)
+    Page<Adresa> findAllNativePaginat(Pageable pageable);
 
     // SELECT ALL
     @Query(value = "SELECT * FROM Adrese", nativeQuery = true)

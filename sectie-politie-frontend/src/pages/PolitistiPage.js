@@ -1,75 +1,47 @@
 import React, { useState } from "react";
 import PolitistiList from '../components/PolitistiList';
 import AddPolitist from "../components/AddPolitist";
-import EditPolitist from "../components/EditPolitist"; // Importam componenta noua
+import EditPolitist from "../components/EditPolitist";
 import Modal from "../components/Modal";
 
 const PolitistiPage = () => {
-    // --- STATE PENTRU ADAUGARE ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-    // --- STATE PENTRU EDITARE (Nou) ---
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editId, setEditId] = useState(null); // ID-ul politistului pe care il editam
+    const [editId, setEditId] = useState(null);
 
-    // --- REFRESH LISTA ---
-    const [refreshKey, setRefreshKey] = useState(0);
+    // Un simplu contor pentru a forța reîncărcarea listei
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // HANDLERS ADAUGARE
-    const handleOpenAddModal = () => setIsAddModalOpen(true);
-    const handleCloseAddModal = () => setIsAddModalOpen(false);
-
+    // HANDLERS MODALE
     const handleAddSuccess = () => {
         setIsAddModalOpen(false);
-        setRefreshKey(prev => prev + 1); // Refresh lista
-        alert("Polițist adăugat cu succes!");
-    };
-
-    // HANDLERS EDITARE (Sablonul pentru viitoarele pagini)
-    const handleOpenEditModal = (id) => {
-        setEditId(id); // Setam ID-ul selectat
-        setIsEditModalOpen(true); // Deschidem modalul
-    };
-
-    const handleCloseEditModal = () => {
-        setEditId(null);
-        setIsEditModalOpen(false);
+        setRefreshTrigger(prev => prev + 1); // Semnalizam listei sa faca refresh
+        alert("Polițist adăugat!");
     };
 
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditId(null);
-        setRefreshKey(prev => prev + 1); // Refresh lista pentru a vedea modificarile
-        alert("Polițist modificat cu succes!");
+        setRefreshTrigger(prev => prev + 1); // Semnalizam listei sa faca refresh
+        alert("Polițist modificat!");
     };
 
     return (
-        <div>
-            {/* Lista primeste acum si functia de editare */}
+        <div className="page-wrapper">
+            {/* Lista se descurca singura, primeste doar semnal de refresh si functii pt modale */}
             <PolitistiList
-                key={refreshKey}
-                onAddClick={handleOpenAddModal}
-                onEditClick={handleOpenEditModal}
+                refreshTrigger={refreshTrigger}
+                onAddClick={() => setIsAddModalOpen(true)}
+                onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
             />
 
-            {/* --- MODAL ADAUGARE --- */}
-            <Modal isOpen={isAddModalOpen} onClose={handleCloseAddModal} title="Adaugă Polițist Nou">
-                <AddPolitist
-                    onSaveSuccess={handleAddSuccess}
-                    onCancel={handleCloseAddModal}
-                />
+            {/* MODALELE raman aici pentru a fi deasupra la toate */}
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Polițist">
+                <AddPolitist onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* --- MODAL EDITARE (Nou) --- */}
-            <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title="Editează Polițist">
-                {/* Randam componenta doar daca avem un ID setat */}
-                {editId && (
-                    <EditPolitist
-                        id={editId}
-                        onSaveSuccess={handleEditSuccess}
-                        onCancel={handleCloseEditModal}
-                    />
-                )}
+            <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditId(null); }} title="Editează Polițist">
+                {editId && <EditPolitist id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />}
             </Modal>
         </div>
     );

@@ -1,43 +1,62 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Pagination from './Pagination';
 import './styles/TableStyles.css';
-import GestionareParticipanti from "./GestionareParticipanti";
-import Modal from "./Modal";
 
-// Adaugam onViewClick in props
-const IncidenteList = ({ onAddClick, onEditClick, onViewClick }) => {
+const IncidenteList = ({
+                           refreshTrigger,
+                           onAddClick,
+                           onEditClick,
+                           onViewClick,
+                           onManageParticipantsClick // Butonul mov pentru participanti
+                       }) => {
+    // --- STATE ---
     const [incidente, setIncidente] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [termenCautare, setTermenCautare] = useState('');
-    const [selectedIncidentForParticipants, setSelectedIncidentForParticipants] = useState(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        loadIncidente();
-    }, []);
-
-    const loadIncidente = (termen = '') => {
+    // --- FETCH DATA ---
+    const loadIncidente = (page, term = '') => {
         const token = localStorage.getItem('token');
-        let url = 'http://localhost:8080/api/incidente';
 
-        if (termen) {
-            url = `http://localhost:8080/api/incidente/cauta?termen=${termen}`;
+        // Default: Paginare server-side (sortat descrescator din backend)
+        let url = `http://localhost:8080/api/incidente/lista-paginata?page=${page}&size=10`;
+
+        // Daca cautam: Endpoint Cautare
+        if (term) {
+            url = `http://localhost:8080/api/incidente/cauta?termen=${term}`;
         }
 
         axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
-            .then(response => {
-                setIncidente(response.data);
-                setLoading(false);
+            .then(res => {
+                if(term) {
+                    setIncidente(res.data);
+                    setTotalPages(1);
+                } else {
+                    setIncidente(res.data.content);
+                    setTotalPages(res.data.totalPages);
+                }
+                setCurrentPage(page);
             })
-            .catch(err => {
-                console.error("Eroare incarcare:", err);
-                setLoading(false);
-            });
+            .catch(err => console.error("Eroare incarcare incidente:", err));
     };
 
-    const handleSearch = (e) => {
+    // --- EFFECT ---
+    useEffect(() => {
+        loadIncidente(currentPage, searchTerm);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshTrigger]);
+
+    // --- HANDLERS ---
+    const handlePageChange = (newPage) => {
+        loadIncidente(newPage, searchTerm);
+    };
+
+    const handleSearchChange = (e) => {
         const val = e.target.value;
-        setTermenCautare(val);
-        loadIncidente(val);
+        setSearchTerm(val);
+        loadIncidente(0, val);
     };
 
     const handleDelete = (id) => {
@@ -47,20 +66,10 @@ const IncidenteList = ({ onAddClick, onEditClick, onViewClick }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(() => {
-                    setIncidente(incidente.filter(item => item.idIncident !== id));
+                    loadIncidente(currentPage, searchTerm);
                 })
-                .catch(error => {
-                    console.error("Eroare la stergere:", error);
-                    alert("Eroare la ștergere!");
-                });
+                .catch(err => alert("Eroare la ștergere!"));
         }
-    };
-
-    // Funcție utilitară pentru formatare data
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ro-RO').replace(/\./g, '/');
     };
 
     return (
@@ -71,11 +80,10 @@ const IncidenteList = ({ onAddClick, onEditClick, onViewClick }) => {
                 <input
                     type="text"
                     className="search-input"
-                    placeholder="Caută după tip, locație sau incident..."
-                    value={termenCautare}
-                    onChange={handleSearch}
+                    placeholder="Caută după tip, locație..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
                 />
-
                 <button className="add-btn-primary" onClick={onAddClick}>
                     <span>+</span> Adaugă Incident
                 </button>
@@ -86,90 +94,82 @@ const IncidenteList = ({ onAddClick, onEditClick, onViewClick }) => {
                 <tr>
                     <th>Tip</th>
                     <th>Data & Ora</th>
-                    <th>Locație (Scurt)</th>
+                    <th>Locație</th>
                     <th>Adresă</th>
                     <th>Polițist</th>
-                    {/* Am scos coloana veche de Detalii text */}
-                    <th>Acțiuni</th>
+                    <th style={{textAlign:'center'}}>Acțiuni</th>
                 </tr>
                 </thead>
                 <tbody>
-                {incidente.map((incident) => (
-                    <tr key={incident.idIncident}>
-                        <td>{incident.tipIncident}</td>
-                        <td>
-                            {incident.dataEmitere
-                                ? new Date(incident.dataEmitere).toLocaleString('ro-RO').substring(0, 17)
-                                : '-'}
-                        </td>
-                        <td>{incident.descriereLocatie}</td>
+                {incidente && incidente.length > 0 ? (
+                    incidente.map((inc) => (
+                        <tr key={inc.idIncident}>
+                            <td>{inc.tipIncident}</td>
+                            <td>
+                                {inc.dataEmitere
+                                    ? new Date(inc.dataEmitere).toLocaleString('ro-RO').substring(0, 17)
+                                    : '-'}
+                            </td>
+                            <td>{inc.descriereLocatie}</td>
+                            <td>
+                                {inc.adresaIncident
+                                    ? `${inc.adresaIncident.strada} ${inc.adresaIncident.numar}`
+                                    : '-'}
+                            </td>
+                            <td>
+                                {inc.politistResponsabil
+                                    ? `${inc.politistResponsabil.nume} ${inc.politistResponsabil.prenume}`
+                                    : 'Nealocat'}
+                            </td>
+                            <td>
+                                <div className="action-buttons-container" style={{justifyContent:'center'}}>
+                                    <button
+                                        className="action-btn"
+                                        style={{ backgroundColor: '#17a2b8', color: 'white' }}
+                                        onClick={() => onViewClick(inc)}
+                                        title="Vezi Detalii"
+                                    >
+                                        Vezi
+                                    </button>
 
-                        {/* CORECTIE ADRESA: Doar variabilele, fara "Str." in fata */}
-                        <td>
-                            {incident.adresaIncident
-                                ? `${incident.adresaIncident.strada} ${incident.adresaIncident.numar}`
-                                : '-'}
-                        </td>
+                                    <button
+                                        className="action-btn edit-btn"
+                                        onClick={() => onEditClick(inc.idIncident)}
+                                    >
+                                        Edit
+                                    </button>
 
-                        <td>
-                            {incident.politistResponsabil
-                                ? `${incident.politistResponsabil.nume} ${incident.politistResponsabil.prenume}`
-                                : 'Nealocat'}
-                        </td>
+                                    <button
+                                        className="action-btn delete-btn"
+                                        onClick={() => handleDelete(inc.idIncident)}
+                                    >
+                                        Șterge
+                                    </button>
 
-                        <td>
-                            <div className="action-buttons-container">
-                                {/* 1. Buton VEZI DETALII (Albastru) */}
-                                <button
-                                    className="action-btn"
-                                    style={{ backgroundColor: '#17a2b8', color: 'white' }}
-                                    onClick={() => onViewClick(incident)}
-                                    title="Vezi detalii complete"
-                                >
-                                    Vezi
-                                </button>
-
-                                {/* 2. Buton EDIT (Galben/Standard) */}
-                                <button
-                                    className="action-btn edit-btn"
-                                    onClick={() => onEditClick(incident.idIncident)}
-                                >
-                                    Edit
-                                </button>
-
-                                {/* 3. Buton DELETE (Rosu) */}
-                                <button
-                                    className="action-btn delete-btn"
-                                    onClick={() => handleDelete(incident.idIncident)}
-                                >
-                                    Șterge
-                                </button>
-                                <button
-                                    className="action-btn"
-                                    style={{ backgroundColor: '#6f42c1', color: 'white', marginLeft: '5px' }}
-                                    onClick={() => setSelectedIncidentForParticipants(incident.idIncident)}
-                                    title="Gestionează Martori/Suspecți"
-                                >
-                                    <i className="fa fa-users"></i> Pers
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                ))}
+                                    <button
+                                        className="action-btn"
+                                        style={{ backgroundColor: '#6f42c1', color: 'white', marginLeft: '5px' }}
+                                        onClick={() => onManageParticipantsClick(inc.idIncident)}
+                                        title="Gestionează Participanți"
+                                    >
+                                        <i className="fa fa-users"></i> Pers
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))) : (
+                    <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
+                )}
                 </tbody>
             </table>
-            <Modal
-                isOpen={!!selectedIncidentForParticipants}
-                onClose={() => setSelectedIncidentForParticipants(null)}
-                title="Gestionare Participanți"
-            >
-                {selectedIncidentForParticipants && (
-                    <GestionareParticipanti
-                        incidentId={selectedIncidentForParticipants}
-                        onClose={() => setSelectedIncidentForParticipants(null)}
-                    />
-                )}
-            </Modal>
+
+            {!searchTerm && totalPages > 1 && (
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                />
+            )}
         </div>
     );
 };

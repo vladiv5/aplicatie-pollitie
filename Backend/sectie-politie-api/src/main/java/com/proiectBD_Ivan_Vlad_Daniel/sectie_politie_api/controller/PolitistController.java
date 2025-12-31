@@ -4,6 +4,10 @@ import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities.Politist;
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.PolitistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -68,4 +72,19 @@ public class PolitistController {
         return politistRepository.findByIdNative(id)
                 .orElseThrow(() -> new RuntimeException("Polițistul nu există!"));
     }
+
+    @GetMapping("/lista-paginata")
+    public Page<Politist> getPolitistiPaginati(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nume") String sortBy,
+            @RequestParam(defaultValue = "asc") String dir
+    ) {
+        Sort.Direction direction = dir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort sortare = Sort.by(direction, sortBy)
+                .and(Sort.by(Sort.Direction.ASC, "prenume"));
+
+        Pageable pageable = PageRequest.of(page, size, sortare);
+
+        return politistRepository.findAllNative(pageable);}
 }

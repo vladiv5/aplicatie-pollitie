@@ -9,6 +9,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 @RestController
 @RequestMapping("/api/incidente")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -97,5 +102,17 @@ public class IncidentController {
         public String descriereIncident;
         public Integer idPolitist; // Primim direct ID-ul
         public Integer idAdresa;   // Primim direct ID-ul
+    }
+
+    // --- ENDPOINT PAGINARE ---
+    @GetMapping("/lista-paginata")
+    public Page<Incident> getIncidentePaginat(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        // Logica Sortare: Data Emitere DESC (Cele mai noi sus)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "data_emitere"));
+
+        return incidentRepository.findAllNativePaginat(pageable);
     }
 }

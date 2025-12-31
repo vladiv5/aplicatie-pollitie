@@ -2,91 +2,73 @@ import React, { useState } from 'react';
 import IncidenteList from '../components/IncidenteList';
 import AddIncident from "../components/AddIncident";
 import EditIncident from "../components/EditIncident";
-import ViewIncident from "../components/ViewIncident"; // Importam noua componenta
+import ViewIncident from "../components/ViewIncident";
+import GestionareParticipanti from "../components/GestionareParticipanti";
 import Modal from "../components/Modal";
 
 const IncidentePage = () => {
-    // State-uri pentru Modale
+    // --- STATE MODALE ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State nou pentru View
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
+    // State pentru selectii
     const [editId, setEditId] = useState(null);
-    const [selectedIncident, setSelectedIncident] = useState(null); // Datele incidentului selectat pt vizualizare
+    const [selectedIncident, setSelectedIncident] = useState(null);
+    const [participantsId, setParticipantsId] = useState(null);
 
-    const [refreshKey, setRefreshKey] = useState(0);
+    // --- REFRESH ---
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // --- LOGICA ADD ---
     const handleAddSuccess = () => {
         setIsAddModalOpen(false);
-        setRefreshKey(k => k + 1);
+        setRefreshTrigger(prev => prev + 1);
         alert("Incident adăugat!");
-    };
-
-    // --- LOGICA EDIT ---
-    const handleOpenEdit = (id) => {
-        setEditId(id);
-        setIsEditModalOpen(true);
-    };
-
-    const handleCloseEdit = () => {
-        setEditId(null);
-        setIsEditModalOpen(false);
     };
 
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditId(null);
-        setRefreshKey(k => k + 1);
+        setRefreshTrigger(prev => prev + 1);
         alert("Incident modificat!");
-    };
-
-    // --- LOGICA VIEW (NOU) ---
-    const handleOpenView = (incident) => {
-        setSelectedIncident(incident);
-        setIsViewModalOpen(true);
-    };
-
-    const handleCloseView = () => {
-        setSelectedIncident(null);
-        setIsViewModalOpen(false);
     };
 
     return (
         <div>
+            {/* LISTA INTELIGENTA */}
             <IncidenteList
-                key={refreshKey}
+                refreshTrigger={refreshTrigger}
                 onAddClick={() => setIsAddModalOpen(true)}
-                onEditClick={handleOpenEdit}
-                onViewClick={handleOpenView} // Trimitem functia catre lista
+                onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
+                onViewClick={(inc) => { setSelectedIncident(inc); setIsViewModalOpen(true); }}
+                onManageParticipantsClick={(id) => setParticipantsId(id)}
             />
 
-            {/* Modal Adaugare */}
+            {/* --- MODALE --- */}
+
+            {/* Add */}
             <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Incident">
-                <AddIncident
-                    onSaveSuccess={handleAddSuccess}
-                    onCancel={() => setIsAddModalOpen(false)}
-                />
+                <AddIncident onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* Modal Editare */}
-            <Modal isOpen={isEditModalOpen} onClose={handleCloseEdit} title="Editează Incident">
+            {/* Edit */}
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editează Incident">
                 {editId && (
-                    <EditIncident
-                        id={editId}
-                        onSaveSuccess={handleEditSuccess}
-                        onCancel={handleCloseEdit}
-                    />
+                    <EditIncident id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />
                 )}
             </Modal>
 
-            {/* Modal Vizualizare Detalii (NOU) */}
-            <Modal isOpen={isViewModalOpen} onClose={handleCloseView} title="Detalii Incident">
+            {/* View Detalii */}
+            <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title="Detalii Incident">
                 {selectedIncident && (
-                    <ViewIncident
-                        incident={selectedIncident}
-                        onClose={handleCloseView}
-                    />
+                    <ViewIncident incident={selectedIncident} onClose={() => setIsViewModalOpen(false)} />
+                )}
+            </Modal>
+
+            {/* Participanti (Mov) */}
+            <Modal isOpen={!!participantsId} onClose={() => setParticipantsId(null)} title="Gestionare Participanți">
+                {participantsId && (
+                    <GestionareParticipanti incidentId={participantsId} onClose={() => setParticipantsId(null)} />
                 )}
             </Modal>
         </div>

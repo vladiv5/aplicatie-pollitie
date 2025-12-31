@@ -1,80 +1,483 @@
+/* Container Principal */
 .stats-container {
-    padding: 20px;
-    background-color: #f4f7f6;
+    padding: 20px 40px;
+    background-color: #f0f2f5;
     min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.dashboard-grid {
+.page-title {
+    color: #1a1a1a;
+    margin-bottom: 25px;
+    font-weight: 700;
+    border-left: 5px solid #007bff;
+    padding-left: 15px;
+}
+
+/* --- COMMAND BAR (Filtre) --- */
+.command-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Aici e cheia centrarii */
+    gap: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap; /* Permite elementelor să cadă pe rândul următor pe ecrane mici */
+    text-align: center;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Etichetele rămân aliniate cu inputul */
+}
+
+.filter-group label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.date-input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    font-family: inherit;
+}
+
+.reset-btn {
+    margin-top: 18px; /* Aliniere cu inputurile */
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reset-btn:hover { background-color: #5a6268; }
+
+/* --- SECTIUNE GRAFICE (Charts) --- */
+.charts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.chart-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* --- COMPLEX ANALYSIS GRID --- */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
     margin-bottom: 40px;
 }
 
-.stat-card {
+.analysis-card {
     background: white;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 15px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-top: 4px solid #ddd; /* Default border */
 }
 
-.stat-card h3 {
+/* Culori specifice pentru carduri */
+.card-green { border-top-color: #28a745; } /* Zone Sigure */
+.card-red { border-top-color: #dc3545; }   /* Recidivisti */
+.card-orange { border-top-color: #fd7e14; } /* Agenti Severi */
+.card-blue { border-top-color: #007bff; }   /* Zile Critice */
+
+.analysis-card h3 {
+    font-size: 1.1em;
     margin-top: 0;
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
+    color: #444;
+    border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 15px;
 }
 
-.interactive-section {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border-left: 5px solid #28a745;
-}
-
-.search-box {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.search-box input {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    width: 250px;
-}
-
-.search-btn {
-    padding: 8px 15px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.search-btn:hover {
-    background-color: #218838;
-}
-
-/* Tabel mic pentru widget-uri */
-.widget-table {
+/* --- TABELE INTERNE --- */
+.mini-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9em;
 }
 
-.widget-table th, .widget-table td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
+.mini-table th { text-align: left; color: #888; font-weight: 600; padding: 5px; border-bottom: 1px solid #eee; }
+.mini-table td { padding: 8px 5px; border-bottom: 1px solid #f9f9f9; }
+.mini-table tr:last-child td { border-bottom: none; }
+
+/* Interactive Section */
+.interactive-section {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.widget-table th {
+/* --- CAROUSEL / SLIDESHOW --- */
+.carousel-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 450px; /* Înălțime fixă ca să nu "sară" pagina */
+    margin-bottom: 40px;
+    overflow: hidden;
+}
+
+.carousel-content {
+    width: 85%;
+    text-align: center;
+    /* Animația de intrare */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.nav-arrow {
     background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: absolute;
+    z-index: 10;
+}
+
+.nav-arrow:hover {
+    background-color: #007bff;
+    color: white;
+    transform: scale(1.1);
+}
+
+.nav-prev { left: 20px; }
+.nav-next { right: 20px; }
+
+.slide-title {
+    font-size: 1.5rem;
+    color: #444;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.slide-indicator {
+    position: absolute;
+    bottom: 15px;
+    display: flex;
+    gap: 8px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    background-color: #ddd;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.dot.active {
+    background-color: #007bff;
+}
+
+/* --- DATE SPLITTER (ZI - LUNA - AN) --- */
+.date-splitter-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: white;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.date-part-input {
+    border: none;
+    background: #f9f9f9;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+    outline: none;
+}
+
+.date-part-input:focus {
+    background: #eef;
+    color: #007bff;
+}
+
+/* Input mic pentru Zi și Lună */
+.w-small { width: 40px; }
+/* Input mai mare pentru An */
+.w-medium { width: 60px; }
+
+.date-separator {
+    font-weight: bold;
+    color: #888;
+}
+
+/* --- DATA FILTER GROUP --- */
+.filter-container {
+    display: flex;
+    align-items: flex-end; /* Aliniem inputurile cu butonul la bază */
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.date-input-text {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 140px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.date-input-text:focus {
+    border-color: #007bff;
+    outline: none;
+    background-color: #f0f8ff;
+}
+
+.apply-btn {
+    padding: 10px 25px;
+    background-color: #007bff; /* Albastru principal */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    height: 38px; /* Aceeași înălțime cu inputul */
+    transition: background 0.2s;
+}
+
+.apply-btn:hover {
+    background-color: #0056b3;
+}
+
+.reset-btn {
+    background-color: #6c757d; /* Gri */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    height: 38px;
+}
+
+.error-msg {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* --- SEARCH AREA MODERNIZAT --- */
+.search-wrapper {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.search-btn-modern {
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 123, 255, 0.4);
+}
+
+/* --- STILIZARE "DOSAR" (FILE FOLDER) --- */
+.dossier-card {
+    background-color: #fdfbf7; /* Culoare de hârtie veche/oficială */
+    border: 1px solid #d3d3d3;
+    padding: 40px;
+    margin-top: 25px;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    position: relative;
+    font-family: 'Courier New', Courier, monospace; /* Font tip mașină de scris pentru realism */
+}
+
+/* Linia colorată de sus (ca la dosare) */
+.dossier-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: repeating-linear-gradient(
+            45deg,
+            #dc3545,
+            #dc3545 10px,
+            #fdfbf7 10px,
+            #fdfbf7 20px
+    );
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.dossier-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.dossier-photo-placeholder {
+    width: 100px;
+    height: 120px;
+    background-color: #e0e0e0;
+    border: 1px dashed #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
     color: #666;
+}
+
+.dossier-info h2 {
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    color: #000;
+    font-size: 24px;
+}
+
+.dossier-detail {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #444;
+}
+
+.stamp {
+    border: 3px solid #d00;
+    color: #d00;
+    display: inline-block;
+    padding: 5px 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+    transform: rotate(-10deg);
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    opacity: 0.7;
+    font-family: sans-serif;
+    letter-spacing: 2px;
+}
+
+.dossier-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.dossier-table th {
+    border-bottom: 2px solid #000;
+    text-align: left;
+    padding: 8px;
+    text-transform: uppercase;
+}
+
+.dossier-table td {
+    border-bottom: 1px solid #ccc;
+    padding: 8px;
+}
+
+.print-btn {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 20px;
+    cursor: pointer;
+    font-family: sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.print-btn:hover {
+    background-color: #000;
+}
+
+/* --- PRINT RULES (Ce se întâmplă când dai Print) --- */
+@media print {
+    body * {
+        visibility: hidden; /* Ascunde tot site-ul */
+    }
+
+    /* Afișează doar dosarul */
+    .dossier-card, .dossier-card * {
+        visibility: visible;
+    }
+
+    .dossier-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        box-shadow: none;
+        border: 2px solid #000;
+    }
+
+    /* Ascunde butoanele de pe dosar când printezi */
+    .print-btn, .nav-arrow, .command-bar {
+        display: none !important;
+    }
 }
