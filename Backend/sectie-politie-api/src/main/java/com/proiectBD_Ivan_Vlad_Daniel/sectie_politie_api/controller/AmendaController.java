@@ -82,10 +82,4 @@ public class AmendaController {
         amendaRepository.deleteAmendaNative(id);
         return "Amenda ștearsă prin SQL!";
     }
-
-    // Metodele pentru rapoarte (rămân la fel)
-    @GetMapping("/statistici")
-    public List<Map<String, Object>> raportAmenzi() {
-        return amendaRepository.raportAmenzi();
-    }
 }

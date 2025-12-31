@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Map;
 import java.util.List;
 
 @Repository
@@ -57,4 +58,18 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
     @Query(value = "SELECT * FROM Politisti WHERE id_politist = :id", nativeQuery = true)
     java.util.Optional<Politist> findByIdNative(@Param("id") Integer id);
 
+    // --- RAPORT 1: Top Polițiști după valoarea amenzilor date (Performanță) ---
+    @Query(value = "SELECT p.nume, p.prenume, p.grad, SUM(a.suma) as total_valoare " +
+            "FROM politisti p " +
+            "JOIN amenzi a ON p.id_politist = a.id_politist " +
+            "GROUP BY p.id_politist, p.nume, p.prenume, p.grad " +
+            "ORDER BY total_valoare DESC", nativeQuery = true)
+    List<Map<String, Object>> getTopPolitistiAmenzi();
+
+    // --- RAPORT 5: Statistici Amenzi per Grad (Câte amenzi dă fiecare grad) ---
+    @Query(value = "SELECT p.grad, COUNT(a.id_amenda) as nr_amenzi, SUM(a.suma) as valoare_totala " +
+            "FROM politisti p " +
+            "JOIN amenzi a ON p.id_politist = a.id_politist " +
+            "GROUP BY p.grad", nativeQuery = true)
+    List<Map<String, Object>> getStatisticiPerGrad();
 }

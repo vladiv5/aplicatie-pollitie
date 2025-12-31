@@ -22,7 +22,7 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Query(value = "SELECT * FROM Incidente WHERE id_incident = :id", nativeQuery = true)
     Optional<Incident> getIncidentByIdNative(@Param("id") Integer id);
 
-    // INSERT (Aici punem FK-urile manual)
+    // INSERT
     @Modifying
     @Transactional
     @Query(value = "INSERT INTO Incidente (tip_incident, data_emitere, descriere_locatie, descriere_incident, id_politist_responsabil, id_adresa_incident) " +
@@ -61,17 +61,19 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             "LOWER(p.nume) LIKE LOWER(CONCAT(:termen, '%'))", nativeQuery = true)
     List<Incident> cautaDupaInceput(@Param("termen") String termen);
 
-    // REPORTS
-    @Query(value = "SELECT adr.strada, COUNT(i.id_incident) as nr_incidente " +
+    // --- RAPORT 2: Top Străzi (FIXAT NUME COLOANA: id_adresa_incident) ---
+    @Query(value = "SELECT adr.strada, adr.localitate, COUNT(i.id_incident) as nr_incidente " +
             "FROM adrese adr " +
-            "JOIN incidente i ON adr.id_adresa = i.id_adresa_incident " +
-            "GROUP BY adr.id_adresa, adr.strada " +
+            "JOIN incidente i ON adr.id_adresa = i.id_adresa_incident " + // <--- Aici era problema
+            "GROUP BY adr.id_adresa, adr.strada, adr.localitate " +
             "ORDER BY nr_incidente DESC", nativeQuery = true)
     List<Map<String, Object>> getTopStraziIncidente();
 
-    @Query(value = "SELECT i.tip_incident, i.data_emitere, i.descriere_locatie " +
+    // --- RAPORT 4: Incidente per Polițist (FIXAT NUME COLOANA: id_politist_responsabil și id_adresa_incident) ---
+    @Query(value = "SELECT i.tip_incident, i.data_emitere, i.descriere_locatie, adr.strada " +
             "FROM incidente i " +
-            "JOIN politisti p ON i.id_politist_responsabil = p.id_politist " +
+            "JOIN politisti p ON i.id_politist_responsabil = p.id_politist " + // <--- Aici era problema
+            "JOIN adrese adr ON i.id_adresa_incident = adr.id_adresa " +       // <--- Aici era problema
             "WHERE p.id_politist = :idPolitist", nativeQuery = true)
     List<Map<String, Object>> getIncidenteByPolitist(@Param("idPolitist") Integer idPolitist);
 }

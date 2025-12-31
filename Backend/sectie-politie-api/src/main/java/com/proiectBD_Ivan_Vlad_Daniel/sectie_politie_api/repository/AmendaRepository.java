@@ -65,14 +65,12 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
             "LOWER(p.prenume) LIKE LOWER(CONCAT(:termen, '%')) OR " +
             "LOWER(pol.nume) LIKE LOWER(CONCAT(:termen, '%'))", nativeQuery = true)
     List<Amenda> cautaDupaInceput(@Param("termen") String termen);
-    // REPORTS
-    @Query(value = "SELECT FORMAT(data_emitere, 'MMMM') as luna, count(*) as numar " +
-            "FROM Amenzi GROUP BY FORMAT(data_emitere, 'MMMM')", nativeQuery = true)
-    List<Map<String, Object>> raportAmenzi();
-
-    @Query(value = "SELECT a.motiv, a.suma, a.data_emitere, a.stare_plata " +
+    // --- RAPORT 6 (Parametru Variabil): Istoric Amenzi după CNP ---
+    @Query(value = "SELECT a.motiv, a.suma, a.data_emitere, a.stare_plata, " +
+            "pol.nume as nume_politist, pol.prenume as prenume_politist " +
             "FROM amenzi a " +
             "JOIN persoane p ON a.id_persoana = p.id_persoana " +
+            "JOIN politisti pol ON a.id_politist = pol.id_politist " +
             "WHERE p.cnp = :cnp", nativeQuery = true)
     List<Map<String, Object>> getAmenziByCNP(@Param("cnp") String cnp);
 }

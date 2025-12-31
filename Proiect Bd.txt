@@ -3,3 +3,13 @@ Proiect Bd:
 1. In formularul e adaugare/modificare al amenzilor sa adaug optiunea e amenda anulata
 
 2. Sa adaug anumite reguli de completare a campurilor in formularele e adaugare/editare (de ex daca scriu caractere in loc de int in apartament crapa)
+
+3. Verificare anumitor logici, de exemplu in momentul de fata apare ca subinspectorii au acordat 4 amenzi, desi acest lucru nu este fezabil
+
+4. Formatarea datei in raportul detaliat de activitate politisti
+
+5. Modificarea LiveSearchului sa arate frumos ca acum e foarte lung
+
+6. Logout
+
+7. Pagina de login

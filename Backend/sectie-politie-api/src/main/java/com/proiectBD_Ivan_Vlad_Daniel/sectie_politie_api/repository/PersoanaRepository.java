@@ -60,11 +60,15 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             "cnp LIKE CONCAT(:termen, '%')", nativeQuery = true)
     List<Persoana> cautaDupaInceput(@Param("termen") String termen);
 
-    // --- 7. REPORT (Rau Platnici) ---
-    @Query(value = "SELECT p.nume, p.prenume, p.cnp, SUM(a.suma) as datorie " +
+    // --- RAPORT 3: Lista Rău-Platnicilor (Persoane cu amenzi neachitate) ---
+    // NOTA: Verifică dacă în baza ta de date statusul e 'Neplatita' sau 'Neachitata'!
+    @Query(value = "SELECT p.nume, p.prenume, p.cnp, SUM(a.suma) as datorie_totala " +
             "FROM persoane p " +
             "JOIN amenzi a ON p.id_persoana = a.id_persoana " +
             "WHERE a.stare_plata = 'Neplatita' " +
-            "GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp", nativeQuery = true)
+            "GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp " +
+            "ORDER BY datorie_totala DESC", nativeQuery = true)
     List<Map<String, Object>> getRauPlatnici();
+
+
 }
