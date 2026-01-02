@@ -92,4 +92,7 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
             ")", nativeQuery = true)
     List<Map<String, Object>> getAgentiSeveri(@Param("startDate") LocalDateTime startDate,
                                               @Param("endDate") LocalDateTime endDate);
+    // Cautam politistul special de arhiva
+    @Query(value = "SELECT * FROM Politisti WHERE nume = 'ARHIVA' AND prenume = 'SISTEM' LIMIT 1", nativeQuery = true)
+    java.util.Optional<Politist> findPolitistArhiva();
 }

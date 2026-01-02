@@ -65,4 +65,69 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
     List<Map<String, Object>> getAmenziByCNP(@Param("cnp") String cnp,
                                              @Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate);
+
+    // Adaugă asta în AmendaRepository.java
+
+    // Numără amenzile care NU sunt neplătite (Platita/Anulata) - acestea vor fi anonimizate
+    @Query(value = "SELECT COUNT(*) FROM Amenzi WHERE id_politist = :idPolitist AND stare_plata != 'Neplatita'", nativeQuery = true)
+    int countAmenziSolubileByPolitist(@Param("idPolitist") Integer idPolitist);
+
+    // Update pentru anonimizare (stergerea legaturii cu politistul)
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE Amenzi SET id_politist = NULL WHERE id_politist = :idPolitist", nativeQuery = true)
+    void anonimizeazaAmenziPolitist(@Param("idPolitist") Integer idPolitist);
+
+    // 1. Gasim doar amenzile NEPLATITE (Blocante)
+    @Query(value = "SELECT id_amenda FROM Amenzi WHERE id_politist = :idPolitist AND stare_plata = 'Neplatita'", nativeQuery = true)
+    List<Integer> findAmenziNeplatiteByPolitist(@Param("idPolitist") Integer idPolitist);
+
+    // 2. Numaram TOATE amenzile (pentru mesajul de avertisment)
+    @Query(value = "SELECT COUNT(*) FROM Amenzi WHERE id_politist = :idPolitist", nativeQuery = true)
+    int countAllAmenziByPolitist(@Param("idPolitist") Integer idPolitist);
+
+    // 3. REATRIBUIRE (Mutam amenzile pe un alt politist - Arhiva)
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE Amenzi SET id_politist = :idNou WHERE id_politist = :idVechi", nativeQuery = true)
+    void mutaAmenziPeAltPolitist(@Param("idVechi") Integer idVechi, @Param("idNou") Integer idNou);
+
+    // 1. Amenzi NEPLATITE (Blocante - Rosu)
+    @Query(value = "SELECT * FROM Amenzi WHERE id_politist = :id AND stare_plata = 'Neplatita'", nativeQuery = true)
+    List<Amenda> findUnpaidAmenziByPolitist(@Param("id") Integer id);
+
+    // 2. Amenzi PLATITE (Warning - Portocaliu)
+    @Query(value = "SELECT COUNT(*) FROM Amenzi WHERE id_politist = :id AND stare_plata = 'Platita'", nativeQuery = true)
+    int countPaidAmenziByPolitist(@Param("id") Integer id);
+
+    // 3. Stergere in cascada
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
+    void deleteByPolitistId(@Param("id") Integer id);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
+    void stergeAmenziDupaPolitist(@Param("id") Integer id);
+
+    // Returnează TOATE amenzile polițistului (pentru lista din Modalul de Ștergere)
+    @Query(value = "SELECT * FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
+    List<Amenda> findAllNativeByPolitist(@Param("id") Integer id);
+
+    // --- PENTRU PERSOANE ---
+
+    // 1. Gasim amenzile NEPLATITE ale persoanei (Blocante - Rosu)
+    @Query(value = "SELECT * FROM Amenzi WHERE id_persoana = :id AND stare_plata = 'Neplatita'", nativeQuery = true)
+    List<Amenda> findUnpaidAmenziByPersoana(@Param("id") Integer id);
+
+    // 2. Gasim TOATE amenzile persoanei (pentru lista din Modal)
+    @Query(value = "SELECT * FROM Amenzi WHERE id_persoana = :id", nativeQuery = true)
+    List<Amenda> findAllNativeByPersoana(@Param("id") Integer id);
+
+    // 3. Stergere amenzi persoana
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM Amenzi WHERE id_persoana = :id", nativeQuery = true)
+    void deleteByPersoanaId(@Param("id") Integer id);
 }

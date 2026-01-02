@@ -13,3 +13,9 @@ Proiect Bd:
 6. Logout
 
 7. Pagina de login
+
+8. Adaugare de mesaje suplimentare la stergere/editare pentru a fi siguri ca utilizatorul nu apasa butonul din greseala!
+
+9. La incidente, searchul merge doar dupa numele agentului nu si dupa prenume
+
+10. Ordonare alfabetica in liste + searchbarul sa mearga pe nume + prenume

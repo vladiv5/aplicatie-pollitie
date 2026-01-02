@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Pagination from './Pagination';
+import DeleteSmartModal from './DeleteSmartModal'; // Importam modalul
 import './styles/TableStyles.css';
 
 const AmenziList = ({
-                        refreshTrigger,
-                        onAddClick,
-                        onEditClick
+                        refreshTrigger, onAddClick, onEditClick
                     }) => {
     // --- STATE ---
     const [amenzi, setAmenzi] = useState([]);
@@ -14,23 +13,22 @@ const AmenziList = ({
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // --- STATE DELETE SMART ---
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteData, setDeleteData] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
+
     // --- FETCH DATA ---
     const loadAmenzi = (page, term = '') => {
         const token = localStorage.getItem('token');
-
-        // Default: Paginare server-side (sortat descrescator din backend)
         let url = `http://localhost:8080/api/amenzi/lista-paginata?page=${page}&size=10`;
-
-        // Daca cautam: Endpoint Cautare
-        if (term) {
-            url = `http://localhost:8080/api/amenzi/cauta?termen=${term}`;
-        }
+        if (term) url = `http://localhost:8080/api/amenzi/cauta?termen=${term}`;
 
         axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
                     setAmenzi(res.data);
-                    setTotalPages(1); // Fara paginare la cautare
+                    setTotalPages(1);
                 } else {
                     setAmenzi(res.data.content);
                     setTotalPages(res.data.totalPages);
@@ -40,37 +38,46 @@ const AmenziList = ({
             .catch(err => console.error("Eroare incarcare amenzi:", err));
     };
 
-    // --- EFFECT ---
-    useEffect(() => {
-        loadAmenzi(currentPage, searchTerm);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshTrigger]);
+    useEffect(() => { loadAmenzi(currentPage, searchTerm); }, [refreshTrigger]);
 
-    // --- HANDLERS ---
-    const handlePageChange = (newPage) => {
-        loadAmenzi(newPage, searchTerm);
-    };
+    const handlePageChange = (newPage) => loadAmenzi(newPage, searchTerm);
+    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadAmenzi(0, e.target.value); };
 
-    const handleSearchChange = (e) => {
-        const val = e.target.value;
-        setSearchTerm(val);
-        loadAmenzi(0, val);
-    };
+    // --- LOGICA DELETE SMART ---
 
-    const handleDelete = (id) => {
-        if(window.confirm("Ești sigur că vrei să ștergi această amendă?")) {
-            const token = localStorage.getItem('token');
-            axios.delete(`http://localhost:8080/api/amenzi/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+    const handleRequestDelete = (id) => {
+        const token = localStorage.getItem('token');
+        axios.get(`http://localhost:8080/api/amenzi/verifica-stergere/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => {
+                setDeleteData(res.data);
+                setDeleteId(id);
+                setIsDeleteModalOpen(true);
             })
-                .then(() => {
-                    loadAmenzi(currentPage, searchTerm);
-                })
-                .catch(err => alert("Eroare la ștergere!"));
-        }
+            .catch(err => {
+                console.error(err);
+                alert("Eroare la verificarea amenzii.");
+            });
     };
 
-    // Formatter data (dd/MM/yyyy HH:mm)
+    const handleConfirmDelete = () => {
+        const token = localStorage.getItem('token');
+        axios.delete(`http://localhost:8080/api/amenzi/${deleteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then((res) => {
+                loadAmenzi(currentPage, searchTerm);
+                setIsDeleteModalOpen(false);
+                setDeleteData(null);
+                setDeleteId(null);
+
+                // AFISAM MESAJUL DIN BACKEND
+                alert(res.data);
+            })
+            .catch(err => alert("Eroare la ștergere!"));
+    };
+
     const formatDataFrumos = (isoString) => {
         if (!isoString) return '-';
         const d = new Date(isoString);
@@ -118,54 +125,38 @@ const AmenziList = ({
                             <td>{amenda.motiv}</td>
                             <td style={{fontWeight: 'bold'}}>{amenda.suma}</td>
                             <td>
-                            <span style={{
-                                color: amenda.starePlata === 'Platita' ? 'green' : 'red',
-                                fontWeight: 'bold'
-                            }}>
-                                {amenda.starePlata}
-                            </span>
+                                <span style={{
+                                    color: amenda.starePlata === 'Platita' ? 'green' : amenda.starePlata === 'Anulata' ? 'orange' : 'red',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {amenda.starePlata}
+                                </span>
                             </td>
                             <td>{formatDataFrumos(amenda.dataEmitere)}</td>
-                            <td>
-                                {amenda.persoana
-                                    ? `${amenda.persoana.nume} ${amenda.persoana.prenume}`
-                                    : 'Nespecificat'}
-                            </td>
-                            <td>
-                                {amenda.politist
-                                    ? `${amenda.politist.nume} ${amenda.politist.prenume}`
-                                    : 'Nespecificat'}
-                            </td>
+                            <td>{amenda.persoana ? `${amenda.persoana.nume} ${amenda.persoana.prenume}` : 'Nespecificat'}</td>
+                            <td>{amenda.politist ? `${amenda.politist.nume} ${amenda.politist.prenume}` : 'Nespecificat'}</td>
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button
-                                        className="action-btn edit-btn"
-                                        onClick={() => onEditClick(amenda.idAmenda)}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        className="action-btn delete-btn"
-                                        onClick={() => handleDelete(amenda.idAmenda)}
-                                    >
-                                        Șterge
-                                    </button>
+                                    <button className="action-btn edit-btn" onClick={() => onEditClick(amenda.idAmenda)}>Edit</button>
+
+                                    {/* BUTON DELETE SMART */}
+                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(amenda.idAmenda)}>Șterge</button>
                                 </div>
                             </td>
                         </tr>
-                    ))) : (
-                    <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
-                )}
+                    ))) : (<tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>)}
                 </tbody>
             </table>
 
-            {!searchTerm && totalPages > 1 && (
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                />
-            )}
+            {!searchTerm && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
+
+            {/* MODAL SMART */}
+            <DeleteSmartModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                data={deleteData}
+            />
         </div>
     );
 };

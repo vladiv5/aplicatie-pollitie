@@ -12,6 +12,13 @@ const ViewIncident = ({ incident, onClose }) => {
             </div>
 
             <div className="view-row">
+                <strong>Stare Curentă: </strong>
+                <span style={{fontWeight: 'bold', color: incident.status === 'Activ' ? 'green' : 'gray'}}>
+                    {incident.status || 'Activ'}
+                </span>
+            </div>
+
+            <div className="view-row">
                 <strong>Data și Ora: </strong>
                 <span>{incident.dataEmitere ? incident.dataEmitere.replace('T', ' ') : '-'}</span>
             </div>
@@ -29,7 +36,6 @@ const ViewIncident = ({ incident, onClose }) => {
 
             <div className="view-row">
                 <strong>Adresă Exactă: </strong>
-                {/* AICI REZOLVAM PROBLEMA "STR STR": Afisam doar variabila din baza de date */}
                 <span>
                     {incident.adresaIncident
                         ? `${incident.adresaIncident.strada}, Nr. ${incident.adresaIncident.numar}, ${incident.adresaIncident.localitate}`
@@ -52,16 +58,14 @@ const ViewIncident = ({ incident, onClose }) => {
                     borderRadius: '4px',
                     width: '100%',
                     marginTop: '5px',
-                    whiteSpace: 'pre-wrap' // Păstrează rândurile noi din text
+                    whiteSpace: 'pre-wrap'
                 }}>
                     {incident.descriereIncident || 'Fără descriere.'}
                 </p>
             </div>
 
             <div className="modal-footer">
-                <button className="action-btn delete-btn" onClick={onClose} style={{background: '#6c757d'}}>
-                    Închide
-                </button>
+                <button className="action-btn delete-btn" onClick={onClose} style={{background: '#6c757d'}}>Închide</button>
             </div>
         </div>
     );

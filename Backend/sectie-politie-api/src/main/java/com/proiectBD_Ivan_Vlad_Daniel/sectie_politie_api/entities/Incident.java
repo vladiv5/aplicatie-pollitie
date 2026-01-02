@@ -15,6 +15,9 @@ public class Incident {
     @Column(name = "tip_incident")
     private String tipIncident;
 
+    @Column(name = "status")
+    private String status;
+
     @Column(name = "data_emitere")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataEmitere;
@@ -96,5 +99,13 @@ public class Incident {
 
     public void setAdresaIncident(Adresa adresaIncident) {
         this.adresaIncident = adresaIncident;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

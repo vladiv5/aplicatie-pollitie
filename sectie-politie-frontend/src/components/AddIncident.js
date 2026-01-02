@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
-import './styles/TableStyles.css'; // Asigură-te că importăm stilurile
+import './styles/TableStyles.css';
 
 const AddIncident = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         tipIncident: '',
-        dataEmitere: '', // <--- Câmp nou pentru Data și Ora
+        status: 'Activ', // <--- Default: Activ
+        dataEmitere: '',
         descriereLocatie: '',
         descriereIncident: '',
         politistId: null,
@@ -20,31 +21,26 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
         }
 
         const token = localStorage.getItem('token');
-
         let dataFinala = formData.dataEmitere;
 
-        // Dacă userul nu a ales data, punem acum
         if (!dataFinala) {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             dataFinala = now.toISOString().slice(0, 16);
         }
 
-        // --- FIX CRITIC: Adăugăm secunde ":00" dacă lipsesc ---
-        // Java crapă dacă primește "2024-05-12T14:30". Vrea "2024-05-12T14:30:00"
         if (dataFinala.length === 16) {
             dataFinala += ":00";
         }
 
-        // --- PAYLOAD SIMPLIFICAT (DTO) ---
-        // Trimitem structura "plată" pe care o așteaptă noul Controller
         const payload = {
             tipIncident: formData.tipIncident,
+            status: formData.status, // <--- Trimitem statusul
             dataEmitere: dataFinala,
             descriereLocatie: formData.descriereLocatie,
             descriereIncident: formData.descriereIncident,
-            idPolitist: formData.politistId, // Trimitem direct ID (Integer)
-            idAdresa: formData.adresaId      // Trimitem direct ID (Integer)
+            idPolitist: formData.politistId,
+            idAdresa: formData.adresaId
         };
 
         axios.post('http://localhost:8080/api/incidente', payload, {
@@ -53,27 +49,37 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
             .then(() => onSaveSuccess())
             .catch(error => {
                 console.error("Eroare salvare:", error);
-                alert("Eroare la salvare! Verifică consola (Network Tab).");
+                alert("Eroare la salvare! Verifică consola.");
             });
     };
 
     return (
         <div>
             <div className="form-group">
-                {/* 1. Tip Incident */}
+                <label>Tip Incident</label>
                 <input
                     type="text"
-                    placeholder="Tip Incident (ex: Furt, Altercație)"
+                    placeholder="ex: Furt, Altercație"
                     className="modal-input"
                     value={formData.tipIncident}
                     onChange={(e) => setFormData({...formData, tipIncident: e.target.value})}
                 />
 
-                {/* 2. DATA ȘI ORA (NOUL CÂMP) */}
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label style={{ fontSize: '12px', color: '#666', marginBottom: '4px', marginLeft: '2px' }}>
-                        Data și Ora Incidentului:
-                    </label>
+                {/* --- SELECTOR STATUS (NOU) --- */}
+                <label>Stare Incident</label>
+                <select
+                    className="modal-input"
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                    style={{backgroundColor: '#f8f9fa'}}
+                >
+                    <option value="Activ">Activ (În lucru)</option>
+                    <option value="Închis">Închis (Rezolvat)</option>
+                    <option value="Arhivat">Arhivat (Dosar Vechi)</option>
+                </select>
+
+                <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
+                    <label style={{ fontSize: '12px', color: '#666' }}>Data și Ora:</label>
                     <input
                         type="datetime-local"
                         className="modal-input"
@@ -82,7 +88,6 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     />
                 </div>
 
-                {/* 3. LIVE SEARCH POLITIST */}
                 <LiveSearchInput
                     label="Polițist Responsabil"
                     placeholder="Caută polițist..."
@@ -91,7 +96,6 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     onSelect={(item) => setFormData({...formData, politistId: item ? item.idPolitist : null})}
                 />
 
-                {/* 4. LIVE SEARCH ADRESA */}
                 <LiveSearchInput
                     label="Adresa Incidentului"
                     placeholder="Caută stradă..."
@@ -100,30 +104,26 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     onSelect={(item) => setFormData({...formData, adresaId: item ? item.idAdresa : null})}
                 />
 
-                {/* 5. Descriere Locație */}
+                <label>Descriere Locație</label>
                 <input
                     type="text"
-                    placeholder="Descriere Locație (ex: În fața parcului)"
                     className="modal-input"
                     value={formData.descriereLocatie}
                     onChange={(e) => setFormData({...formData, descriereLocatie: e.target.value})}
                 />
 
-                {/* 6. Descriere Detaliată */}
+                <label>Detalii Incident</label>
                 <textarea
-                    placeholder="Detalii Incident..."
+                    placeholder="..."
                     className="modal-input"
                     rows="3"
                     value={formData.descriereIncident}
                     onChange={(e) => setFormData({...formData, descriereIncident: e.target.value})}
-                    style={{ fontFamily: 'inherit' }}
                 />
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>
-                    Salvează Incident
-                </button>
+                <button className="save-btn" onClick={handleSave}>Salvează Incident</button>
             </div>
         </div>
     );

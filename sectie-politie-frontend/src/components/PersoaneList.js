@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLocation, useNavigate } from 'react-router-dom'; // <--- IMPORT
 import Pagination from './Pagination';
+import DeleteSmartModal from './DeleteSmartModal'; // <--- IMPORT
 import './styles/TableStyles.css';
 
 const PersoaneList = ({
@@ -15,27 +17,28 @@ const PersoaneList = ({
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-
-    // Sortare default
     const [sortBy] = useState('nume');
+
+    // --- STATE DELETE SMART ---
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteData, setDeleteData] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
+
+    // --- NAVIGARE ---
+    const location = useLocation();
+    const navigate = useNavigate();
 
     // --- FETCH DATA ---
     const loadPersoane = (page, term = '') => {
         const token = localStorage.getItem('token');
-
-        // Default: Paginare Server-Side
         let url = `http://localhost:8080/api/persoane/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
-
-        // Daca cautam: Endpoint Cautare (fara paginare server-side momentan)
-        if (term) {
-            url = `http://localhost:8080/api/persoane/cauta?termen=${term}`;
-        }
+        if (term) url = `http://localhost:8080/api/persoane/cauta?termen=${term}`;
 
         axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
                     setPersoane(res.data);
-                    setTotalPages(1); // Ascundem paginarea la cautare
+                    setTotalPages(1);
                 } else {
                     setPersoane(res.data.content);
                     setTotalPages(res.data.totalPages);
@@ -45,34 +48,70 @@ const PersoaneList = ({
             .catch(err => console.error("Eroare incarcare persoane:", err));
     };
 
-    // --- EFFECT (Mount + Refresh) ---
     useEffect(() => {
         loadPersoane(currentPage, searchTerm);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
-    // --- HANDLERS ---
-    const handlePageChange = (newPage) => {
-        loadPersoane(newPage, searchTerm);
-    };
+    // =========================================================
+    // LOGICA BUMERANG (Intoarcere de la Amenzi/Incidente)
+    // =========================================================
+    useEffect(() => {
+        if (location.state && location.state.triggerAction === 'reOpenDelete') {
+            const idToReCheck = location.state.triggerId;
+
+            // Curatam state-ul browserului
+            window.history.replaceState({}, document.title);
+
+            // Redeschidem verificarea
+            if(idToReCheck) {
+                setTimeout(() => {
+                    handleRequestDelete(idToReCheck);
+                }, 100);
+            }
+        }
+    }, [location]);
+
+    const handlePageChange = (newPage) => loadPersoane(newPage, searchTerm);
 
     const handleSearchChange = (e) => {
-        const val = e.target.value;
-        setSearchTerm(val);
-        loadPersoane(0, val);
+        setSearchTerm(e.target.value);
+        loadPersoane(0, e.target.value);
     };
 
-    const handleDelete = (id) => {
-        if(window.confirm("Ești sigur că vrei să ștergi această persoană?")) {
-            const token = localStorage.getItem('token');
-            axios.delete(`http://localhost:8080/api/persoane/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+    // --- LOGICA DELETE SMART ---
+
+    // 1. Verificare
+    const handleRequestDelete = (id) => {
+        const token = localStorage.getItem('token');
+        axios.get(`http://localhost:8080/api/persoane/verifica-stergere/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => {
+                setDeleteData(res.data);
+                setDeleteId(id);
+                setIsDeleteModalOpen(true);
             })
-                .then(() => {
-                    loadPersoane(currentPage, searchTerm);
-                })
-                .catch(err => alert("Nu se poate șterge (posibil are istoric)!"));
-        }
+            .catch(err => {
+                console.error(err);
+                alert("Eroare la verificarea persoanei.");
+            });
+    };
+
+    // 2. Confirmare
+    const handleConfirmDelete = () => {
+        const token = localStorage.getItem('token');
+        axios.delete(`http://localhost:8080/api/persoane/${deleteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then((res) => {
+                loadPersoane(currentPage, searchTerm);
+                setIsDeleteModalOpen(false);
+                setDeleteId(null);
+                setDeleteData(null);
+                alert(res.data); // Mesaj din backend
+            })
+            .catch(err => alert("Eroare la ștergerea persoanei!"));
     };
 
     const formatDataNasterii = (dateString) => {
@@ -124,7 +163,9 @@ const PersoaneList = ({
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
                                     <button className="action-btn edit-btn" onClick={() => onEditClick(p.idPersoana)}>Edit</button>
-                                    <button className="action-btn delete-btn" onClick={() => handleDelete(p.idPersoana)}>Șterge</button>
+
+                                    {/* BUTON SMART DELETE */}
+                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(p.idPersoana)}>Șterge</button>
 
                                     <button className="action-btn"
                                             style={{ backgroundColor: '#17a2b8', color: 'white', marginRight: '5px' }}
@@ -151,12 +192,18 @@ const PersoaneList = ({
             </table>
 
             {!searchTerm && totalPages > 1 && (
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                />
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
             )}
+
+            {/* MODAL SMART */}
+            <DeleteSmartModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                data={deleteData}
+                currentPolitistId={deleteId} // Folosim acelasi prop generic chiar daca e idPersoana
+                returnRoute="/persoane"
+            />
         </div>
     );
 };

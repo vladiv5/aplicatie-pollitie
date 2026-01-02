@@ -5,6 +5,8 @@ import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.AmendaReposi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.dto.DeleteConfirmation;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,34 @@ public class AmendaController {
 
     @Autowired
     private AmendaRepository amendaRepository;
+
+    // --- VERIFICARE STERGERE (TEXT MODIFICAT) ---
+    @GetMapping("/verifica-stergere/{id}")
+    public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
+        Amenda amenda = amendaRepository.getAmendaByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Amenda nu există!"));
+
+        String stare = amenda.getStarePlata();
+
+        if ("Neplatita".equalsIgnoreCase(stare)) {
+            // TEXTUL NOU CERUT DE TINE:
+            return new DeleteConfirmation(
+                    false, "BLOCKED", "Ștergere Blocată - Debit Activ",
+                    "Această amendă figurează ca NEPLĂTITĂ. Nu o puteți șterge din sistem, ci trebuie mai intai anulata sau platita.",
+                    null
+            );
+        } else if ("Platita".equalsIgnoreCase(stare)) {
+            return new DeleteConfirmation(
+                    true, "WARNING", "Atenție - Ștergere Document Fiscal",
+                    "Amenda a fost plătită. Ștergerea ei va elimina dovada plății din sistemul operativ.", null
+            );
+        } else {
+            return new DeleteConfirmation(
+                    true, "SAFE", "Ștergere Sigură",
+                    "Amenda este anulată juridic. Poate fi ștearsă din baza de date.", null
+            );
+        }
+    }
 
     @GetMapping
     public List<Amenda> getAllAmenzi() {
@@ -82,10 +112,16 @@ public class AmendaController {
         return "Amenda modificată prin SQL!";
     }
 
+    // --- DELETE AMENDA (CU MESAJ PERSONALIZAT) ---
     @DeleteMapping("/{id}")
     public String deleteAmenda(@PathVariable Integer id) {
+        // Luam detalii inainte sa stergem pentru mesaj
+        Amenda a = amendaRepository.getAmendaByIdNative(id).orElse(null);
+        String info = (a != null) ? " (ID: " + id + ", Suma: " + a.getSuma() + " RON)" : "";
+
         amendaRepository.deleteAmendaNative(id);
-        return "Amenda ștearsă prin SQL!";
+
+        return "Amenda a fost ștearsă cu succes!";
     }
 
     // --- ENDPOINT PAGINARE ---

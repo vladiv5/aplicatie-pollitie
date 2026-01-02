@@ -6,6 +6,7 @@ import './styles/TableStyles.css';
 const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         tipIncident: '',
+        status: 'Activ', // <--- Status
         dataEmitere: '',
         descriereLocatie: '',
         descriereIncident: '',
@@ -13,7 +14,6 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
         adresaId: null
     });
 
-    // Stari pentru a pre-completa textul din LiveSearch
     const [initialPolitistName, setInitialPolitistName] = useState('');
     const [initialAdresaName, setInitialAdresaName] = useState('');
 
@@ -25,20 +25,16 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
             })
                 .then(response => {
                     const data = response.data;
-
-                    // NU MAI AVEM NEVOIE DE SUBSTRING!
-                    // Java trimite deja "2024-01-01T12:00", exact ce vrea input-ul.
-
                     setFormData({
                         tipIncident: data.tipIncident || '',
-                        dataEmitere: data.dataEmitere || '', // Luam direct valoarea
+                        status: data.status || 'Activ', // <--- Preluam statusul
+                        dataEmitere: data.dataEmitere || '',
                         descriereLocatie: data.descriereLocatie || '',
                         descriereIncident: data.descriereIncident || '',
                         politistId: data.politistResponsabil?.idPolitist || null,
                         adresaId: data.adresaIncident?.idAdresa || null
                     });
 
-                    // Setam numele initiale pentru LiveSearch
                     if (data.politistResponsabil) {
                         setInitialPolitistName(`${data.politistResponsabil.nume} ${data.politistResponsabil.prenume} (${data.politistResponsabil.grad})`);
                     }
@@ -46,36 +42,32 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                         setInitialAdresaName(`${data.adresaIncident.strada} Nr. ${data.adresaIncident.numar}, ${data.adresaIncident.localitate}`);
                     }
                 })
-                .catch(error => console.error("Eroare incarcare incident:", error));
+                .catch(error => console.error("Eroare incarcare:", error));
         }
     }, [id]);
 
     const handleSave = () => {
         const token = localStorage.getItem('token');
 
-        // NU MAI CONVERTIM IN new Date().toISOString()
-        // Trimitem string-ul exact asa cum e (ex: "2024-05-20T14:30")
-        // Java il va intelege datorita adnotarii @JsonFormat
-
+        // PAYLOAD SIMPLIFICAT (DTO)
+        // Trimitem ID-urile direct, nu obiecte imbricate!
         const payload = {
             tipIncident: formData.tipIncident,
-            dataEmitere: formData.dataEmitere, // Trimitem direct
+            status: formData.status,
+            dataEmitere: formData.dataEmitere, // String direct
             descriereLocatie: formData.descriereLocatie,
             descriereIncident: formData.descriereIncident,
-            politistResponsabil: formData.politistId ? { idPolitist: formData.politistId } : null,
-            adresaIncident: formData.adresaId ? { idAdresa: formData.adresaId } : null
+
+            // AICI ERA PROBLEMA: Trimitem direct ID-ul, nu obiect { id: ... }
+            idPolitist: formData.politistId,
+            idAdresa: formData.adresaId
         };
 
         axios.put(`http://localhost:8080/api/incidente/${id}`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
-                onSaveSuccess();
-            })
-            .catch(error => {
-                console.error("Eroare update:", error);
-                alert("Eroare la modificare!");
-            });
+            .then(() => onSaveSuccess())
+            .catch(error => alert("Eroare la modificare!"));
     };
 
     return (
@@ -88,8 +80,20 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     onChange={(e) => setFormData({...formData, tipIncident: e.target.value})}
                 />
 
+                {/* --- SELECTOR STATUS --- */}
+                <label>Stare Incident</label>
+                <select
+                    className="modal-input"
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                    style={{fontWeight: 'bold', color: formData.status === 'Activ' ? 'green' : formData.status === 'Închis' ? 'gray' : 'orange'}}
+                >
+                    <option value="Activ">Activ</option>
+                    <option value="Închis">Închis</option>
+                    <option value="Arhivat">Arhivat</option>
+                </select>
+
                 <label>Data și Ora</label>
-                {/* Input-ul va afisa corect data fara secunde */}
                 <input
                     type="datetime-local" className="modal-input"
                     value={formData.dataEmitere}
@@ -98,7 +102,6 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
 
                 <LiveSearchInput
                     label="Polițist Responsabil"
-                    placeholder="Caută polițist..."
                     apiUrl="http://localhost:8080/api/politisti/cauta"
                     defaultValue={initialPolitistName}
                     displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
@@ -107,7 +110,6 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
 
                 <LiveSearchInput
                     label="Adresă Incident"
-                    placeholder="Caută adresă..."
                     apiUrl="http://localhost:8080/api/adrese/cauta"
                     defaultValue={initialAdresaName}
                     displayKey={(a) => `${a.strada} Nr. ${a.numar}, ${a.localitate}`}
@@ -130,9 +132,7 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>
-                    Salvează Modificări
-                </button>
+                <button className="save-btn" onClick={handleSave}>Salvează Modificări</button>
             </div>
         </div>
     );

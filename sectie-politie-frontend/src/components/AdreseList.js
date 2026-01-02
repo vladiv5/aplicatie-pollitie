@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLocation, useNavigate } from 'react-router-dom'; // IMPORTURI
 import Pagination from './Pagination';
+import DeleteSmartModal from './DeleteSmartModal'; // IMPORT
 import './styles/TableStyles.css';
 
 const AdreseList = ({
                         refreshTrigger,
                         onAddClick,
                         onEditClick,
-                        onViewLocatariClick // Butonul Portocaliu
+                        onViewLocatariClick
                     }) => {
     // --- STATE ---
     const [adrese, setAdrese] = useState([]);
@@ -15,23 +17,26 @@ const AdreseList = ({
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // --- FETCH DATA ---
+    // --- STATE DELETE SMART ---
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteData, setDeleteData] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
+
+    // --- NAVIGARE ---
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // --- FETCH ---
     const loadAdrese = (page, term = '') => {
         const token = localStorage.getItem('token');
-
-        // Default: Paginare server-side (sortat complex din backend)
         let url = `http://localhost:8080/api/adrese/lista-paginata?page=${page}&size=10`;
-
-        // Daca cautam: Endpoint Cautare
-        if (term) {
-            url = `http://localhost:8080/api/adrese/cauta?termen=${term}`;
-        }
+        if (term) url = `http://localhost:8080/api/adrese/cauta?termen=${term}`;
 
         axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
                     setAdrese(res.data);
-                    setTotalPages(1); // Fara paginare la cautare
+                    setTotalPages(1);
                 } else {
                     setAdrese(res.data.content);
                     setTotalPages(res.data.totalPages);
@@ -41,34 +46,64 @@ const AdreseList = ({
             .catch(err => console.error("Eroare incarcare adrese:", err));
     };
 
-    // --- EFFECT ---
     useEffect(() => {
         loadAdrese(currentPage, searchTerm);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
-    // --- HANDLERS ---
-    const handlePageChange = (newPage) => {
-        loadAdrese(newPage, searchTerm);
-    };
+    // =========================================================
+    // LOGICA BUMERANG (Intoarcere de la Incidente)
+    // =========================================================
+    useEffect(() => {
+        if (location.state && location.state.triggerAction === 'reOpenDelete') {
+            const idToReCheck = location.state.triggerId;
 
-    const handleSearchChange = (e) => {
-        const val = e.target.value;
-        setSearchTerm(val);
-        loadAdrese(0, val);
-    };
+            window.history.replaceState({}, document.title);
 
-    const handleDelete = (id) => {
-        if(window.confirm("Ești sigur că vrei să ștergi această adresă?")) {
-            const token = localStorage.getItem('token');
-            axios.delete(`http://localhost:8080/api/adrese/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-                .then(() => {
-                    loadAdrese(currentPage, searchTerm);
-                })
-                .catch(err => alert("Nu se poate șterge adresa (posibil are locatari sau incidente)!"));
+            if(idToReCheck) {
+                setTimeout(() => {
+                    handleRequestDelete(idToReCheck);
+                }, 100);
+            }
         }
+    }, [location]);
+
+    const handlePageChange = (newPage) => loadAdrese(newPage, searchTerm);
+    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadAdrese(0, e.target.value); };
+
+    // --- LOGICA DELETE SMART ---
+
+    // 1. Verificare
+    const handleRequestDelete = (id) => {
+        const token = localStorage.getItem('token');
+        axios.get(`http://localhost:8080/api/adrese/verifica-stergere/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => {
+                setDeleteData(res.data);
+                setDeleteId(id);
+                setIsDeleteModalOpen(true);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Eroare la verificarea adresei.");
+            });
+    };
+
+    // 2. Confirmare
+    const handleConfirmDelete = () => {
+        const token = localStorage.getItem('token');
+        axios.delete(`http://localhost:8080/api/adrese/${deleteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then((res) => {
+                loadAdrese(currentPage, searchTerm);
+                setIsDeleteModalOpen(false);
+                setDeleteId(null);
+                setDeleteData(null);
+                alert(res.data); // Mesajul din backend
+            })
+            .catch(err => alert("Eroare la ștergerea adresei!"));
     };
 
     return (
@@ -112,18 +147,11 @@ const AdreseList = ({
                             <td>{adresa.apartament ? adresa.apartament : '-'}</td>
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button
-                                        className="action-btn edit-btn"
-                                        onClick={() => onEditClick(adresa.idAdresa)}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        className="action-btn delete-btn"
-                                        onClick={() => handleDelete(adresa.idAdresa)}
-                                    >
-                                        Șterge
-                                    </button>
+                                    <button className="action-btn edit-btn" onClick={() => onEditClick(adresa.idAdresa)}>Edit</button>
+
+                                    {/* BUTON SMART DELETE */}
+                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(adresa.idAdresa)}>Șterge</button>
+
                                     <button
                                         className="action-btn"
                                         style={{ backgroundColor: '#fd7e14', color: 'white', marginRight: '5px' }}
@@ -148,6 +176,16 @@ const AdreseList = ({
                     onPageChange={handlePageChange}
                 />
             )}
+
+            {/* MODAL SMART - IMPORTANT: returnRoute catre /adrese */}
+            <DeleteSmartModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                data={deleteData}
+                currentPolitistId={deleteId}
+                returnRoute="/adrese"
+            />
         </div>
     );
 };
