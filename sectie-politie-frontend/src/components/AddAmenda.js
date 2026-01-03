@@ -7,56 +7,52 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         motiv: '',
         suma: '',
-        // MODIFICARE AICI: Default-ul trebuie să fie exact ca în baza de date
         starePlata: 'Neplatita',
         dataEmitere: '',
         politistId: null,
         persoanaId: null
     });
+    // State erori
+    const [errors, setErrors] = useState({});
 
     const handleSave = () => {
-        if (!formData.motiv || !formData.suma || !formData.persoanaId || !formData.politistId) {
-            alert("Te rog completează toate câmpurile obligatorii!");
-            return;
-        }
+        // --- VALIDARE MUTATĂ ÎN BACKEND ---
 
         const token = localStorage.getItem('token');
-        const sumaNumar = parseFloat(formData.suma);
-
-        if (isNaN(sumaNumar)) {
-            alert("Suma trebuie să fie un număr valid!");
-            return;
-        }
-
-        // Logica Dată (Formatată corect)
         let dataFinala = formData.dataEmitere;
+
         if (!dataFinala) {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             dataFinala = now.toISOString().slice(0, 16);
         }
+        if (dataFinala.length === 16) dataFinala += ":00";
+
+        // Convertim suma la numar sau null daca e goala (dar validarea cere NotNull)
+        const sumaNumar = formData.suma ? parseFloat(formData.suma) : null;
 
         const payload = {
             motiv: formData.motiv,
             suma: sumaNumar,
             starePlata: formData.starePlata,
             dataEmitere: dataFinala,
-            politist: { idPolitist: formData.politistId },
-            persoana: { idPersoana: formData.persoanaId }
+            idPolitist: formData.politistId, // Trimitem ID direct
+            idPersoana: formData.persoanaId // Trimitem ID direct
         };
 
         axios.post('http://localhost:8080/api/amenzi', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(() => {
+                setErrors({});
                 onSaveSuccess();
             })
             .catch(error => {
-                console.error("Eroare salvare:", error);
-                if (error.response && error.response.data) {
-                    alert(`Eroare server: ${JSON.stringify(error.response.data)}`);
+                if (error.response && error.response.status === 400) {
+                    setErrors(error.response.data);
                 } else {
-                    alert("Eroare la salvare! Verifică consola.");
+                    console.error("Eroare salvare:", error);
+                    alert("Eroare server!");
                 }
             });
     };
@@ -64,18 +60,23 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
     return (
         <div>
             <div className="form-group">
+                <label>Motiv</label>
                 <input
-                    type="text" placeholder="Motiv Amendă" className="modal-input"
+                    type="text" placeholder="ex: Parcare ilegală" className="modal-input"
                     value={formData.motiv}
                     onChange={(e) => setFormData({...formData, motiv: e.target.value})}
                 />
+                {errors.motiv && <span style={{color: 'red', fontSize: '12px'}}>{errors.motiv}</span>}
+
+                <label>Sumă (RON)</label>
                 <input
-                    type="number" placeholder="Sumă (RON)" className="modal-input"
+                    type="number" className="modal-input"
                     value={formData.suma}
                     onChange={(e) => setFormData({...formData, suma: e.target.value})}
                 />
+                {errors.suma && <span style={{color: 'red', fontSize: '12px'}}>{errors.suma}</span>}
 
-                {/* MODIFICARE AICI: Valorile trebuie să fie fix "Neplatita" și "Platita" */}
+                <label>Stare Plată</label>
                 <select
                     className="modal-input"
                     value={formData.starePlata}
@@ -83,7 +84,9 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
                 >
                     <option value="Neplatita">Neplatita</option>
                     <option value="Platita">Platita</option>
+                    <option value="Anulata">Anulata</option>
                 </select>
+                {errors.starePlata && <span style={{color: 'red', fontSize: '12px'}}>{errors.starePlata}</span>}
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label style={{ fontSize: '12px', color: '#666', marginLeft: '2px' }}>Data Acordării:</label>
@@ -92,6 +95,7 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
                         value={formData.dataEmitere}
                         onChange={(e) => setFormData({...formData, dataEmitere: e.target.value})}
                     />
+                    {errors.dataEmitere && <span style={{color: 'red', fontSize: '12px'}}>{errors.dataEmitere}</span>}
                 </div>
 
                 <LiveSearchInput
@@ -101,6 +105,7 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
                     displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
                     onSelect={(item) => setFormData({...formData, politistId: item?.idPolitist})}
                 />
+                {/* Nu avem eroare aici, e optional */}
 
                 <LiveSearchInput
                     label="Persoana Amendată"

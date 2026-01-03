@@ -140,49 +140,54 @@ action-buttons-container {
     background-color: #218838; /* Verde mai închis la hover */
 }
 
-/* 1. Fundalul întunecat (Overlay) */
+/* Păstrează restul stilurilor de la tabel/butoane neschimbate... */
+/* Modificăm doar secțiunea MODAL */
+
+/* 1. Fundalul întunecat */
 .modal-overlay {
-    position: fixed; /* Rămâne fix pe ecran */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Negru semi-transparent */
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
-    justify-content: center; /* Centrează orizontal */
-    align-items: center; /* Centrează vertical */
-    z-index: 1000; /* Z-Index mare ca să fie peste tot */
-    backdrop-filter: blur(2px); /* Un efect modern de blur în spate (opțional) */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
 }
 
 /* 2. Fereastra propriu-zisă */
 .modal-content {
     background-color: white;
-    padding: 25px;
-    border-radius: 10px; /* Colțuri rotunjite, exact ca la tabele */
-    width: 450px; /* Lățime fixă sau procentuală */
+    border-radius: 10px;
+    width: 450px;
     max-width: 90%;
+
+    /* --- AICI E MODIFICAREA CRITICĂ --- */
+    max-height: 80vh; /* Maxim 80% din înălțimea ecranului */
+    display: flex;    /* Folosim Flexbox pentru a separa Titlul de Conținut */
+    flex-direction: column;
+    /* ---------------------------------- */
+
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    position: relative; /* Pentru a poziționa butonul X */
-    animation: slideDown 0.3s ease-out; /* Mică animație de intrare */
+    position: relative;
+    animation: slideDown 0.3s ease-out;
 }
 
-/* 3. Header-ul Modalei (Titlu + X) */
+/* 3. Header-ul (Rămâne FIX sus) */
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #0056b3; /* Linia albastră specifică temei */
-    padding-bottom: 10px;
+    padding: 20px 25px;
+    border-bottom: 2px solid #0056b3;
+    flex-shrink: 0; /* Nu se micșorează, rămâne fix */
 }
 
-.modal-title {
-    margin: 0;
-    color: #333;
-}
+.modal-title { margin: 0; color: #333; }
 
-/* 4. Butonul X (Închidere) */
 .close-btn {
     background: none;
     border: none;
@@ -192,15 +197,18 @@ action-buttons-container {
     cursor: pointer;
     transition: color 0.2s;
 }
+.close-btn:hover { color: #dc3545; }
 
-.close-btn:hover {
-    color: #dc3545; /* Roșu la hover */
+/* 4. Corpul cu SCROLL (Doar zona asta se derulează) */
+.modal-body-scroll {
+    padding: 20px 25px;
+    overflow-y: auto; /* Activează scroll-ul vertical doar dacă e nevoie */
 }
 
-/* 5. Corpul formularului (Input-uri unul sub altul) */
+/* Stiluri generale pentru inputs (Rămân la fel) */
 .form-group {
     display: flex;
-    flex-direction: column; /* Le așază vertical */
+    flex-direction: column;
     gap: 15px;
 }
 
@@ -209,19 +217,16 @@ action-buttons-container {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
 }
+.modal-input:focus { outline: none; border-color: #0056b3; box-shadow: 0 0 4px rgba(0, 86, 179, 0.2); }
 
-.modal-input:focus {
-    outline: none;
-    border-color: #0056b3;
-    box-shadow: 0 0 4px rgba(0, 86, 179, 0.2);
-}
-
-/* 6. Footer-ul (Butonul Salvează) */
+/* Footer-ul (Butonul Salvează) */
 .modal-footer {
     margin-top: 25px;
     display: flex;
-    justify-content: flex-end; /* Butonul în dreapta jos */
+    justify-content: flex-end;
 }
 
 .save-btn {
@@ -232,64 +237,41 @@ action-buttons-container {
     border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.3s, opacity 0.3s;
+    transition: background-color 0.3s;
 }
+.save-btn:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
+.save-btn:hover:not(:disabled) { background-color: #218838; }
 
-.save-btn:disabled {
-    background-color: #ccc; /* Gri când e dezactivat */
-    cursor: not-allowed;
-    opacity: 0.7;
-}
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-.save-btn:hover:not(:disabled) {
-    background-color: #218838;
-}
-
-/* Animație simplă */
-@keyframes slideDown {
-    from { transform: translateY(-20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-/* Container pentru Input-ul cu Search Live */
-.live-search-container {
-    position: relative; /* Ca să putem poziționa lista absolut față de el */
-    width: 100%;
-}
-
-/* Lista de sugestii care apare sub input */
+/* Live Search Styles */
+.live-search-container { position: relative; width: 100%; }
 .suggestions-list {
-    position: absolute;
-    top: 100%; /* Imediat sub input */
-    left: 0;
-    right: 0;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-top: none;
-    border-radius: 0 0 5px 5px;
-    max-height: 200px; /* Dacă sunt multe, facem scroll */
-    overflow-y: auto;
-    z-index: 1050; /* Să fie PESTE tot, chiar și peste modal */
-    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    position: absolute; top: 100%; left: 0; right: 0;
+    background-color: white; border: 1px solid #ccc; border-top: none;
+    border-radius: 0 0 5px 5px; max-height: 200px; overflow-y: auto;
+    z-index: 1050; box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    list-style: none; padding: 0; margin: 0;
+}
+.suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+.suggestion-item:hover { background-color: #f0f8ff; color: #0056b3; }
+.suggestion-item:last-child { border-bottom: none; }
+
+/* --- FIX PENTRU MODAL DE STERGERE SI CONFIRMARI MICI --- */
+.modal-content-auto {
+    /* Resetam inaltimea fixa si flex-ul */
+    height: auto !important;
+    max-height: 90vh !important;
+    display: block !important; /* Nu mai e flex column */
+    overflow-y: auto; /* Scroll doar daca e chiar necesar (pe ecrane mici) */
 }
 
-/* Un element din listă */
-.suggestion-item {
-    padding: 10px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
-    color: #333;
-}
-
-.suggestion-item:hover {
-    background-color: #f0f8ff; /* Albastru deschis la hover */
-    color: #0056b3;
-}
-
-.suggestion-item:last-child {
-    border-bottom: none;
+/* Facem footer-ul sa stea cuminte jos */
+.modal-footer-auto {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }

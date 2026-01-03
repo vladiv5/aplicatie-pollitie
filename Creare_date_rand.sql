@@ -1,6 +1,8 @@
 -- =============================================
--- SCRIPT GENERARE DATE TEST - VERSIUNEA "GOLD MASTER"
--- AMENZI DIVIZIBILE CU 25 & MINIM 50 LEI
+-- SCRIPT GENERARE DATE TEST - VERSIUNEA "PLATINUM" (FIXED)
+-- AMENZI: 50% Platite, 25% Neplatite, 25% Anulate
+-- INCIDENTE: 40% Activ, 30% Inchis, 30% Arhivat
+-- FIX: Prevenire duplicate cheie primara la participanti
 -- =============================================
 
 SET NOCOUNT ON;
@@ -10,7 +12,6 @@ SET NOCOUNT ON;
 -- =============================================
 PRINT '1. Curatare baza de date...'
 
--- Stergem intai dependentele
 IF OBJECT_ID('dbo.Persoane_Incidente', 'U') IS NOT NULL DELETE FROM Persoane_Incidente;
 IF OBJECT_ID('dbo.Persoane_Adrese', 'U') IS NOT NULL DELETE FROM Persoane_Adrese;
 DELETE FROM Amenzi;
@@ -19,7 +20,6 @@ DELETE FROM Politisti;
 DELETE FROM Persoane;
 DELETE FROM Adrese;
 
--- Resetam ID-urile
 DBCC CHECKIDENT ('Amenzi', RESEED, 0);
 DBCC CHECKIDENT ('Incidente', RESEED, 0);
 DBCC CHECKIDENT ('Politisti', RESEED, 0);
@@ -55,7 +55,6 @@ DECLARE @GradeBirou TABLE (Valoare NVARCHAR(50)); INSERT INTO @GradeBirou VALUES
 DECLARE @Functii TABLE (Valoare NVARCHAR(50)); INSERT INTO @Functii VALUES ('Rutiera'), ('Ordine Publica'), ('Investigatii Criminale'), ('Logistica');
 DECLARE @TipuriIncidente TABLE (Valoare NVARCHAR(50)); INSERT INTO @TipuriIncidente VALUES ('Furt Calificat'), ('Accident Rutier'), ('Tulburarea Linistii'), ('Violenta Domestica'), ('Vandalism'), ('Inselaciune'), ('Infractiune Informatica'), ('Disparitie Persoana'), ('Incendiu');
 
--- REPERE LOCATIE
 DECLARE @RepereLocatie TABLE (Txt NVARCHAR(100));
 INSERT INTO @RepereLocatie VALUES 
 ('Langa parcul central'), ('In incinta mall-ului'), ('La intrarea in metrou'),
@@ -115,7 +114,6 @@ END
 -- 5. GENERARE PERSOANE + ADRESE
 -- =============================================
 PRINT '4. Generare Persoane si Adrese...'
-
 SET @i = 0;
 WHILE @i < 300
 BEGIN
@@ -127,13 +125,11 @@ BEGIN
     
     DECLARE @NewPersonID INT = SCOPE_IDENTITY();
 
-    -- Domiciliu (95%)
     IF RAND() < 0.95 
     BEGIN
         DECLARE @IdDomiciliu INT; SELECT TOP 1 @IdDomiciliu = id_adresa FROM Adrese ORDER BY NEWID();
         INSERT INTO Persoane_Adrese (id_persoana, id_adresa, tip_adresa) VALUES (@NewPersonID, @IdDomiciliu, 'Domiciliu');
 
-        -- Resedinta (30%)
         IF RAND() < 0.30
         BEGIN
             DECLARE @IdResedinta INT; SELECT TOP 1 @IdResedinta = id_adresa FROM Adrese WHERE id_adresa <> @IdDomiciliu ORDER BY NEWID();
@@ -151,12 +147,8 @@ SET @i = 0;
 WHILE @i < 400 
 BEGIN
     DECLARE @DataIncident DATETIME = DATEADD(hour, ABS(CHECKSUM(NEWID()) % 24), DATEADD(day, ABS(CHECKSUM(NEWID()) % @ZileTotale), @DataStart));
-    
     DECLARE @IdAdresa INT; SELECT TOP 1 @IdAdresa = id_adresa FROM Adrese ORDER BY NEWID();
-
-    -- DESCRIERE LOCATIE (REPER)
-    DECLARE @LocatieScurta NVARCHAR(255);
-    SELECT TOP 1 @LocatieScurta = Txt FROM @RepereLocatie ORDER BY NEWID();
+    DECLARE @LocatieScurta NVARCHAR(255); SELECT TOP 1 @LocatieScurta = Txt FROM @RepereLocatie ORDER BY NEWID();
 
     DECLARE @TipInc NVARCHAR(50); SELECT TOP 1 @TipInc = Valoare FROM @TipuriIncidente ORDER BY NEWID();
     DECLARE @Desc NVARCHAR(255);
@@ -168,47 +160,63 @@ BEGIN
     ELSE IF @TipInc = 'Vandalism' SET @Desc = 'Distrugere de bunuri in spatiul public.';
     ELSE SET @Desc = 'Incident semnalat prin 112.';
 
-    INSERT INTO Incidente (tip_incident, data_emitere, descriere_locatie, descriere_incident, id_politist_responsabil, id_adresa_incident)
-    VALUES (@TipInc, @DataIncident, @LocatieScurta, @Desc, (SELECT TOP 1 id_politist FROM Politisti ORDER BY NEWID()), @IdAdresa);
+    -- Status: 40% Activ, 30% Inchis, 30% Arhivat
+    DECLARE @StatusInc NVARCHAR(20) = CASE 
+        WHEN RAND() < 0.40 THEN 'Activ'
+        WHEN RAND() < 0.70 THEN 'Închis'
+        ELSE 'Arhivat'
+    END;
+
+    INSERT INTO Incidente (tip_incident, data_emitere, descriere_locatie, descriere_incident, id_politist_responsabil, id_adresa_incident, status)
+    VALUES (@TipInc, @DataIncident, @LocatieScurta, @Desc, (SELECT TOP 1 id_politist FROM Politisti ORDER BY NEWID()), @IdAdresa, @StatusInc);
     
     DECLARE @NewIncidentID INT = SCOPE_IDENTITY();
 
-    -- ACTORI: Victima (100%)
+    -- ACTORI: Victima 1 (Obligatoriu)
     DECLARE @Victima1 INT; SELECT TOP 1 @Victima1 = id_persoana FROM Persoane ORDER BY NEWID();
     INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Victima1, @NewIncidentID, 'Victima');
 
-    -- Victima Extra (30%)
+    -- Victima Extra
     IF RAND() < 0.3 
     BEGIN
         DECLARE @Victima2 INT; SELECT TOP 1 @Victima2 = id_persoana FROM Persoane WHERE id_persoana <> @Victima1 ORDER BY NEWID();
-        INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Victima2, @NewIncidentID, 'Victima');
+        -- !!! FIX: VERIFICARE EXISTENTA INAINTE DE INSERT !!!
+        IF NOT EXISTS (SELECT 1 FROM Persoane_Incidente WHERE id_persoana = @Victima2 AND id_incident = @NewIncidentID)
+            INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Victima2, @NewIncidentID, 'Victima');
     END
 
-    -- Suspect (50%)
+    -- Suspect 1
     IF RAND() < 0.5
     BEGIN
         DECLARE @Suspect1 INT; SELECT TOP 1 @Suspect1 = id_persoana FROM Persoane WHERE id_persoana <> @Victima1 ORDER BY NEWID();
-        INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Suspect1, @NewIncidentID, 'Suspect');
-        -- Suspect 2 (30% din 50%)
+        -- !!! FIX: VERIFICARE EXISTENTA !!!
+        IF NOT EXISTS (SELECT 1 FROM Persoane_Incidente WHERE id_persoana = @Suspect1 AND id_incident = @NewIncidentID)
+            INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Suspect1, @NewIncidentID, 'Suspect');
+        
+        -- Suspect 2
         IF RAND() < 0.3
         BEGIN
             DECLARE @Suspect2 INT; SELECT TOP 1 @Suspect2 = id_persoana FROM Persoane WHERE id_persoana NOT IN (@Victima1, @Suspect1) ORDER BY NEWID();
-            INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Suspect2, @NewIncidentID, 'Suspect');
+            -- !!! FIX: VERIFICARE EXISTENTA !!!
+            IF NOT EXISTS (SELECT 1 FROM Persoane_Incidente WHERE id_persoana = @Suspect2 AND id_incident = @NewIncidentID)
+                INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Suspect2, @NewIncidentID, 'Suspect');
         END
     END
 
-    -- Martor (30%)
+    -- Martor
     IF RAND() < 0.3
     BEGIN
         DECLARE @Martor INT; SELECT TOP 1 @Martor = id_persoana FROM Persoane ORDER BY NEWID();
+        -- !!! FIX: VERIFICARE EXISTENTA !!!
         IF NOT EXISTS (SELECT 1 FROM Persoane_Incidente WHERE id_persoana = @Martor AND id_incident = @NewIncidentID)
             INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Martor, @NewIncidentID, 'Martor');
     END
 
-    -- Reclamant (30%)
+    -- Reclamant
     IF RAND() < 0.3
     BEGIN
          DECLARE @Reclamant INT; SELECT TOP 1 @Reclamant = id_persoana FROM Persoane ORDER BY NEWID();
+         -- !!! FIX: VERIFICARE EXISTENTA !!!
          IF NOT EXISTS (SELECT 1 FROM Persoane_Incidente WHERE id_persoana = @Reclamant AND id_incident = @NewIncidentID)
             INSERT INTO Persoane_Incidente (id_persoana, id_incident, calitate) VALUES (@Reclamant, @NewIncidentID, 'Reclamant');
     END
@@ -217,22 +225,22 @@ BEGIN
 END
 
 -- =============================================
--- 7. GENERARE AMENZI (NOUA FORMULA FINANCIARA)
+-- 7. GENERARE AMENZI (DISTRIBUTIE PROCENTUALA NOUA)
 -- =============================================
-PRINT '6. Generare Amenzi (Divizibile cu 25)...'
+PRINT '6. Generare Amenzi (50% Platite, 25% Neplatite, 25% Anulate)...'
 SET @i = 0;
 WHILE @i < 700
 BEGIN
     DECLARE @DataAmenda DATETIME = DATEADD(hour, ABS(CHECKSUM(NEWID()) % 24), DATEADD(day, ABS(CHECKSUM(NEWID()) % @ZileTotale), @DataStart));
-    
-    -- !!! FORMULA NOUA !!!
-    -- 50 RON + (Multiplu de 25 RON)
-    -- Ex: 50 + 0 = 50 (Minim)
-    -- Ex: 50 + 25 = 75
-    -- Ex: 50 + (100 * 25) = 2550 (Maxim)
     DECLARE @Valoare DECIMAL(10, 2) = 50 + (ABS(CHECKSUM(NEWID()) % 120) * 25); 
 
-    DECLARE @StarePlata NVARCHAR(20) = CASE WHEN RAND() < 0.05 THEN 'Anulata' WHEN RAND() < 0.50 THEN 'Platita' ELSE 'Neplatita' END;
+    -- !!! NOUA DISTRIBUTIE !!!
+    DECLARE @RandStare FLOAT = RAND();
+    DECLARE @StarePlata NVARCHAR(20) = CASE 
+        WHEN @RandStare < 0.50 THEN 'Platita'   -- 50%
+        WHEN @RandStare < 0.75 THEN 'Neplatita' -- 25%
+        ELSE 'Anulata'                          -- 25%
+    END;
 
     INSERT INTO Amenzi (motiv, suma, stare_plata, data_emitere, id_politist, id_persoana)
     SELECT TOP 1 CASE WHEN RAND() < 0.3 THEN 'Viteza' ELSE 'Parcare ilegala' END, @Valoare, @StarePlata, @DataAmenda,
@@ -241,4 +249,4 @@ BEGIN
     SET @i = @i + 1;
 END
 
-PRINT 'GENERARE GOLD MASTER REUSITA!'
+PRINT 'GENERARE PLATINUM MASTER REUSITA!'

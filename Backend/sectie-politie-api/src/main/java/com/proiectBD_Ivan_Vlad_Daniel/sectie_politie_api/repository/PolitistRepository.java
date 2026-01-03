@@ -95,4 +95,9 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
     // Cautam politistul special de arhiva
     @Query(value = "SELECT * FROM Politisti WHERE nume = 'ARHIVA' AND prenume = 'SISTEM' LIMIT 1", nativeQuery = true)
     java.util.Optional<Politist> findPolitistArhiva();
+
+    // Verifica daca telefonul exista deja la ALTCINEVA
+    // :idExclus il folosim la Edit (sa nu se numere pe el insusi). La Add trimitem NULL.
+    @Query(value = "SELECT count(*) FROM Politisti WHERE telefon_serviciu = :tel AND (:idExclus IS NULL OR id_politist != :idExclus)", nativeQuery = true)
+    int verificaTelefonUnic(@Param("tel") String tel, @Param("idExclus") Integer idExclus);
 }

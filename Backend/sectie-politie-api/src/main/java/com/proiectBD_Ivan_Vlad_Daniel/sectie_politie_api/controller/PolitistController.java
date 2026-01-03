@@ -11,15 +11,18 @@ import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.AmendaReposi
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.IncidentRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-
+import jakarta.validation.Valid;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/politisti")
@@ -113,28 +116,63 @@ public class PolitistController {
     }
 
     @PostMapping
-    public String addPolitist(@RequestBody Politist p) {
+    public ResponseEntity<?> addPolitist(@Valid @RequestBody Politist p) {
+        // 1. Transformam Empty in NULL
+        if (p.getTelefon_serviciu() != null && p.getTelefon_serviciu().trim().isEmpty()) {
+            p.setTelefon_serviciu(null);
+        }
+        if (p.getGrad() != null && p.getGrad().trim().isEmpty()) p.setGrad(null);
+        if (p.getFunctie() != null && p.getFunctie().trim().isEmpty()) p.setFunctie(null);
+
+        // 2. Initializam harta de erori (pentru validari custom)
+        // Nota: Daca ai erori de la @Valid, ele sunt prinse de GlobalExceptionHandler,
+        // dar aici prindem erorile de business (unicitate).
+        Map<String, String> eroriLogice = new HashMap<>();
+
+        // 3. Verificare UNICITATE Telefon
+        if (p.getTelefon_serviciu() != null) {
+            // Trimitem null la idExclus pentru ca e insert nou
+            if (politistRepository.verificaTelefonUnic(p.getTelefon_serviciu(), null) > 0) {
+                eroriLogice.put("telefon_serviciu", "Acest număr de telefon este deja folosit de un alt polițist!");
+            }
+        }
+
+        if (!eroriLogice.isEmpty()) {
+            return ResponseEntity.badRequest().body(eroriLogice);
+        }
+
         politistRepository.adaugaPolitistManual(
-                p.getNume(),
-                p.getPrenume(),
-                p.getGrad(),
-                p.getFunctie(),
-                p.getTelefon_serviciu()
+                p.getNume(), p.getPrenume(), p.getGrad(), p.getFunctie(), p.getTelefon_serviciu()
         );
-        return "Politist adăugat prin SQL!";
+        return ResponseEntity.ok("Politist adăugat cu succes!");
     }
 
     @PutMapping("/{id}")
-    public String updatePolitist(@PathVariable Integer id, @RequestBody Politist p) {
+    public ResponseEntity<?> updatePolitist(@PathVariable Integer id, @Valid @RequestBody Politist p) {
+        //Logica de Empty
+        if (p.getTelefon_serviciu() != null && p.getTelefon_serviciu().trim().isEmpty()) {
+            p.setTelefon_serviciu(null);
+        }
+        if (p.getGrad() != null && p.getGrad().trim().isEmpty()) p.setGrad(null);
+        if (p.getFunctie() != null && p.getFunctie().trim().isEmpty()) p.setFunctie(null);
+
+        Map<String, String> eroriLogice = new HashMap<>();
+
+        // Verificare UNICITATE (Excludem ID-ul curent)
+        if (p.getTelefon_serviciu() != null) {
+            if (politistRepository.verificaTelefonUnic(p.getTelefon_serviciu(), id) > 0) {
+                eroriLogice.put("telefon_serviciu", "Acest număr de telefon este deja folosit!");
+            }
+        }
+
+        if (!eroriLogice.isEmpty()) {
+            return ResponseEntity.badRequest().body(eroriLogice);
+        }
+
         politistRepository.updatePolitist(
-                id,
-                p.getNume(),
-                p.getPrenume(),
-                p.getGrad(),
-                p.getFunctie(),
-                p.getTelefon_serviciu()
+                id, p.getNume(), p.getPrenume(), p.getGrad(), p.getFunctie(), p.getTelefon_serviciu()
         );
-        return "Politist modificat prin SQL!";
+        return ResponseEntity.ok("Politist modificat cu succes!");
     }
 
     @GetMapping("/{id}")

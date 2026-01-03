@@ -12,6 +12,8 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
         telefon_serviciu: ''
     });
 
+    const [errors, setErrors] = useState({}); // Aici tinem erorile primite de la backend
+
     // Incarcam datele cand componenta se monteaza sau se schimba ID-ul
     useEffect(() => {
         if (id) {
@@ -38,8 +40,13 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
                 onSaveSuccess();
             })
             .catch(error => {
-                console.error("Eroare la update:", error);
-                alert("Eroare la modificare!");
+                if (error.response && error.response.status === 400) {
+                    // Aici primim harta cu erori din Java (GlobalExceptionHandler)
+                    setErrors(error.response.data);
+                } else {
+                    console.error("Eroare:", error);
+                    alert("A apărut o eroare neașteptată!");
+                }
             });
     };
 
@@ -49,18 +56,23 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
             <div className="form-group">
                 <label>Nume</label>
                 <input type="text" name="nume" className="modal-input" value={formData.nume} onChange={handleChange} />
+                {errors.nume && <span style={{color: 'red', fontSize: '12px'}}>{errors.nume}</span>}
 
                 <label>Prenume</label>
                 <input type="text" name="prenume" className="modal-input" value={formData.prenume} onChange={handleChange} />
+                {errors.prenume && <span style={{color: 'red', fontSize: '12px'}}>{errors.prenume}</span>}
 
                 <label>Grad</label>
                 <input type="text" name="grad" className="modal-input" value={formData.grad} onChange={handleChange} />
+                {errors.grad && <span style={{color: 'red', fontSize: '12px'}}>{errors.grad}</span>}
 
                 <label>Funcție</label>
                 <input type="text" name="functie" className="modal-input" value={formData.functie} onChange={handleChange} />
+                {errors.functie && <span style={{color: 'red', fontSize: '12px'}}>{errors.functie}</span>}
 
                 <label>Telefon</label>
                 <input type="text" name="telefon_serviciu" className="modal-input" value={formData.telefon_serviciu} onChange={handleChange} />
+                {errors.telefon_serviciu && <span style={{color: 'red', fontSize: '12px'}}>{errors.telefon_serviciu}</span>}
             </div>
 
             <div className="modal-footer">

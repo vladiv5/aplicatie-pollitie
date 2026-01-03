@@ -19,13 +19,13 @@ import java.util.Optional;
 @Repository
 public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
 
-    // --- METODA NOUA PENTRU PAGINARE ---
+    // --- METODA PENTRU PAGINARE ---
     @Query(value = "SELECT * FROM Persoane",
             countQuery = "SELECT count(*) FROM Persoane",
             nativeQuery = true)
     Page<Persoana> findAllNativePaginat(Pageable pageable);
 
-    // --- METODE STANDARD (NU LE MODIFICĂM) ---
+    // --- METODE STANDARD ---
     @Query(value = "SELECT * FROM Persoane", nativeQuery = true)
     List<Persoana> getAllPersoaneNative();
 
@@ -51,10 +51,10 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
     List<Persoana> cautaDupaInceput(@Param("termen") String termen);
 
     // =================================================================================
-    // === 📊 RAPOARTE SIMPLE (Refactorizate cu Filtru de Dată) ===
+    // === 📊 RAPOARTE SIMPLE SI COMPLEXE (PE CARE LE AVEAI DEJA) ===
     // =================================================================================
 
-    // --- RAPORT 3: Rău-Platnici (Cu filtru pe data emiterii amenzii) ---
+    // --- RAPORT 3: Rău-Platnici ---
     @Query(value = "SELECT p.nume, p.prenume, p.cnp, SUM(a.suma) as datorie_totala " +
             "FROM persoane p " +
             "JOIN amenzi a ON p.id_persoana = a.id_persoana " +
@@ -66,11 +66,8 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
     List<Map<String, Object>> getRauPlatnici(@Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate);
 
-    // =================================================================================
-    // === 🧠 INTEROGARE COMPLEXĂ (SUBCERERE 4) ===
-    // =================================================================================
 
-    // --- Recidiviști: Persoane care au un nr. de amenzi > media generală de amenzi per persoană ---
+    // --- SUBCERERE 4: Recidiviști ---
     @Query(value = "SELECT p.nume, p.prenume, p.cnp, COUNT(a.id_amenda) as nr_abateri " +
             "FROM Persoane p " +
             "JOIN Amenzi a ON p.id_persoana = a.id_persoana " +
@@ -85,4 +82,16 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             ")", nativeQuery = true)
     List<Map<String, Object>> getRecidivisti(@Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate);
+
+    // =================================================================================
+    // === 🛡️ METODE NOI PENTRU VALIDARE UNICITATE (FIX EROARE 500) ===
+    // =================================================================================
+
+    // Verifica CNP unic
+    @Query(value = "SELECT count(*) FROM Persoane WHERE cnp = :cnp AND (:idExclus IS NULL OR id_persoana != :idExclus)", nativeQuery = true)
+    int verificaCnpUnic(@Param("cnp") String cnp, @Param("idExclus") Integer idExclus);
+
+    // Verifica Telefon unic
+    @Query(value = "SELECT count(*) FROM Persoane WHERE telefon = :tel AND (:idExclus IS NULL OR id_persoana != :idExclus)", nativeQuery = true)
+    int verificaTelefonUnic(@Param("tel") String tel, @Param("idExclus") Integer idExclus);
 }

@@ -18,7 +18,6 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
         iconClass = 'fa fa-ban';
     }
 
-    // Navigare "Bumerang"
     const handleJump = (type, itemId) => {
         const targetRoute = type === 'Incident' ? '/incidente' : '/amenzi';
         navigate(targetRoute, {
@@ -33,47 +32,48 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '600px', width: '90%' }}>
+            {/* APLICAM CLASA NOUA AICI: modal-content-auto */}
+            <div className="modal-content modal-content-auto" style={{ maxWidth: '600px', width: '90%' }}>
 
                 <div className="modal-header" style={{ borderBottomColor: headerColor }}>
-                    <h3 style={{ color: headerColor, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h3 style={{ color: headerColor, display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
                         <i className={iconClass}></i> {data.titlu}
                     </h3>
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
-                <div className="form-group">
-                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: '#333' }}>
+                <div style={{ padding: '20px' }}>
+                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: '#333', marginTop: 0 }}>
                         {data.mesaj}
                     </p>
 
-                    {/* TABEL CU ELEMENTE ASOCIATE (Apare Mereu daca exista date) */}
                     {data.elementeBlocante && data.elementeBlocante.length > 0 && (
                         <div style={{ marginTop: '15px', background: '#f8f9fa', padding: '10px', borderRadius: '5px', border: '1px solid #ddd', maxHeight: '200px', overflowY: 'auto' }}>
                             <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
                                 Dosare asociate:
                             </h4>
-                            <table className="mini-table" style={{ width: '100%', background: 'white' }}>
+                            <table className="mini-table" style={{ width: '100%', background: 'white', borderCollapse: 'collapse' }}>
                                 <thead>
                                 <tr>
-                                    <th style={{ textAlign: 'left', padding: '5px' }}>Tip</th>
-                                    <th style={{ textAlign: 'left', padding: '5px' }}>Detalii</th>
-                                    <th style={{ textAlign: 'center', padding: '5px' }}>Acțiune</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', borderBottom: '2px solid #eee' }}>Tip</th>
+                                    <th style={{ textAlign: 'left', padding: '8px', borderBottom: '2px solid #eee' }}>Detalii</th>
+                                    <th style={{ textAlign: 'center', padding: '8px', borderBottom: '2px solid #eee' }}>Acțiune</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 {data.elementeBlocante.map((item, idx) => (
                                     <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                                        <td style={{ padding: '5px', fontWeight: 'bold' }}>{item.tip}</td>
+                                        <td style={{ padding: '8px', fontWeight: 'bold', fontSize: '13px' }}>{item.tip}</td>
                                         <td style={{
-                                            padding: '5px',
-                                            color: (item.descriere.includes('Activ') || item.descriere.includes('Neplatita')) ? '#dc3545' : // Rosu
-                                                (item.descriere.includes('Închis') || item.descriere.includes('Platita')) ? '#fd7e14' : // Portocaliu
-                                                    '#28a745' // Verde
+                                            padding: '8px',
+                                            fontSize: '13px',
+                                            color: (item.descriere.includes('Activ') || item.descriere.includes('Neplatita')) ? '#dc3545' :
+                                                (item.descriere.includes('Închis') || item.descriere.includes('Platita')) ? '#fd7e14' :
+                                                    '#28a745'
                                         }}>
                                             {item.descriere}
                                         </td>
-                                        <td style={{ textAlign: 'center', padding: '5px' }}>
+                                        <td style={{ textAlign: 'center', padding: '8px' }}>
                                             <button
                                                 onClick={() => handleJump(item.tip, item.id)}
                                                 className="action-btn"
@@ -99,16 +99,16 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                     )}
                 </div>
 
-                <div className="modal-footer">
+                {/* FOLOSIM CLASA NOUA PENTRU FOOTER */}
+                <div className="modal-footer-auto" style={{ padding: '20px' }}>
                     <button
                         className="action-btn"
                         onClick={onClose}
-                        style={{ backgroundColor: '#6c757d', color: 'white', marginRight: '10px' }}
+                        style={{ backgroundColor: '#6c757d', color: 'white' }}
                     >
                         {data.severitate === 'BLOCKED' ? 'Am înțeles' : 'Anulează'}
                     </button>
 
-                    {/* Butonul de Stergere (Fara ID in text) */}
                     {data.severitate !== 'BLOCKED' && (
                         <button
                             className="save-btn"

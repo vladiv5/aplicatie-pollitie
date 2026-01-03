@@ -6,36 +6,38 @@ import './styles/TableStyles.css';
 const AddIncident = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         tipIncident: '',
-        status: 'Activ', // <--- Default: Activ
+        status: 'Activ',
         dataEmitere: '',
         descriereLocatie: '',
         descriereIncident: '',
         politistId: null,
         adresaId: null
     });
+    // State pentru erorile venite din Backend
+    const [errors, setErrors] = useState({});
 
     const handleSave = () => {
-        if (!formData.tipIncident || !formData.politistId) {
-            alert("Te rog completează Tipul și alege un Polițist!");
-            return;
-        }
+        // --- AM SCOS ALERT-ul MANUAL ---
+        // Lăsăm Backend-ul (Java) să facă validarea (litere, dată 15 ani, etc.)
 
         const token = localStorage.getItem('token');
         let dataFinala = formData.dataEmitere;
 
+        // Dacă nu s-a ales data, punem data curentă
         if (!dataFinala) {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             dataFinala = now.toISOString().slice(0, 16);
         }
 
+        // Adăugăm secundele dacă lipsesc (format LocalDateTime Java)
         if (dataFinala.length === 16) {
             dataFinala += ":00";
         }
 
         const payload = {
             tipIncident: formData.tipIncident,
-            status: formData.status, // <--- Trimitem statusul
+            status: formData.status,
             dataEmitere: dataFinala,
             descriereLocatie: formData.descriereLocatie,
             descriereIncident: formData.descriereIncident,
@@ -46,10 +48,18 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
         axios.post('http://localhost:8080/api/incidente', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => onSaveSuccess())
+            .then(() => {
+                setErrors({}); // Curățăm erorile la succes
+                onSaveSuccess();
+            })
             .catch(error => {
-                console.error("Eroare salvare:", error);
-                alert("Eroare la salvare! Verifică consola.");
+                // Aici prindem erorile trimise de Java (400 Bad Request)
+                if (error.response && error.response.status === 400) {
+                    setErrors(error.response.data);
+                } else {
+                    console.error("Eroare salvare:", error);
+                    alert("Eroare la salvare! Verifică consola.");
+                }
             });
     };
 
@@ -64,8 +74,8 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     value={formData.tipIncident}
                     onChange={(e) => setFormData({...formData, tipIncident: e.target.value})}
                 />
+                {errors.tipIncident && <span style={{color: 'red', fontSize: '12px'}}>{errors.tipIncident}</span>}
 
-                {/* --- SELECTOR STATUS (NOU) --- */}
                 <label>Stare Incident</label>
                 <select
                     className="modal-input"
@@ -78,14 +88,15 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     <option value="Arhivat">Arhivat (Dosar Vechi)</option>
                 </select>
 
-                <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
-                    <label style={{ fontSize: '12px', color: '#666' }}>Data și Ora:</label>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>Data și Ora:</label>
                     <input
                         type="datetime-local"
                         className="modal-input"
                         value={formData.dataEmitere}
                         onChange={(e) => setFormData({...formData, dataEmitere: e.target.value})}
                     />
+                    {errors.dataEmitere && <span style={{color: 'red', fontSize: '12px'}}>{errors.dataEmitere}</span>}
                 </div>
 
                 <LiveSearchInput
@@ -111,15 +122,18 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     value={formData.descriereLocatie}
                     onChange={(e) => setFormData({...formData, descriereLocatie: e.target.value})}
                 />
+                {errors.descriereLocatie && <span style={{color: 'red', fontSize: '12px'}}>{errors.descriereLocatie}</span>}
 
                 <label>Detalii Incident</label>
                 <textarea
-                    placeholder="..."
+                    placeholder="Descrieți ce s-a întâmplat..."
                     className="modal-input"
-                    rows="3"
+                    rows="4"
                     value={formData.descriereIncident}
                     onChange={(e) => setFormData({...formData, descriereIncident: e.target.value})}
                 />
+                {/* Aici nu avem eroare de format, dar daca Backendul da eroare de lungime, o afisam */}
+                {errors.descriereIncident && <span style={{color: 'red', fontSize: '12px'}}>{errors.descriereIncident}</span>}
             </div>
 
             <div className="modal-footer">

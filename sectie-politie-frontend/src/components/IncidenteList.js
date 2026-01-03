@@ -120,10 +120,10 @@ const IncidenteList = ({
                         <tr key={inc.idIncident}>
                             <td>{inc.tipIncident}</td>
                             <td><span style={getStatusStyle(inc.status)}>{inc.status || 'Activ'}</span></td>
-                            <td>{inc.dataEmitere ? new Date(inc.dataEmitere).toLocaleString('ro-RO').substring(0, 17) : '-'}</td>
+                            <td>{inc.dataEmitere ? new Date(inc.dataEmitere).toLocaleString('ro-RO').substring(0, 17) : ''}</td>
                             <td>{inc.descriereLocatie}</td>
-                            <td>{inc.adresaIncident ? `${inc.adresaIncident.strada} ${inc.adresaIncident.numar}` : '-'}</td>
-                            <td>{inc.politistResponsabil ? `${inc.politistResponsabil.nume} ${inc.politistResponsabil.prenume}` : 'Nealocat'}</td>
+                            <td>{inc.adresaIncident ? `${inc.adresaIncident.strada} ${inc.adresaIncident.numar}` : ''}</td>
+                            <td>{inc.politistResponsabil ? `${inc.politistResponsabil.nume} ${inc.politistResponsabil.prenume}` : ''}</td>
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
                                     <button className="action-btn" style={{ backgroundColor: '#17a2b8', color: 'white' }} onClick={() => onViewClick(inc)}>Vezi</button>

@@ -142,9 +142,9 @@ const AdreseList = ({
                             <td>{adresa.judetSauSector}</td>
                             <td>{adresa.localitate}</td>
                             <td>{adresa.strada}</td>
-                            <td>{adresa.numar ? adresa.numar : '-'}</td>
-                            <td>{adresa.bloc ? adresa.bloc : '-'}</td>
-                            <td>{adresa.apartament ? adresa.apartament : '-'}</td>
+                            <td>{adresa.numar ? adresa.numar : ''}</td>
+                            <td>{adresa.bloc ? adresa.bloc : ''}</td>
+                            <td>{adresa.apartament ? adresa.apartament : ''}</td>
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
                                     <button className="action-btn edit-btn" onClick={() => onEditClick(adresa.idAdresa)}>Edit</button>

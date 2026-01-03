@@ -115,7 +115,7 @@ const PersoaneList = ({
     };
 
     const formatDataNasterii = (dateString) => {
-        if (!dateString) return '-';
+        if (!dateString) return '';
         const date = new Date(dateString);
         const zi = String(date.getDate()).padStart(2, '0');
         const luna = String(date.getMonth() + 1).padStart(2, '0');

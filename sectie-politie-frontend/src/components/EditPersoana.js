@@ -10,6 +10,7 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
         dataNasterii: '',
         telefon: ''
     });
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (id) {
@@ -18,8 +19,6 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(response => {
-                    // Backend-ul trimite data in format YYYY-MM-DD, exact ce trebuie.
-                    // Nu mai e nevoie de procesare suplimentara.
                     setFormData(response.data);
                 })
                 .catch(error => console.error("Eroare la încărcare date persoană:", error));
@@ -37,11 +36,15 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(() => {
+                setErrors({});
                 onSaveSuccess();
             })
             .catch(error => {
-                console.error("Eroare la update:", error);
-                alert("Eroare la modificare! Verifică datele.");
+                if (error.response && error.response.status === 400) {
+                    setErrors(error.response.data);
+                } else {
+                    alert("Eroare server!");
+                }
             });
     };
 
@@ -53,30 +56,35 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
                     type="text" name="nume" className="modal-input"
                     value={formData.nume} onChange={handleChange}
                 />
+                {errors.nume && <span style={{color: 'red', fontSize: '12px'}}>{errors.nume}</span>}
 
                 <label>Prenume</label>
                 <input
                     type="text" name="prenume" className="modal-input"
                     value={formData.prenume} onChange={handleChange}
                 />
+                {errors.prenume && <span style={{color: 'red', fontSize: '12px'}}>{errors.prenume}</span>}
 
                 <label>CNP</label>
                 <input
                     type="text" name="cnp" className="modal-input" maxLength="13"
                     value={formData.cnp} onChange={handleChange}
                 />
+                {errors.cnp && <span style={{color: 'red', fontSize: '12px'}}>{errors.cnp}</span>}
 
                 <label>Data Nașterii</label>
                 <input
                     type="date" name="dataNasterii" className="modal-input"
                     value={formData.dataNasterii || ''} onChange={handleChange}
                 />
+                {errors.dataNasterii && <span style={{color: 'red', fontSize: '12px'}}>{errors.dataNasterii}</span>}
 
                 <label>Telefon</label>
                 <input
                     type="text" name="telefon" className="modal-input"
                     value={formData.telefon} onChange={handleChange}
                 />
+                {errors.telefon && <span style={{color: 'red', fontSize: '12px'}}>{errors.telefon}</span>}
             </div>
 
             <div className="modal-footer">

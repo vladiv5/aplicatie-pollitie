@@ -6,7 +6,7 @@ import './styles/TableStyles.css';
 const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         tipIncident: '',
-        status: 'Activ', // <--- Status
+        status: 'Activ',
         dataEmitere: '',
         descriereLocatie: '',
         descriereIncident: '',
@@ -16,6 +16,9 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
 
     const [initialPolitistName, setInitialPolitistName] = useState('');
     const [initialAdresaName, setInitialAdresaName] = useState('');
+
+    // State pentru erorile venite din Backend
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (id) {
@@ -27,7 +30,7 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     const data = response.data;
                     setFormData({
                         tipIncident: data.tipIncident || '',
-                        status: data.status || 'Activ', // <--- Preluam statusul
+                        status: data.status || 'Activ',
                         dataEmitere: data.dataEmitere || '',
                         descriereLocatie: data.descriereLocatie || '',
                         descriereIncident: data.descriereIncident || '',
@@ -49,16 +52,12 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
     const handleSave = () => {
         const token = localStorage.getItem('token');
 
-        // PAYLOAD SIMPLIFICAT (DTO)
-        // Trimitem ID-urile direct, nu obiecte imbricate!
         const payload = {
             tipIncident: formData.tipIncident,
             status: formData.status,
-            dataEmitere: formData.dataEmitere, // String direct
+            dataEmitere: formData.dataEmitere,
             descriereLocatie: formData.descriereLocatie,
             descriereIncident: formData.descriereIncident,
-
-            // AICI ERA PROBLEMA: Trimitem direct ID-ul, nu obiect { id: ... }
             idPolitist: formData.politistId,
             idAdresa: formData.adresaId
         };
@@ -66,8 +65,18 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
         axios.put(`http://localhost:8080/api/incidente/${id}`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => onSaveSuccess())
-            .catch(error => alert("Eroare la modificare!"));
+            .then(() => {
+                setErrors({}); // Curățăm erorile la succes
+                onSaveSuccess();
+            })
+            .catch(error => {
+                if (error.response && error.response.status === 400) {
+                    // Preluam harta cu erori din Java
+                    setErrors(error.response.data);
+                } else {
+                    alert("Eroare la modificare!");
+                }
+            });
     };
 
     return (
@@ -79,8 +88,8 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     value={formData.tipIncident}
                     onChange={(e) => setFormData({...formData, tipIncident: e.target.value})}
                 />
+                {errors.tipIncident && <span style={{color: 'red', fontSize: '12px'}}>{errors.tipIncident}</span>}
 
-                {/* --- SELECTOR STATUS --- */}
                 <label>Stare Incident</label>
                 <select
                     className="modal-input"
@@ -99,6 +108,7 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     value={formData.dataEmitere}
                     onChange={(e) => setFormData({...formData, dataEmitere: e.target.value})}
                 />
+                {errors.dataEmitere && <span style={{color: 'red', fontSize: '12px'}}>{errors.dataEmitere}</span>}
 
                 <LiveSearchInput
                     label="Polițist Responsabil"
@@ -122,6 +132,7 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     value={formData.descriereLocatie}
                     onChange={(e) => setFormData({...formData, descriereLocatie: e.target.value})}
                 />
+                {errors.descriereLocatie && <span style={{color: 'red', fontSize: '12px'}}>{errors.descriereLocatie}</span>}
 
                 <label>Detalii Incident</label>
                 <textarea
@@ -129,6 +140,7 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     value={formData.descriereIncident}
                     onChange={(e) => setFormData({...formData, descriereIncident: e.target.value})}
                 />
+                {/* Fara eroare aici, e text liber */}
             </div>
 
             <div className="modal-footer">

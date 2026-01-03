@@ -1,21 +1,22 @@
 import React from 'react';
-import './styles/TableStyles.css'; // Importăm stilurile
+import './styles/TableStyles.css';
 
 const Modal = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null; // Dacă nu e deschis, nu afișăm nimic
+    if (!isOpen) return null;
 
     return (
         <div className="modal-overlay">
+            {/* Modal Content are acum max-height: 80vh */}
             <div className="modal-content">
 
-                {/* Header cu Titlu și X */}
+                {/* Header-ul RĂMÂNE FIX sus */}
                 <div className="modal-header">
                     <h3 className="modal-title">{title}</h3>
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
-                {/* Aici vine formularul (AddPolitist, AddIncident, etc.) */}
-                <div className="modal-body">
+                {/* DOAR AICI apare scroll-ul dacă e prea lung */}
+                <div className="modal-body-scroll">
                     {children}
                 </div>
 

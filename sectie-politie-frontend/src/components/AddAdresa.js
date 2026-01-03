@@ -11,25 +11,31 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
         localitate: '',
         judetSauSector: ''
     });
+    const [errors, setErrors] = useState({});
 
     const handleSave = () => {
-        // Validare minimă
-        if(!formData.strada || !formData.localitate || !formData.judetSauSector) {
-            alert("Strada, Localitatea și Județul sunt obligatorii!");
-            return;
-        }
-
+        // Validare automata prin Backend (scos alert manual)
         const token = localStorage.getItem('token');
 
-        axios.post('http://localhost:8080/api/adrese', formData, {
+        // Curatam datele: apartament gol -> null
+        const payload = {
+            ...formData,
+            apartament: formData.apartament ? formData.apartament : null
+        };
+
+        axios.post('http://localhost:8080/api/adrese', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(() => {
+                setErrors({});
                 onSaveSuccess();
             })
             .catch(err => {
-                console.error("Eroare salvare:", err);
-                alert("Eroare la salvare! Verifică consola.");
+                if (err.response && err.response.status === 400) {
+                    setErrors(err.response.data);
+                } else {
+                    alert("Eroare la salvare!");
+                }
             });
     };
 
@@ -41,61 +47,41 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
         <div>
             <div className="form-group">
                 <input
-                    name="judetSauSector"
-                    placeholder="Județ / Sector"
-                    className="modal-input"
-                    value={formData.judetSauSector}
-                    onChange={handleChange}
+                    name="judetSauSector" placeholder="Județ / Sector" className="modal-input"
+                    value={formData.judetSauSector} onChange={handleChange}
                 />
+                {errors.judetSauSector && <span style={{color: 'red', fontSize: '12px'}}>{errors.judetSauSector}</span>}
 
                 <input
-                    name="localitate"
-                    placeholder="Localitate"
-                    className="modal-input"
-                    value={formData.localitate}
-                    onChange={handleChange}
+                    name="localitate" placeholder="Localitate" className="modal-input"
+                    value={formData.localitate} onChange={handleChange}
                 />
+                {errors.localitate && <span style={{color: 'red', fontSize: '12px'}}>{errors.localitate}</span>}
 
                 <input
-                    name="strada"
-                    placeholder="Stradă"
-                    className="modal-input"
-                    value={formData.strada}
-                    onChange={handleChange}
+                    name="strada" placeholder="Stradă" className="modal-input"
+                    value={formData.strada} onChange={handleChange}
                 />
+                {errors.strada && <span style={{color: 'red', fontSize: '12px'}}>{errors.strada}</span>}
 
                 <div style={{display:'flex', gap:'10px'}}>
-                    <input
-                        name="numar"
-                        placeholder="Nr."
-                        className="modal-input"
-                        style={{width:'30%'}}
-                        value={formData.numar}
-                        onChange={handleChange}
-                    />
-                    <input
-                        name="bloc"
-                        placeholder="Bloc"
-                        className="modal-input"
-                        style={{width:'30%'}}
-                        value={formData.bloc}
-                        onChange={handleChange}
-                    />
-                    <input
-                        name="apartament"
-                        placeholder="Ap."
-                        className="modal-input"
-                        style={{width:'30%'}}
-                        value={formData.apartament}
-                        onChange={handleChange}
-                    />
+                    <div style={{width:'30%'}}>
+                        <input name="numar" placeholder="Nr." className="modal-input" value={formData.numar} onChange={handleChange} />
+                        {errors.numar && <span style={{color: 'red', fontSize: '12px'}}>{errors.numar}</span>}
+                    </div>
+                    <div style={{width:'30%'}}>
+                        <input name="bloc" placeholder="Bloc" className="modal-input" value={formData.bloc} onChange={handleChange} />
+                        {/* Bloc e optional, fara erori de @NotBlank */}
+                    </div>
+                    <div style={{width:'30%'}}>
+                        <input name="apartament" placeholder="Ap." className="modal-input" value={formData.apartament} onChange={handleChange} />
+                        {errors.apartament && <span style={{color: 'red', fontSize: '12px'}}>{errors.apartament}</span>}
+                    </div>
                 </div>
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>
-                    Salvează Adresa
-                </button>
+                <button className="save-btn" onClick={handleSave}>Salvează Adresa</button>
             </div>
         </div>
     );
