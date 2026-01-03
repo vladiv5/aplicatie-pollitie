@@ -1,0 +1,195 @@
+/* src/pages/styles/Home.css */
+
+.home-container {
+    padding: 30px;
+    background-color: #f4f6f9; /* Gri foarte deschis, curat */
+    min-height: calc(100vh - 70px); /* Scadem inaltimea meniului */
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.welcome-banner {
+    background: linear-gradient(90deg, #1a3c6e 0%, #2c5364 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.welcome-text h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.welcome-text p {
+    margin: 5px 0 0;
+    opacity: 0.8;
+    font-size: 16px;
+}
+
+.live-clock {
+    text-align: right;
+    background: rgba(255,255,255,0.1);
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.clock-time {
+    font-size: 24px;
+    font-weight: 700;
+    display: block;
+}
+
+.clock-date {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* GRID PRINCIPAL */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* Coloana stanga mai mica (Card), dreapta mai mare (Scurtaturi) */
+    gap: 30px;
+}
+
+/* CARD DE IDENTITATE (Stanga) */
+.id-card-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+    border-top: 5px solid #fbc02d; /* Linie aurie */
+}
+
+.id-card-header {
+    background-color: #f8f9fa;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+.officer-avatar {
+    font-size: 60px;
+    background: #e9ecef;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    border: 3px solid #1a3c6e;
+}
+
+.officer-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.officer-rank {
+    color: #1a3c6e;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.id-card-body {
+    padding: 20px;
+}
+
+.id-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+
+.id-detail-row:last-child {
+    border-bottom: none;
+}
+
+.label { color: #888; }
+.value { font-weight: 600; color: #333; }
+
+/* SCURTATURI (Dreapta) */
+.shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.shortcut-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.shortcut-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: #1a3c6e;
+}
+
+.shortcut-icon {
+    font-size: 35px;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.shortcut-title {
+    font-weight: 700;
+    font-size: 16px;
+    display: block;
+}
+
+.shortcut-desc {
+    font-size: 12px;
+    color: #777;
+    margin-top: 5px;
+    display: block;
+}
+
+/* System Status */
+.system-status {
+    margin-top: 30px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #28a745; /* Verde */
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #28a745;
+    border-radius: 50%;
+    box-shadow: 0 0 5px #28a745;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}

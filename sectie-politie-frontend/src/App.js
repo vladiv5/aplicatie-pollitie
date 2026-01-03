@@ -11,6 +11,7 @@ import IncidentePage from "./pages/IncidentePage";
 import PersoanePage from "./pages/PersoanePage";
 import AdresePage from "./pages/AdresePage";
 import AmenziPage from "./pages/AmenziPage";
+import HomePage from './pages/HomePage';
 
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
                     {/* Rutele Private (Protejate) */}
                     <Route element={<ProtectedRoute />}>
                         {/* Tot ce e aici e păzit. Doar logații ajung. */}
+                        <Route path="acasa" element={<HomePage />} />
                         <Route path="politisti" element={<PolitistiPage />} />
                         <Route path="politisti/edit/:id" element={<EditPolitist />} />
                         <Route path="/statistici" element={<StatisticiPage />} />

@@ -1,0 +1,109 @@
+/* src/components/styles/Login.css */
+
+.login-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* Fundal serios, intunecat */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-card {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 15px 25px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    border-top: 5px solid #1a3c6e; /* Linie albastra de politie */
+}
+
+.login-header {
+    margin-bottom: 30px;
+}
+
+.police-badge {
+    font-size: 50px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.login-header h2 {
+    color: #1a3c6e;
+    margin: 0;
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.login-header p {
+    color: #666;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.login-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box; /* Important pentru padding */
+}
+
+.login-input:focus {
+    border-color: #1a3c6e;
+    outline: none;
+    box-shadow: 0 0 5px rgba(26, 60, 110, 0.3);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #1a3c6e;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    text-transform: uppercase;
+}
+
+.login-btn:hover {
+    background-color: #132d52;
+}
+
+.error-msg {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+/* Footer mic jos */
+.login-footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #888;
+}
