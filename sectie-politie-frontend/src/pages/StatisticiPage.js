@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+
 import LiveSearchInput from '../components/LiveSearchInput';
+import PaginatedCard from '../components/PaginatedCard';
 import '../components/styles/TableStyles.css';
 import '../components/styles/Statistici.css';
 
-// Importăm graficele din Recharts
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF4560'];
 
-// ... (Păstrezi funcțiile parseUserDate, formatDateDisplay, SplitDateInput neschimbate) ...
-// --- COPIAZA DE MAI SUS ACELE FUNCȚII DACĂ LE-AI ȘTERS ---
+// --- PARSARE SI FORMATARE DATE ---
 const parseUserDate = (input) => {
     if (!input || input.trim() === '') return null;
     const cleanInput = input.replace(/[./]/g, '-');
@@ -23,44 +23,89 @@ const parseUserDate = (input) => {
     if (day < 1 || day > 31) return 'INVALID';
     if (month < 1 || month > 12) return 'INVALID';
     if (year < 1900 || year > 2100) return 'INVALID';
-    const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return isoDate;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 };
+
 const formatDateDisplay = (isoDate) => {
-    if (!isoDate) return '';
-    const parts = isoDate.split('-');
-    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    if (!isoDate) return '-';
+    const datePart = isoDate.toString().split('T')[0];
+    const parts = datePart.split('-');
+    if (parts.length !== 3) return isoDate;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+};
+
+// --- TOOLTIP PERSONALIZAT PENTRU GRAFICE ---
+const CustomChartTooltip = ({ active, payload, label, type }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload; // Datele complete ale barei
+
+        return (
+            <div className="custom-tooltip-box" style={{visibility:'visible', opacity:1, position:'relative', bottom:'auto', left:'auto', transform:'none', margin:0}}>
+                {/* Header comun */}
+                <div style={{fontWeight:'bold', borderBottom:'1px solid rgba(255,255,255,0.2)', marginBottom:'5px', paddingBottom:'3px'}}>
+                    {data.nume ? `${data.nume} ${data.prenume || ''}` : label}
+                </div>
+
+                {/* Continut specific */}
+                {type === 'politist' && (
+                    <>
+                        <div>Funcție: {data.functie}</div>
+                        <div>Grad: {data.grad}</div>
+                        <div style={{marginTop:'5px', color:'#ffd700'}}>
+                            Total Amenzi: {data.total_valoare} RON
+                        </div>
+                    </>
+                )}
+
+                {type === 'persoana' && (
+                    <>
+                        <div>CNP: {data.cnp}</div>
+                        <div style={{marginTop:'5px', color:'#ff6b6b'}}>
+                            Datorie: {data.datorie_totala} RON
+                        </div>
+                    </>
+                )}
+
+                {type === 'strada' && (
+                    <>
+                        <div style={{color:'#4dabf7'}}>
+                            Incidente: {data.nr_incidente}
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    }
+    return null;
 };
 
 const StatisticiPage = () => {
-    // ... (Păstrezi toate state-urile pentru filtre și grafice neschimbate) ...
     const [startInput, setStartInput] = useState('');
     const [endInput, setEndInput] = useState('');
     const [dateError, setDateError] = useState('');
     const [activeStartDate, setActiveStartDate] = useState(null);
     const [activeEndDate, setActiveEndDate] = useState(null);
 
+    // State Grafice
     const [topPolitisti, setTopPolitisti] = useState([]);
     const [amenziGrad, setAmenziGrad] = useState([]);
     const [topStrazi, setTopStrazi] = useState([]);
     const [rauPlatnici, setRauPlatnici] = useState([]);
+
+    // State Carduri
     const [zoneSigure, setZoneSigure] = useState([]);
     const [agentiSeveri, setAgentiSeveri] = useState([]);
     const [recidivisti, setRecidivisti] = useState([]);
     const [zileCritice, setZileCritice] = useState([]);
+
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    // --- STATE INTERACTIVE MODIFICAT (Obiecte complete) ---
-    const [selectedPolitist, setSelectedPolitist] = useState(null); // Obiect întreg
+    // State Dosare
+    const [selectedPolitist, setSelectedPolitist] = useState(null);
     const [rezultatPolitist, setRezultatPolitist] = useState(null);
-
-    const [selectedPersoana, setSelectedPersoana] = useState(null); // Obiect întreg
+    const [selectedPersoana, setSelectedPersoana] = useState(null);
     const [rezultatCnp, setRezultatCnp] = useState(null);
 
-    // ... (Păstrezi fetchAllData, useEffect, handleApplyFilters, handleReset, slides, carousel logic - EXACT CA ÎNAINTE) ...
-
-    // REIA LOGICA DE FETCH DATA SI CAROUSEL DIN CODUL ANTERIOR (Nu o mai scriu aici ca să nu fie mesajul kilometric)
-    // Asigură-te că le ai în fișier!
     const fetchAllData = () => {
         const token = localStorage.getItem('token');
         const config = {
@@ -68,7 +113,6 @@ const StatisticiPage = () => {
             params: { start: activeStartDate, end: activeEndDate }
         };
 
-        // Resetăm erorile vizuale vechi
         setDateError('');
 
         axios.get('http://localhost:8080/api/statistici/top-politisti', config).then(res => setTopPolitisti(res.data));
@@ -80,38 +124,31 @@ const StatisticiPage = () => {
         axios.get('http://localhost:8080/api/statistici/agenti-severi', config).then(res => setAgentiSeveri(res.data));
         axios.get('http://localhost:8080/api/statistici/recidivisti', config).then(res => setRecidivisti(res.data));
         axios.get('http://localhost:8080/api/statistici/zile-critice', config).then(res => setZileCritice(res.data));
-
-        setRezultatPolitist(null);
-        setRezultatCnp(null);
     };
 
-    // Trigger fetch doar când filtrele active se schimbă (la apăsarea butonului)
     useEffect(() => {
         fetchAllData();
     }, [activeStartDate, activeEndDate]);
 
-    // --- HANDLER BUTON "APLICĂ FILTRE" ---
     const handleApplyFilters = () => {
-        // 1. Parsăm inputurile
         const parsedStart = parseUserDate(startInput);
         const parsedEnd = parseUserDate(endInput);
 
-        // 2. Verificăm validitatea
         if (parsedStart === 'INVALID' || parsedEnd === 'INVALID') {
-            setDateError('Format dată invalid! Folosește formatul: ZZ.LL.AAAA (ex: 01.01.2025)');
+            setDateError('Format dată invalid! Folosește formatul: ZZ.LL.AAAA');
             return;
         }
-
-        // 3. Verificăm logica (Start să nu fie după End)
         if (parsedStart && parsedEnd && parsedStart > parsedEnd) {
             setDateError('Data de început nu poate fi după data de sfârșit!');
             return;
         }
 
-        // 4. Dacă totul e ok, setăm filtrele active (ceea ce declanșează useEffect -> Fetch)
         setActiveStartDate(parsedStart);
         setActiveEndDate(parsedEnd);
-        setDateError(''); // Ștergem erorile
+        setDateError('');
+
+        if (selectedPolitist) handleCautaPolitist(parsedStart, parsedEnd);
+        if (selectedPersoana) handleCautaCnp(parsedStart, parsedEnd);
     };
 
     const handleReset = () => {
@@ -120,21 +157,35 @@ const StatisticiPage = () => {
         setActiveStartDate(null);
         setActiveEndDate(null);
         setDateError('');
+        setRezultatPolitist(null);
+        setRezultatCnp(null);
     };
 
-    // --- CAROUSEL LOGIC ---
+    // --- CONFIGURARE SLIDE-URI (GRAFICE) ---
     const slides = [
         {
             id: 0, title: "🏆 Top Polițiști (Valoare Amenzi)",
             component: (
                 <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={topPolitisti} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    {/* Folosim slice(0, 10) pentru a limita la primii 10 */}
+                    <BarChart data={topPolitisti.slice(0, 20)} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="nume" tick={{fontSize: 12}} />
+
+                        {/* Axa X arata Nume + Prenume */}
+                        <XAxis
+                            dataKey={(row) => `${row.nume} ${row.prenume}`}
+                            tick={{fontSize: 11}}
+                            angle={-20}
+                            textAnchor="end"
+                            interval={0}
+                        />
                         <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="total_valoare" fill="#007bff" name="Total RON" barSize={50} />
+
+                        {/* Tooltip Personalizat Politist */}
+                        <Tooltip content={<CustomChartTooltip type="politist"/>} />
+
+                        <Legend wrapperStyle={{paddingTop: '20px'}}/>
+                        <Bar dataKey="total_valoare" fill="#007bff" name="Total RON Generat" barSize={40} radius={[5, 5, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             )
@@ -154,31 +205,57 @@ const StatisticiPage = () => {
             )
         },
         {
-            id: 2, title: "🔥 Top Străzi (Zone de Risc)",
+            id: 2, title: "🔥 Top 20 Străzi (Zone de Risc)",
             component: (
                 <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={topStrazi} layout="vertical" margin={{ top: 20, right: 30, left: 50, bottom: 5 }}>
+                    {/* 1. Am scos layout="vertical" si am marit marginea de jos pt text */}
+                    <BarChart data={topStrazi.slice(0, 20)} margin={{ top: 20, right: 30, left: 20, bottom: 70 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="strada" type="category" width={100} tick={{fontSize: 11}} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="nr_incidente" fill="#dc3545" name="Nr. Incidente" barSize={30} />
+
+                        {/* 2. AXA X: Acum afișează Strada (rotită să încapă) */}
+                        <XAxis
+                            dataKey="strada"
+                            tick={{fontSize: 11}}
+                            angle={-45}
+                            textAnchor="end"
+                            interval={0}
+                        />
+
+                        {/* 3. AXA Y: Acum afișează Numerele (automat) */}
+                        <YAxis />
+
+                        <Tooltip content={<CustomChartTooltip type="strada"/>} />
+                        <Legend wrapperStyle={{paddingTop: '20px'}}/>
+
+                        {/* Barele sunt acum verticale */}
+                        <Bar dataKey="nr_incidente" fill="#dc3545" name="Nr. Incidente" barSize={30} radius={[5, 5, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             )
         },
         {
-            id: 3, title: "⚠️ Top Rău-Platnici (Datorii)",
+            id: 3, title: "⚠️ Top Rău-Platnici",
             component: (
                 <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={rauPlatnici} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    {/* Limitare la 10 persoane */}
+                    <BarChart data={rauPlatnici.slice(0, 20)} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="nume" tick={{fontSize: 12}} />
+
+                        {/* Axa X arata Nume + Prenume */}
+                        <XAxis
+                            dataKey={(row) => `${row.nume} ${row.prenume}`}
+                            tick={{fontSize: 11}}
+                            angle={-20}
+                            textAnchor="end"
+                            interval={0}
+                        />
                         <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="datorie_totala" fill="#FF8042" name="Datorie (RON)" barSize={50} />
+
+                        {/* Tooltip Personalizat Persoana (cu CNP) */}
+                        <Tooltip content={<CustomChartTooltip type="persoana"/>} />
+
+                        <Legend wrapperStyle={{paddingTop: '20px'}}/>
+                        <Bar dataKey="datorie_totala" fill="#FF8042" name="Datorie (RON)" barSize={40} radius={[5, 5, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             )
@@ -188,20 +265,20 @@ const StatisticiPage = () => {
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
     const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
-    // --- SEARCH HANDLERS UPDATE ---
-    const handleCautaPolitist = () => {
+    // --- DOSARE HANDLERS ---
+    const handleCautaPolitist = (startOverride = activeStartDate, endOverride = activeEndDate) => {
         if(!selectedPolitist) return;
         const token = localStorage.getItem('token');
-        const config = { headers: { 'Authorization': `Bearer ${token}` }, params: { id: selectedPolitist.idPolitist, start: activeStartDate, end: activeEndDate } };
+        const config = { headers: { 'Authorization': `Bearer ${token}` }, params: { id: selectedPolitist.idPolitist, start: startOverride, end: endOverride } };
         axios.get(`http://localhost:8080/api/statistici/incidente-politist`, config)
             .then(res => setRezultatPolitist(res.data))
             .catch(() => alert("Fără date."));
     };
 
-    const handleCautaCnp = () => {
+    const handleCautaCnp = (startOverride = activeStartDate, endOverride = activeEndDate) => {
         if(!selectedPersoana) return;
         const token = localStorage.getItem('token');
-        const config = { headers: { 'Authorization': `Bearer ${token}` }, params: { cnp: selectedPersoana.cnp, start: activeStartDate, end: activeEndDate } };
+        const config = { headers: { 'Authorization': `Bearer ${token}` }, params: { cnp: selectedPersoana.cnp, start: startOverride, end: endOverride } };
         axios.get(`http://localhost:8080/api/statistici/istoric-cnp`, config)
             .then(res => setRezultatCnp(res.data))
             .catch(() => alert("Fără date."));
@@ -215,16 +292,15 @@ const StatisticiPage = () => {
         <div className="stats-container">
             <h2 className="page-title">Dashboard Analitic & Statistici</h2>
 
-            {/* COMMAND BAR */}
             <div className="command-bar">
                 <div className="filter-container">
                     <div className="filter-group">
                         <label>Data Început:</label>
-                        <input type="text" className="date-input-text" placeholder="ex: 01.01.2024" value={startInput} onChange={(e) => setStartInput(e.target.value)} />
+                        <input type="text" className="date-input-text" placeholder="ZZ-LL-AAAA" value={startInput} onChange={(e) => setStartInput(e.target.value)} />
                     </div>
                     <div className="filter-group">
                         <label>Data Sfârșit:</label>
-                        <input type="text" className="date-input-text" placeholder="ex: 31.12.2024" value={endInput} onChange={(e) => setEndInput(e.target.value)} />
+                        <input type="text" className="date-input-text" placeholder="ZZ-LL-AAAA" value={endInput} onChange={(e) => setEndInput(e.target.value)} />
                     </div>
                     <button className="apply-btn" onClick={handleApplyFilters}>🔍 Aplică Filtre</button>
                     <button className="reset-btn" onClick={handleReset}>↺ Reset</button>
@@ -236,7 +312,6 @@ const StatisticiPage = () => {
                     (<span style={{color: '#666', fontStyle: 'italic'}}>{activeStartDate && activeEndDate ? `📊 Analiză activă: ${formatDateDisplay(activeStartDate)} ➔ ${formatDateDisplay(activeEndDate)}` : "📊 Se afișează istoricul complet (All Time)"}</span>)}
             </div>
 
-            {/* CAROUSEL - Păstrat neschimbat */}
             <div className="carousel-container">
                 <button className="nav-arrow nav-prev" onClick={prevSlide}>&#10094;</button>
                 <div className="carousel-content" key={currentSlide}>
@@ -247,34 +322,111 @@ const StatisticiPage = () => {
                 <div className="slide-indicator">{slides.map((_, idx) => (<div key={idx} className={`dot ${currentSlide === idx ? 'active' : ''}`} onClick={() => setCurrentSlide(idx)}></div>))}</div>
             </div>
 
-            {/* ANALIZĂ COMPLEXĂ - Păstrat neschimbat */}
+            {/* --- ANALYSIS GRID --- */}
             <div className="analysis-grid">
-                <div className="analysis-card card-green">
-                    <h3>🛡️ Zone Sigure (0 Incidente)</h3>
-                    {zoneSigure.length > 0 ? (
-                        <table className="mini-table"><tbody>{zoneSigure.slice(0, 5).map((z, idx) => (<tr key={idx}><td>{z.strada}, {z.localitate}</td></tr>))}</tbody></table>
-                    ) : <p style={{color:'#666'}}>Nicio zonă sigură.</p>}
-                </div>
-                <div className="analysis-card card-orange">
-                    <h3>👮 Agenți Severi (Peste Medie)</h3>
-                    <table className="mini-table"><tbody>{agentiSeveri.map((a, idx) => (<tr key={idx}><td>{a.nume}</td><td style={{fontWeight:'bold'}}>{parseFloat(a.medie_personala).toFixed(0)}</td></tr>))}</tbody></table>
-                </div>
-                <div className="analysis-card card-red">
-                    <h3>⚠️ Recidiviști (Frecvență)</h3>
-                    <table className="mini-table"><tbody>{recidivisti.map((r, idx) => (<tr key={idx}><td>{r.nume}</td><td style={{color:'red', fontWeight:'bold'}}>{r.nr_abateri}</td></tr>))}</tbody></table>
-                </div>
-                <div className="analysis-card card-blue">
-                    <h3>📅 Zile Critice</h3>
-                    <table className="mini-table"><tbody>{zileCritice.map((z, idx) => (<tr key={idx}><td>{z.ziua}</td><td style={{fontWeight:'bold'}}>{z.nr_incidente}</td></tr>))}</tbody></table>
-                </div>
+
+                {/* 1. Zone Sigure */}
+                <PaginatedCard
+                    title="Zone Sigure"
+                    icon="🛡️"
+                    colorClass="card-green"
+                    data={zoneSigure}
+                    itemsPerPage={5}
+                    renderItem={(item, idx) => (
+                        <tr key={idx}>
+                            <td>
+                                <div className="tooltip-wrapper">
+                                    <span className="truncated-text">
+                                        {item.strada}, {item.localitate}
+                                    </span>
+                                    <div className="custom-tooltip-box">
+                                        Localitate: {item.localitate}{'\n'}
+                                        Strada: {item.strada}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    )}
+                />
+
+                {/* 2. Agenți Severi */}
+                <PaginatedCard
+                    title="Agenți Severi"
+                    icon="👮"
+                    colorClass="card-orange"
+                    data={agentiSeveri}
+                    itemsPerPage={5}
+                    renderItem={(item, idx) => (
+                        <tr key={idx}>
+                            <td>
+                                <div className="tooltip-wrapper">
+                                    <span className="truncated-text">
+                                        <b>{item.nume} {item.prenume}</b><br/>
+                                        <span style={{fontSize:'11px', opacity:0.8}}>{item.grad}, {item.functie}</span>
+                                    </span>
+                                    <div className="custom-tooltip-box">
+                                        Nume: {item.nume} {item.prenume}{'\n'}
+                                        Grad: {item.grad}{'\n'}
+                                        Funcție: {item.functie}
+                                    </div>
+                                </div>
+                            </td>
+                            <td style={{fontWeight:'bold', textAlign:'right'}}>
+                                {parseFloat(item.medie_personala).toFixed(0)} RON
+                            </td>
+                        </tr>
+                    )}
+                />
+
+                {/* 3. Recidiviști */}
+                <PaginatedCard
+                    title="Recidiviști"
+                    icon="⚠️"
+                    colorClass="card-red"
+                    data={recidivisti}
+                    itemsPerPage={5}
+                    renderItem={(item, idx) => (
+                        <tr key={idx}>
+                            <td>
+                                <div className="tooltip-wrapper">
+                                    <span className="truncated-text">
+                                        <b>{item.nume} {item.prenume}</b><br/>
+                                        <span style={{fontSize:'11px', opacity:0.8}}>CNP: {item.cnp}</span>
+                                    </span>
+                                    <div className="custom-tooltip-box">
+                                        Nume: {item.nume} {item.prenume}{'\n'}
+                                        CNP: {item.cnp}
+                                    </div>
+                                </div>
+                            </td>
+                            <td style={{color:'red', fontWeight:'bold', textAlign:'right'}}>
+                                {item.nr_abateri} abateri
+                            </td>
+                        </tr>
+                    )}
+                />
+
+                {/* 4. Zile Critice */}
+                <PaginatedCard
+                    title="Zile Critice"
+                    icon="📅"
+                    colorClass="card-blue"
+                    data={zileCritice}
+                    itemsPerPage={5}
+                    renderItem={(item, idx) => (
+                        <tr key={idx}>
+                            <td>{formatDateDisplay(item.ziua)}</td>
+                            <td style={{fontWeight:'bold', textAlign:'right'}}>{item.nr_incidente} incidente</td>
+                        </tr>
+                    )}
+                />
             </div>
 
-            {/* --- SECTIUNEA DE SEARCH MODERNIZATĂ (DOSARE) --- */}
+            {/* --- ARHIVA OPERATIVA (DOSARE) --- */}
             <h2 className="page-title" style={{marginTop:'50px'}}>📂 Arhivă Operativă (Dosare)</h2>
 
             <div className="dashboard-grid">
-
-                {/* 1. DOSAR POLIȚIST */}
+                {/* DOSAR POLITIST */}
                 <div>
                     <div className="search-wrapper">
                         <div style={{flex:1}}>
@@ -282,22 +434,18 @@ const StatisticiPage = () => {
                                 label="Caută Polițist"
                                 placeholder="Nume, Prenume..."
                                 apiUrl="http://localhost:8080/api/politisti/cauta"
-                                // AICI E MODIFICAREA: Afișăm Gradul și Funcția
                                 displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad} - ${p.functie})`}
-                                // Salvăm TOT obiectul
                                 onSelect={(item) => setSelectedPolitist(item)}
                             />
                         </div>
-                        <button className="search-btn-modern" onClick={handleCautaPolitist}>
+                        <button className="search-btn-modern" onClick={() => handleCautaPolitist()}>
                             🔍 Deschide Dosar
                         </button>
                     </div>
-
                     {rezultatPolitist && selectedPolitist && (
                         <div className="dossier-card">
                             <div className="dossier-top-bar"></div>
                             <div className="stamp">DOSAR PERSONAL</div>
-
                             <div className="dossier-header">
                                 <div className="dossier-photo-placeholder">FOTO</div>
                                 <div className="dossier-info" style={{flex:1, marginLeft:'20px'}}>
@@ -308,7 +456,6 @@ const StatisticiPage = () => {
                                     <div className="dossier-detail"><b>ID Serviciu:</b> {selectedPolitist.idPolitist}</div>
                                 </div>
                             </div>
-
                             <h4 style={{borderBottom:'1px solid #333'}}>RAPORT DE ACTIVITATE (INCIDENTE GESTIONATE)</h4>
                             {rezultatPolitist.length > 0 ? (
                                 <table className="dossier-table">
@@ -316,7 +463,7 @@ const StatisticiPage = () => {
                                     <tbody>
                                     {rezultatPolitist.map((r, i) => (
                                         <tr key={i}>
-                                            <td>{r.data_emitere ? r.data_emitere.split('T')[0] : '-'}</td>
+                                            <td>{formatDateDisplay(r.data_emitere)}</td>
                                             <td>{r.tip_incident}</td>
                                             <td>{r.descriere_locatie}, {r.strada}</td>
                                         </tr>
@@ -324,13 +471,12 @@ const StatisticiPage = () => {
                                     </tbody>
                                 </table>
                             ) : <p>Nu există activitate înregistrată în perioada selectată.</p>}
-
                             <button className="print-btn" onClick={handlePrint}>🖨️ Printează Dosar</button>
                         </div>
                     )}
                 </div>
 
-                {/* 2. DOSAR CETĂȚEAN */}
+                {/* DOSAR CETATEAN */}
                 <div>
                     <div className="search-wrapper">
                         <div style={{flex:1}}>
@@ -342,33 +488,31 @@ const StatisticiPage = () => {
                                 onSelect={(item) => setSelectedPersoana(item)}
                             />
                         </div>
-                        <button className="search-btn-modern" onClick={handleCautaCnp}>
+                        <button className="search-btn-modern" onClick={() => handleCautaCnp()}>
                             🔍 Deschide Dosar
                         </button>
                     </div>
-
                     {rezultatCnp && selectedPersoana && (
                         <div className="dossier-card">
                             <div className="dossier-top-bar"></div>
                             <div className="stamp">CAZIER FISCAL</div>
-
                             <div className="dossier-header">
                                 <div className="dossier-photo-placeholder">FOTO</div>
                                 <div className="dossier-info" style={{flex:1, marginLeft:'20px'}}>
                                     <h2>{selectedPersoana.nume} {selectedPersoana.prenume}</h2>
                                     <div className="dossier-detail"><b>CNP:</b> {selectedPersoana.cnp}</div>
                                     <div className="dossier-detail"><b>Telefon:</b> {selectedPersoana.telefon}</div>
-                                    <div className="dossier-detail"><b>Data Nașterii:</b> {selectedPersoana.dataNasterii}</div>
+                                    <div className="dossier-detail"><b>Data Nașterii:</b> {formatDateDisplay(selectedPersoana.dataNasterii)}</div>
                                 </div>
                             </div>
-
                             <h4 style={{borderBottom:'1px solid #333'}}>ISTORIC AMENZI & SANCȚIUNI</h4>
                             {rezultatCnp.length > 0 ? (
                                 <table className="dossier-table">
-                                    <thead><tr><th>Motiv</th><th>Sumă</th><th>Status</th><th>Agent</th></tr></thead>
+                                    <thead><tr><th>Dată</th><th>Motiv</th><th>Sumă</th><th>Status</th><th>Agent</th></tr></thead>
                                     <tbody>
                                     {rezultatCnp.map((r, i) => (
                                         <tr key={i}>
+                                            <td>{formatDateDisplay(r.data_emitere)}</td>
                                             <td>{r.motiv}</td>
                                             <td style={{fontWeight:'bold'}}>{r.suma} RON</td>
                                             <td style={{color: r.stare_plata === 'Platita' ? 'green' : 'red', fontWeight:'bold'}}>{r.stare_plata}</td>
@@ -378,7 +522,6 @@ const StatisticiPage = () => {
                                     </tbody>
                                 </table>
                             ) : <p>Persoana nu are amenzi înregistrate.</p>}
-
                             <button className="print-btn" onClick={handlePrint}>🖨️ Printează Dosar</button>
                         </div>
                     )}

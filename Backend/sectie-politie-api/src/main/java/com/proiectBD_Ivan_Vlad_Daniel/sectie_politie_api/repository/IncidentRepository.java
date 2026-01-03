@@ -61,15 +61,17 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     List<Incident> cautaDupaInceput(@Param("termen") String termen);
 
     // =================================================================================
-    // === 📊 RAPOARTE SIMPLE (Pastrate) ===
+    // === 📊 TOP STRĂZI (REPARAT - GRUPARE DUPĂ NUME) ===
     // =================================================================================
 
+    // AICI E MODIFICAREA: GROUP BY adr.strada, adr.localitate
+    // Adună toate incidentele de pe "Strada Libertății", indiferent de număr/bloc/ID.
     @Query(value = "SELECT adr.strada, adr.localitate, COUNT(i.id_incident) as nr_incidente " +
             "FROM adrese adr " +
             "JOIN incidente i ON adr.id_adresa = i.id_adresa_incident " +
             "WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) " +
             "  AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
-            "GROUP BY adr.id_adresa, adr.strada, adr.localitate " +
+            "GROUP BY adr.strada, adr.localitate " +
             "ORDER BY nr_incidente DESC", nativeQuery = true)
     List<Map<String, Object>> getTopStraziIncidente(@Param("startDate") LocalDateTime startDate,
                                                     @Param("endDate") LocalDateTime endDate);
@@ -86,19 +88,27 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
                                                      @Param("endDate") LocalDateTime endDate);
 
     // =================================================================================
-    // === 🧠 INTEROGĂRI COMPLEXE (Pastrate) ===
+    // === 🛡️ ZONE SIGURE (REPARAT - ELIMINARE DUPLICATE) ===
     // =================================================================================
 
-    @Query(value = "SELECT a.strada, a.localitate, a.judet_sau_sector " +
+    // AICI E MODIFICAREA:
+    // 1. Luăm toate combinațiile unice de Stradă + Localitate.
+    // 2. Numărăm incidentele totale pe acel nume de stradă.
+    // 3. Afișăm doar dacă TOTALUL este 0.
+    @Query(value = "SELECT a.strada, a.localitate " +
             "FROM Adrese a " +
-            "WHERE a.id_adresa NOT IN (" +
-            "    SELECT i.id_adresa_incident FROM Incidente i " +
-            "    WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) " +
-            "      AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
-            "      AND i.id_adresa_incident IS NOT NULL" +
-            ")", nativeQuery = true)
+            "LEFT JOIN Incidente i ON a.id_adresa = i.id_adresa_incident " +
+            "  AND (:startDate IS NULL OR i.data_emitere >= :startDate) " +
+            "  AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
+            "GROUP BY a.strada, a.localitate " +
+            "HAVING COUNT(i.id_incident) = 0 " +
+            "ORDER BY a.localitate, a.strada", nativeQuery = true)
     List<Map<String, Object>> getZoneSigure(@Param("startDate") LocalDateTime startDate,
                                             @Param("endDate") LocalDateTime endDate);
+
+    // =================================================================================
+    // === ALTE INTEROGĂRI (Rămân neschimbate) ===
+    // =================================================================================
 
     @Query(value = "SELECT CAST(i.data_emitere AS DATE) as ziua, COUNT(*) as nr_incidente " +
             "FROM Incidente i " +
@@ -112,7 +122,8 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             "         AND (:endDate IS NULL OR i2.data_emitere <= :endDate) " +
             "       GROUP BY CAST(i2.data_emitere AS DATE) " +
             "   ) as sub" +
-            ")", nativeQuery = true)
+            ") " +
+            "ORDER BY nr_incidente DESC", nativeQuery = true)
     List<Map<String, Object>> getZileCritice(@Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate);
 

@@ -480,4 +480,125 @@
     .print-btn, .nav-arrow, .command-bar {
         display: none !important;
     }
+
+    /* --- PAGINATED CARD STYLES --- */
+    /* --- PAGINATED CARD STYLES UPDATED --- */
+    .paginated-card {
+        display: flex;
+        flex-direction: column;
+        /* Inaltime fixa putin mai mare pentru a acomoda textul de jos */
+        min-height: 340px;
+        max-height: 340px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+
+    /* Container relativ pentru a pozitiona butoanele fata de el */
+    .card-content-relative {
+        position: relative;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    /* Container tabel - lasam spatiu stanga/dreapta pentru butoane */
+    .table-container-full {
+        width: 100%;
+        padding: 0 45px; /* Spatiu ca sa nu intre textul sub butoane */
+    }
+
+    /* Tabel fix */
+    .fixed-height-table {
+        width: 100%;
+    }
+
+    .fixed-height-table td {
+        height: 38px; /* Inaltimea randului */
+        vertical-align: middle;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+    }
+
+    /* --- BUTOANE ABSOLUTE (MARGINI) --- */
+    .nav-circle-absolute {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%); /* Centrare verticala perfecta */
+        width: 32px;
+        height: 32px;
+        border-radius: 50%; /* Perfect rotunde */
+        border: none;
+        background-color: white;
+        color: #333;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        transition: all 0.2s;
+    }
+
+    .nav-circle-absolute.left {
+        left: 10px; /* Lipit de stanga */
+    }
+
+    .nav-circle-absolute.right {
+        right: 10px; /* Lipit de dreapta */
+    }
+
+    .nav-circle-absolute:hover {
+        background-color: #f0f0f0;
+        transform: translateY(-50%) scale(1.1); /* Efect hover pastrand centrarea */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Culori specifice pentru butoane in functie de card */
+    .analysis-card.card-blue .nav-circle-absolute {
+        color: #007bff;
+        border: 1px solid #cce5ff;
+    }
+
+    .analysis-card.card-red .nav-circle-absolute {
+        color: #dc3545;
+        border: 1px solid #f5c6cb;
+    }
+
+    .analysis-card.card-green .nav-circle-absolute {
+        color: #28a745;
+        border: 1px solid #c3e6cb;
+    }
+
+    .analysis-card.card-orange .nav-circle-absolute {
+        color: #fd7e14;
+        border: 1px solid #ffeeba;
+    }
+
+    /* --- CONTOR PAGINA (JOS) --- */
+    .page-counter {
+        text-align: center;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.9); /* Text alb usor transparent */
+        font-weight: 600;
+        margin-top: 5px;
+        letter-spacing: 0.5px;
+        background-color: rgba(0, 0, 0, 0.1); /* Fundal fin pentru contrast */
+        padding: 2px 10px;
+        border-radius: 10px;
+        align-self: center; /* Centrat orizontal in flex column */
+    }
+
+    /* Empty state styling */
+    .empty-state {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 50px;
+        font-style: italic;
+    }
 }

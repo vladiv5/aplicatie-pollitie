@@ -51,7 +51,7 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
     List<Persoana> cautaDupaInceput(@Param("termen") String termen);
 
     // =================================================================================
-    // === 📊 RAPOARTE SIMPLE SI COMPLEXE (PE CARE LE AVEAI DEJA) ===
+    // === 📊 RAPOARTE SIMPLE SI COMPLEXE ===
     // =================================================================================
 
     // --- RAPORT 3: Rău-Platnici ---
@@ -67,7 +67,7 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
                                              @Param("endDate") LocalDateTime endDate);
 
 
-    // --- SUBCERERE 4: Recidiviști ---
+    // --- SUBCERERE 4: Recidiviști (Modificat sa aiba Order By) ---
     @Query(value = "SELECT p.nume, p.prenume, p.cnp, COUNT(a.id_amenda) as nr_abateri " +
             "FROM Persoane p " +
             "JOIN Amenzi a ON p.id_persoana = a.id_persoana " +
@@ -79,12 +79,13 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             "   FROM Amenzi a2 " +
             "   WHERE (:startDate IS NULL OR a2.data_emitere >= :startDate) " +
             "     AND (:endDate IS NULL OR a2.data_emitere <= :endDate) " +
-            ")", nativeQuery = true)
+            ") " +
+            "ORDER BY nr_abateri DESC", nativeQuery = true) // <-- ORDER BY ADAUGAT
     List<Map<String, Object>> getRecidivisti(@Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate);
 
     // =================================================================================
-    // === 🛡️ METODE NOI PENTRU VALIDARE UNICITATE (FIX EROARE 500) ===
+    // === 🛡️ METODE PENTRU VALIDARE UNICITATE ===
     // =================================================================================
 
     // Verifica CNP unic

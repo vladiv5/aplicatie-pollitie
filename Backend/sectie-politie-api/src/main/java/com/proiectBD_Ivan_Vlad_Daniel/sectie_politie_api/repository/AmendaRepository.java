@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 @Repository
 public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
 
-    // --- METODA NOUA PENTRU PAGINARE ---
+    // --- PAGINARE ---
     @Query(value = "SELECT * FROM Amenzi",
             countQuery = "SELECT count(*) FROM Amenzi",
             nativeQuery = true)
@@ -52,7 +52,7 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
     List<Amenda> cautaDupaInceput(@Param("termen") String termen);
 
     // =================================================================================
-    // === 📊 RAPORT 6: ISTORIC CNP (Refactorizat cu Filtru de Dată) ===
+    // === 📊 RAPORT PENTRU STATISTICI: ISTORIC CNP ===
     // =================================================================================
     @Query(value = "SELECT a.motiv, a.suma, a.data_emitere, a.stare_plata, " +
             "pol.nume as nume_politist, pol.prenume as prenume_politist " +
@@ -66,41 +66,39 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
                                              @Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate);
 
-    // Adaugă asta în AmendaRepository.java
+    // =================================================================================
+    // === 🛡️ LOGICĂ PROTECȚIE ȘTERGERE POLIȚIST ===
+    // =================================================================================
 
-    // Numără amenzile care NU sunt neplătite (Platita/Anulata) - acestea vor fi anonimizate
+    // Numără amenzile care NU sunt neplătite (Platita/Anulata)
     @Query(value = "SELECT COUNT(*) FROM Amenzi WHERE id_politist = :idPolitist AND stare_plata != 'Neplatita'", nativeQuery = true)
     int countAmenziSolubileByPolitist(@Param("idPolitist") Integer idPolitist);
 
-    // Update pentru anonimizare (stergerea legaturii cu politistul)
+    // Anonimizare (stergerea legaturii cu politistul)
     @Modifying
     @Transactional
     @Query(value = "UPDATE Amenzi SET id_politist = NULL WHERE id_politist = :idPolitist", nativeQuery = true)
     void anonimizeazaAmenziPolitist(@Param("idPolitist") Integer idPolitist);
 
-    // 1. Gasim doar amenzile NEPLATITE (Blocante)
-    @Query(value = "SELECT id_amenda FROM Amenzi WHERE id_politist = :idPolitist AND stare_plata = 'Neplatita'", nativeQuery = true)
-    List<Integer> findAmenziNeplatiteByPolitist(@Param("idPolitist") Integer idPolitist);
-
-    // 2. Numaram TOATE amenzile (pentru mesajul de avertisment)
-    @Query(value = "SELECT COUNT(*) FROM Amenzi WHERE id_politist = :idPolitist", nativeQuery = true)
-    int countAllAmenziByPolitist(@Param("idPolitist") Integer idPolitist);
-
-    // 3. REATRIBUIRE (Mutam amenzile pe un alt politist - Arhiva)
+    // Reatribuire (Mutam amenzile pe un alt politist - Arhiva)
     @Modifying
     @Transactional
     @Query(value = "UPDATE Amenzi SET id_politist = :idNou WHERE id_politist = :idVechi", nativeQuery = true)
     void mutaAmenziPeAltPolitist(@Param("idVechi") Integer idVechi, @Param("idNou") Integer idNou);
 
-    // 1. Amenzi NEPLATITE (Blocante - Rosu)
+    // Gasim amenzile NEPLATITE (Blocante)
     @Query(value = "SELECT * FROM Amenzi WHERE id_politist = :id AND stare_plata = 'Neplatita'", nativeQuery = true)
     List<Amenda> findUnpaidAmenziByPolitist(@Param("id") Integer id);
 
-    // 2. Amenzi PLATITE (Warning - Portocaliu)
+    // Gasim amenzile PLATITE (Warning)
     @Query(value = "SELECT COUNT(*) FROM Amenzi WHERE id_politist = :id AND stare_plata = 'Platita'", nativeQuery = true)
     int countPaidAmenziByPolitist(@Param("id") Integer id);
 
-    // 3. Stergere in cascada
+    // Returnează TOATE amenzile polițistului
+    @Query(value = "SELECT * FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
+    List<Amenda> findAllNativeByPolitist(@Param("id") Integer id);
+
+    // Stergere in cascada
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
@@ -111,21 +109,16 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
     @Query(value = "DELETE FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
     void stergeAmenziDupaPolitist(@Param("id") Integer id);
 
-    // Returnează TOATE amenzile polițistului (pentru lista din Modalul de Ștergere)
-    @Query(value = "SELECT * FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
-    List<Amenda> findAllNativeByPolitist(@Param("id") Integer id);
+    // =================================================================================
+    // === 🛡️ LOGICĂ PROTECȚIE ȘTERGERE PERSOANĂ ===
+    // =================================================================================
 
-    // --- PENTRU PERSOANE ---
-
-    // 1. Gasim amenzile NEPLATITE ale persoanei (Blocante - Rosu)
     @Query(value = "SELECT * FROM Amenzi WHERE id_persoana = :id AND stare_plata = 'Neplatita'", nativeQuery = true)
     List<Amenda> findUnpaidAmenziByPersoana(@Param("id") Integer id);
 
-    // 2. Gasim TOATE amenzile persoanei (pentru lista din Modal)
     @Query(value = "SELECT * FROM Amenzi WHERE id_persoana = :id", nativeQuery = true)
     List<Amenda> findAllNativeByPersoana(@Param("id") Integer id);
 
-    // 3. Stergere amenzi persoana
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Amenzi WHERE id_persoana = :id", nativeQuery = true)
