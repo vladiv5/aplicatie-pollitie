@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast'; // <--- IMPORT
+
 import './styles/TableStyles.css';
 
 const AddPersoana = ({ onSaveSuccess, onCancel }) => {
@@ -10,14 +12,9 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
         dataNasterii: '',
         telefon: ''
     });
-    // State pentru erorile venite din Backend
     const [errors, setErrors] = useState({});
 
     const handleSave = () => {
-        // --- AM SCOS IF-ul CARE BLOCA TRIMIEREA ---
-        // Acum datele pleacă direct la Java, chiar dacă sunt goale.
-        // Java va întoarce erorile (400 Bad Request), iar noi le vom afișa sub câmpuri.
-
         const token = localStorage.getItem('token');
 
         axios.post('http://localhost:8080/api/persoane', formData, {
@@ -25,15 +22,16 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
         })
             .then(() => {
                 setErrors({});
+                toast.success("Persoană adăugată cu succes!"); // <--- SUCCES
                 onSaveSuccess();
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
-                    // Aici primim harta cu erori (ex: "Numele este obligatoriu", "CNP invalid")
                     setErrors(error.response.data);
+                    toast.error("Verifică câmpurile invalide!"); // <--- EROARE FORMULAR
                 } else {
                     console.error(error);
-                    alert("Eroare server! Verifică consola.");
+                    toast.error("Eroare la salvare! CNP-ul există deja?"); // <--- EROARE SERVER
                 }
             });
     };
@@ -49,7 +47,6 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
                     type="text" name="nume" placeholder="Nume"
                     className="modal-input" onChange={handleChange} value={formData.nume}
                 />
-                {/* Mesaj de eroare sub camp */}
                 {errors.nume && <span style={{color: 'red', fontSize: '12px'}}>{errors.nume}</span>}
 
                 <input

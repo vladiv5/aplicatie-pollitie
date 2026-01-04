@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -30,7 +31,7 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
                         judetSauSector: data.judetSauSector || ''
                     });
                 })
-                .catch(err => console.error("Eroare încărcare adresă:", err));
+                .catch(err => toast.error("Eroare încărcare date!"));
         }
     }, [id]);
 
@@ -46,13 +47,14 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
         })
             .then(() => {
                 setErrors({});
+                toast.success("Adresă actualizată!"); // <--- TOAST
                 onSaveSuccess();
             })
             .catch(err => {
                 if (err.response && err.response.status === 400) {
                     setErrors(err.response.data);
                 } else {
-                    alert("Eroare la modificare!");
+                    toast.error("Eroare la modificare!"); // <--- TOAST
                 }
             });
     };
@@ -94,6 +96,7 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
                     <div style={{width:'30%'}}>
                         <label>Bloc</label>
                         <input name="bloc" className="modal-input" value={formData.bloc} onChange={handleChange} />
+                        {errors.bloc && <span style={{color: 'red', fontSize: '12px'}}>{errors.bloc}</span>}
                     </div>
                     <div style={{width:'30%'}}>
                         <label>Ap.</label>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
-// ACUM: Primim ID-ul si functiile direct de la parinte (PolitistiPage), nu din URL
 const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
 
     const [formData, setFormData] = useState({
@@ -12,16 +12,15 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
         telefon_serviciu: ''
     });
 
-    const [errors, setErrors] = useState({}); // Aici tinem erorile primite de la backend
+    const [errors, setErrors] = useState({});
 
-    // Incarcam datele cand componenta se monteaza sau se schimba ID-ul
     useEffect(() => {
         if (id) {
             axios.get(`http://localhost:8080/api/politisti/${id}`)
                 .then(response => {
                     setFormData(response.data);
                 })
-                .catch(error => console.error("Eroare la încărcare date polițist:", error));
+                .catch(error => console.error("Eroare:", error));
         }
     }, [id]);
 
@@ -33,26 +32,24 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
     };
 
     const handleSubmit = () => {
-        // PUT request catre backend
         axios.put(`http://localhost:8080/api/politisti/${id}`, formData)
             .then(() => {
-                // Nu mai facem navigate, ci anuntam parintele ca am terminat
+                toast.success("Polițist actualizat!"); // <--- SUCCES
                 onSaveSuccess();
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
-                    // Aici primim harta cu erori din Java (GlobalExceptionHandler)
                     setErrors(error.response.data);
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
                     console.error("Eroare:", error);
-                    alert("A apărut o eroare neașteptată!");
+                    toast.error("A apărut o eroare la salvare!"); // <--- EROARE
                 }
             });
     };
 
     return (
         <div>
-            {/* Am refolosit clasele din AddPolitist pentru design consistent */}
             <div className="form-group">
                 <label>Nume</label>
                 <input type="text" name="nume" className="modal-input" value={formData.nume} onChange={handleChange} />
@@ -79,8 +76,6 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
                 <button className="save-btn" onClick={handleSubmit}>
                     Salvează Modificări
                 </button>
-                {/* Optional: Buton de Anuleaza daca vrei sa fie explicit */}
-                {/* <button className="cancel-btn" onClick={onCancel}>Anulează</button> */}
             </div>
         </div>
     );

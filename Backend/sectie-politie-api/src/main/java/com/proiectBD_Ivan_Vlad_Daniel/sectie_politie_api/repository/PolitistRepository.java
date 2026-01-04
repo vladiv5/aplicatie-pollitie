@@ -17,19 +17,15 @@ import java.util.Optional;
 @Repository
 public interface PolitistRepository extends JpaRepository<Politist, Integer> {
 
-    @Query(value = "SELECT * FROM Politisti",
-            countQuery = "SELECT count(*) FROM Politisti",
-            nativeQuery = true)
+    @Query(value = "SELECT * FROM Politisti", countQuery = "SELECT count(*) FROM Politisti", nativeQuery = true)
     Page<Politist> findAllNative(Pageable pageable);
 
-    // --- METODE STANDARD (NU LE MODIFICĂM) ---
     @Query(value = "SELECT * FROM Politisti", nativeQuery = true)
     List<Politist> toataListaPolitisti();
 
     @Modifying
     @Transactional
-    @Query(value = "INSERT INTO Politisti (nume, prenume, grad, functie, telefon_serviciu) " +
-            "VALUES (:nume, :prenume, :grad, :functie, :telefon)", nativeQuery = true)
+    @Query(value = "INSERT INTO Politisti (nume, prenume, grad, functie, telefon_serviciu) VALUES (:nume, :prenume, :grad, :functie, :telefon)", nativeQuery = true)
     void adaugaPolitistManual(@Param("nume") String nume, @Param("prenume") String prenume, @Param("grad") String grad, @Param("functie") String functie, @Param("telefon") String telefon);
 
     @Modifying
@@ -44,62 +40,29 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
     @Query(value = "UPDATE Politisti SET nume = :nume, prenume = :prenume, grad = :grad, functie = :functie, telefon_serviciu = :telefon_serviciu WHERE id_politist = :id_politist", nativeQuery = true)
     void updatePolitist(@Param("id_politist") Integer id_politist, @Param("nume") String nume, @Param("prenume") String prenume, @Param("grad") String grad, @Param("functie") String functie, @Param("telefon_serviciu") String telefon_serviciu);
 
-    @Query(value = "SELECT * FROM Politisti WHERE LOWER(nume) LIKE LOWER(CONCAT(:termen, '%')) OR LOWER(prenume) LIKE LOWER(CONCAT(:termen, '%')) OR LOWER(grad) LIKE LOWER(CONCAT(:termen, '%'))", nativeQuery = true)
+    // === SEARCH INTELIGENT (_100_CI_AI) ===
+    @Query(value = "SELECT * FROM Politisti WHERE " +
+            "CONCAT(COALESCE(nume, ''), ' ', COALESCE(prenume, ''), ' ', COALESCE(grad, ''), ' ', COALESCE(functie, ''), ' ', COALESCE(telefon_serviciu, '')) " +
+            "COLLATE Latin1_General_100_CI_AI " +
+            "LIKE CONCAT('%', :termen, '%')", nativeQuery = true)
     List<Politist> cautaDupaInceput(@Param("termen") String termen);
 
     @Query(value = "SELECT * FROM Politisti WHERE id_politist = :id", nativeQuery = true)
     Optional<Politist> findByIdNative(@Param("id") Integer id);
 
-    // =================================================================================
-    // === 📊 RAPOARTE SIMPLE (Pastrate) ===
-    // =================================================================================
+    // --- RAPOARTE ---
+    @Query(value = "SELECT p.nume, p.prenume, p.grad, p.functie, SUM(a.suma) as total_valoare FROM politisti p JOIN amenzi a ON p.id_politist = a.id_politist WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) AND (:endDate IS NULL OR a.data_emitere <= :endDate) GROUP BY p.id_politist, p.nume, p.prenume, p.grad, p.functie ORDER BY total_valoare DESC", nativeQuery = true)
+    List<Map<String, Object>> getTopPolitistiAmenzi(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    // --- RAPORT 1: Top Polițiști ---
-    @Query(value = "SELECT p.nume, p.prenume, p.grad, p.functie, SUM(a.suma) as total_valoare " +
-            "FROM politisti p " +
-            "JOIN amenzi a ON p.id_politist = a.id_politist " +
-            "WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) " +
-            "  AND (:endDate IS NULL OR a.data_emitere <= :endDate) " +
-            "GROUP BY p.id_politist, p.nume, p.prenume, p.grad, p.functie " +
-            "ORDER BY total_valoare DESC", nativeQuery = true)
-    List<Map<String, Object>> getTopPolitistiAmenzi(@Param("startDate") LocalDateTime startDate,
-                                                    @Param("endDate") LocalDateTime endDate);
-    // --- RAPORT 5: Statistici per Grad ---
-    @Query(value = "SELECT p.grad, COUNT(a.id_amenda) as nr_amenzi, SUM(a.suma) as valoare_totala " +
-            "FROM politisti p " +
-            "JOIN amenzi a ON p.id_politist = a.id_politist " +
-            "WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) " +
-            "  AND (:endDate IS NULL OR a.data_emitere <= :endDate) " +
-            "GROUP BY p.grad", nativeQuery = true)
-    List<Map<String, Object>> getStatisticiPerGrad(@Param("startDate") LocalDateTime startDate,
-                                                   @Param("endDate") LocalDateTime endDate);
+    @Query(value = "SELECT p.grad, COUNT(a.id_amenda) as nr_amenzi, SUM(a.suma) as valoare_totala FROM politisti p JOIN amenzi a ON p.id_politist = a.id_politist WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) AND (:endDate IS NULL OR a.data_emitere <= :endDate) GROUP BY p.grad", nativeQuery = true)
+    List<Map<String, Object>> getStatisticiPerGrad(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    // =================================================================================
-    // === 🧠 INTEROGARE COMPLEXĂ (MODIFICATA PENTRU A INCLUDE FUNCTIA SI ORDONAREA) ===
-    // =================================================================================
+    @Query(value = "SELECT p.nume, p.prenume, p.grad, p.functie, AVG(a.suma) as medie_personala FROM Politisti p JOIN Amenzi a ON p.id_politist = a.id_politist WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) AND (:endDate IS NULL OR a.data_emitere <= :endDate) GROUP BY p.id_politist, p.nume, p.prenume, p.grad, p.functie HAVING AVG(a.suma) > (SELECT AVG(a2.suma) FROM Amenzi a2 WHERE (:startDate IS NULL OR a2.data_emitere >= :startDate) AND (:endDate IS NULL OR a2.data_emitere <= :endDate)) ORDER BY medie_personala DESC", nativeQuery = true)
+    List<Map<String, Object>> getAgentiSeveri(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    // --- Agenți Severi ---
-    // MODIFICARE: Adaugat p.functie in SELECT si GROUP BY. Adaugat ORDER BY medie_personala DESC
-    @Query(value = "SELECT p.nume, p.prenume, p.grad, p.functie, AVG(a.suma) as medie_personala " +
-            "FROM Politisti p " +
-            "JOIN Amenzi a ON p.id_politist = a.id_politist " +
-            "WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) " +
-            "  AND (:endDate IS NULL OR a.data_emitere <= :endDate) " +
-            "GROUP BY p.id_politist, p.nume, p.prenume, p.grad, p.functie " +
-            "HAVING AVG(a.suma) > (" +
-            "   SELECT AVG(a2.suma) FROM Amenzi a2 " +
-            "   WHERE (:startDate IS NULL OR a2.data_emitere >= :startDate) " +
-            "     AND (:endDate IS NULL OR a2.data_emitere <= :endDate) " +
-            ") " +
-            "ORDER BY medie_personala DESC", nativeQuery = true) // <-- ORDER BY ADAUGAT
-    List<Map<String, Object>> getAgentiSeveri(@Param("startDate") LocalDateTime startDate,
-                                              @Param("endDate") LocalDateTime endDate);
-
-    // Cautam politistul special de arhiva
     @Query(value = "SELECT * FROM Politisti WHERE nume = 'ARHIVA' AND prenume = 'SISTEM' LIMIT 1", nativeQuery = true)
     Optional<Politist> findPolitistArhiva();
 
-    // Verifica daca telefonul exista deja la ALTCINEVA
     @Query(value = "SELECT count(*) FROM Politisti WHERE telefon_serviciu = :tel AND (:idExclus IS NULL OR id_politist != :idExclus)", nativeQuery = true)
     int verificaTelefonUnic(@Param("tel") String tel, @Param("idExclus") Integer idExclus);
 }

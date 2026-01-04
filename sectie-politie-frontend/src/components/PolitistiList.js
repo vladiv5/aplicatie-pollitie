@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'; // <--- IMPORTURI O
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast';
 
 const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick }) => {
     // --- STATE DATE TABEL ---
@@ -86,7 +87,7 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick }) => {
             })
             .catch(err => {
                 console.error(err);
-                alert("Eroare la verificarea polițistului.");
+                toast.error("Eroare la verificarea polițistului.");
             });
     };
 
@@ -100,9 +101,11 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick }) => {
                 setIsDeleteModalOpen(false);
                 setDeleteId(null);
                 setDeleteData(null);
-                alert(res.data); // Mesajul de succes din backend
+                toast.success("Polițist șters cu succes!");
             })
-            .catch(err => alert("Eroare la ștergerea efectivă!"));
+            .catch(err => {
+                toast.error("Eroare la ștergerea efectivă!");
+            });
     };
 
     return (

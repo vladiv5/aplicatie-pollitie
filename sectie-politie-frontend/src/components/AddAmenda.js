@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const AddAmenda = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -12,12 +13,9 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
         politistId: null,
         persoanaId: null
     });
-    // State erori
     const [errors, setErrors] = useState({});
 
     const handleSave = () => {
-        // --- VALIDARE MUTATĂ ÎN BACKEND ---
-
         const token = localStorage.getItem('token');
         let dataFinala = formData.dataEmitere;
 
@@ -28,7 +26,6 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
         }
         if (dataFinala.length === 16) dataFinala += ":00";
 
-        // Convertim suma la numar sau null daca e goala (dar validarea cere NotNull)
         const sumaNumar = formData.suma ? parseFloat(formData.suma) : null;
 
         const payload = {
@@ -36,8 +33,8 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
             suma: sumaNumar,
             starePlata: formData.starePlata,
             dataEmitere: dataFinala,
-            idPolitist: formData.politistId, // Trimitem ID direct
-            idPersoana: formData.persoanaId // Trimitem ID direct
+            idPolitist: formData.politistId,
+            idPersoana: formData.persoanaId
         };
 
         axios.post('http://localhost:8080/api/amenzi', payload, {
@@ -45,14 +42,16 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
         })
             .then(() => {
                 setErrors({});
+                toast.success("Amendă emisă cu succes!"); // <--- TOAST
                 onSaveSuccess();
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
                     console.error("Eroare salvare:", error);
-                    alert("Eroare server!");
+                    toast.error("Eroare la salvare!"); // <--- TOAST
                 }
             });
     };
@@ -105,7 +104,6 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
                     displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
                     onSelect={(item) => setFormData({...formData, politistId: item?.idPolitist})}
                 />
-                {/* Nu avem eroare aici, e optional */}
 
                 <LiveSearchInput
                     label="Persoana Amendată"

@@ -7,6 +7,7 @@ import '../components/styles/TableStyles.css';
 import '../components/styles/Statistici.css';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import toast from 'react-hot-toast';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF4560'];
 
@@ -272,7 +273,7 @@ const StatisticiPage = () => {
         const config = { headers: { 'Authorization': `Bearer ${token}` }, params: { id: selectedPolitist.idPolitist, start: startOverride, end: endOverride } };
         axios.get(`http://localhost:8080/api/statistici/incidente-politist`, config)
             .then(res => setRezultatPolitist(res.data))
-            .catch(() => alert("Fără date."));
+            .catch(() => toast.error("Fără date."));
     };
 
     const handleCautaCnp = (startOverride = activeStartDate, endOverride = activeEndDate) => {
@@ -281,7 +282,7 @@ const StatisticiPage = () => {
         const config = { headers: { 'Authorization': `Bearer ${token}` }, params: { cnp: selectedPersoana.cnp, start: startOverride, end: endOverride } };
         axios.get(`http://localhost:8080/api/statistici/istoric-cnp`, config)
             .then(res => setRezultatCnp(res.data))
-            .catch(() => alert("Fără date."));
+            .catch(() => toast.error("Fără date."));
     };
 
     const handlePrint = () => {

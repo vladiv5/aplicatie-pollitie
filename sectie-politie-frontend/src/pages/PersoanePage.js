@@ -5,6 +5,7 @@ import EditPersoana from '../components/EditPersoana';
 import ViewIncidentePersoana from '../components/ViewIncidentePersoana';
 import ViewAdresePersoana from '../components/ViewAdresePersoana';
 import Modal from '../components/Modal';
+import toast from 'react-hot-toast';
 
 const PersoanePage = () => {
     // State Modale
@@ -20,14 +21,12 @@ const PersoanePage = () => {
     const handleAddSuccess = () => {
         setIsAddModalOpen(false);
         setRefreshTrigger(prev => prev + 1);
-        alert("Persoană adăugată!");
     };
 
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditId(null);
         setRefreshTrigger(prev => prev + 1);
-        alert("Persoană modificată!");
     };
 
     return (

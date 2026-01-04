@@ -1,6 +1,7 @@
 // src/App.js
 import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from "react-hot-toast";
 import Menu from './components/Menu';
 import LoginPage from './pages/LoginPage';
 import PolitistiPage from './pages/PolitistiPage';
@@ -12,11 +13,42 @@ import PersoanePage from "./pages/PersoanePage";
 import AdresePage from "./pages/AdresePage";
 import AmenziPage from "./pages/AmenziPage";
 import HomePage from './pages/HomePage';
+import './components/styles/Toast.css'
 
 
 function App() {
     return (
         <BrowserRouter>
+            <Toaster
+                position="top-right"
+                reverseOrder={false}
+                toastOptions={{
+                    // Definim clasele CSS pe care le-am creat
+                    className: 'toast-base',
+
+                    success: {
+                        className: 'toast-base toast-success',
+                        duration: 3000,
+                        iconTheme: {
+                            primary: '#28a745',
+                            secondary: '#fff',
+                        },
+                    },
+
+                    error: {
+                        className: 'toast-base toast-error',
+                        duration: 4000,
+                        iconTheme: {
+                            primary: '#dc3545',
+                            secondary: '#fff',
+                        },
+                    },
+
+                    loading: {
+                        className: 'toast-base toast-loading',
+                    }
+                }}
+            />
             <Routes>
                 {/* Meniul se încarcă mereu */}
                 <Route path="/" element={<Menu />}>

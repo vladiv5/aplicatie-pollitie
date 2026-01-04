@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const AddIncident = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -13,24 +14,18 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
         politistId: null,
         adresaId: null
     });
-    // State pentru erorile venite din Backend
     const [errors, setErrors] = useState({});
 
     const handleSave = () => {
-        // --- AM SCOS ALERT-ul MANUAL ---
-        // Lăsăm Backend-ul (Java) să facă validarea (litere, dată 15 ani, etc.)
-
         const token = localStorage.getItem('token');
         let dataFinala = formData.dataEmitere;
 
-        // Dacă nu s-a ales data, punem data curentă
         if (!dataFinala) {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             dataFinala = now.toISOString().slice(0, 16);
         }
 
-        // Adăugăm secundele dacă lipsesc (format LocalDateTime Java)
         if (dataFinala.length === 16) {
             dataFinala += ":00";
         }
@@ -49,16 +44,17 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(() => {
-                setErrors({}); // Curățăm erorile la succes
+                setErrors({});
+                toast.success("Incident înregistrat cu succes!"); // <--- TOAST
                 onSaveSuccess();
             })
             .catch(error => {
-                // Aici prindem erorile trimise de Java (400 Bad Request)
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
+                    toast.error("Verifică câmpurile invalide!"); // <--- TOAST
                 } else {
                     console.error("Eroare salvare:", error);
-                    alert("Eroare la salvare! Verifică consola.");
+                    toast.error("Eroare la salvare! Verifică conexiunea."); // <--- TOAST
                 }
             });
     };
@@ -132,7 +128,6 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     value={formData.descriereIncident}
                     onChange={(e) => setFormData({...formData, descriereIncident: e.target.value})}
                 />
-                {/* Aici nu avem eroare de format, dar daca Backendul da eroare de lungime, o afisam */}
                 {errors.descriereIncident && <span style={{color: 'red', fontSize: '12px'}}>{errors.descriereIncident}</span>}
             </div>
 

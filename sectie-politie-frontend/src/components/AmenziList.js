@@ -1,24 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Pagination from './Pagination';
-import DeleteSmartModal from './DeleteSmartModal'; // Importam modalul
+import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
-const AmenziList = ({
-                        refreshTrigger, onAddClick, onEditClick
-                    }) => {
-    // --- STATE ---
+const AmenziList = ({ refreshTrigger, onAddClick, onEditClick }) => {
     const [amenzi, setAmenzi] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // --- STATE DELETE SMART ---
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
-    // --- FETCH DATA ---
     const loadAmenzi = (page, term = '') => {
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/amenzi/lista-paginata?page=${page}&size=10`;
@@ -44,7 +40,6 @@ const AmenziList = ({
     const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadAmenzi(0, e.target.value); };
 
     // --- LOGICA DELETE SMART ---
-
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/amenzi/verifica-stergere/${id}`, {
@@ -57,7 +52,7 @@ const AmenziList = ({
             })
             .catch(err => {
                 console.error(err);
-                alert("Eroare la verificarea amenzii.");
+                toast.error("Eroare la verificarea amenzii."); // <--- TOAST
             });
     };
 
@@ -71,11 +66,9 @@ const AmenziList = ({
                 setIsDeleteModalOpen(false);
                 setDeleteData(null);
                 setDeleteId(null);
-
-                // AFISAM MESAJUL DIN BACKEND
-                alert(res.data);
+                toast.success("Amendă ștearsă!"); // <--- TOAST
             })
-            .catch(err => alert("Eroare la ștergere!"));
+            .catch(err => toast.error("Eroare la ștergere!")); // <--- TOAST
     };
 
     const formatDataFrumos = (isoString) => {
@@ -92,18 +85,9 @@ const AmenziList = ({
     return (
         <div className="page-container">
             <h2 className="page-title">Registru Amenzi</h2>
-
             <div className="controls-container">
-                <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Caută după motiv, persoană..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                />
-                <button className="add-btn-primary" onClick={onAddClick}>
-                    <span>+</span> Adaugă Amendă
-                </button>
+                <input type="text" className="search-input" placeholder="Caută..." value={searchTerm} onChange={handleSearchChange} />
+                <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adaugă Amendă</button>
             </div>
 
             <table className="styled-table">
@@ -138,8 +122,6 @@ const AmenziList = ({
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
                                     <button className="action-btn edit-btn" onClick={() => onEditClick(amenda.idAmenda)}>Edit</button>
-
-                                    {/* BUTON DELETE SMART */}
                                     <button className="action-btn delete-btn" onClick={() => handleRequestDelete(amenda.idAmenda)}>Șterge</button>
                                 </div>
                             </td>
@@ -147,16 +129,8 @@ const AmenziList = ({
                     ))) : (<tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>)}
                 </tbody>
             </table>
-
             {!searchTerm && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
-
-            {/* MODAL SMART */}
-            <DeleteSmartModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleConfirmDelete}
-                data={deleteData}
-            />
+            <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
         </div>
     );
 };

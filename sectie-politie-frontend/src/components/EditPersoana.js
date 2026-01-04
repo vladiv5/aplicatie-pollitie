@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast'; // <--- IMPORT
 import './styles/TableStyles.css';
 
 const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
@@ -21,7 +22,7 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
                 .then(response => {
                     setFormData(response.data);
                 })
-                .catch(error => console.error("Eroare la încărcare date persoană:", error));
+                .catch(error => toast.error("Eroare la încărcare date persoană."));
         }
     }, [id]);
 
@@ -37,13 +38,15 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
         })
             .then(() => {
                 setErrors({});
+                toast.success("Datele au fost actualizate!"); // <--- SUCCES
                 onSaveSuccess();
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
-                    alert("Eroare server!");
+                    toast.error("Eroare la salvarea modificărilor!"); // <--- EROARE
                 }
             });
     };

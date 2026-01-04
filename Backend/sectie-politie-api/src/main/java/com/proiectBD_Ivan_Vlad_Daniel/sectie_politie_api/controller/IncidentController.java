@@ -3,10 +3,6 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.controller;
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities.Incident;
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.IncidentRepository;
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.PersoanaIncidentRepository;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +28,153 @@ public class IncidentController {
     @Autowired
     private PersoanaIncidentRepository persoanaIncidentRepository;
 
-    // --- VERIFICARE STERGERE (NEMODIFICAT) ---
+    // --- GET METHODS ---
+    @GetMapping
+    public List<Incident> getAllIncidente() {
+        return incidentRepository.getAllIncidenteNative();
+    }
+
+    @GetMapping("/{id}")
+    public Incident getIncidentById(@PathVariable Integer id) {
+        return incidentRepository.getIncidentByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Incidentul nu a fost gasit!"));
+    }
+
+    @GetMapping("/cauta")
+    public List<Incident> cautaIncidente(@RequestParam String termen) {
+        if (termen == null || termen.trim().isEmpty()) {
+            return incidentRepository.getAllIncidenteNative();
+        }
+        return incidentRepository.cautaDupaInceput(termen);
+    }
+
+    // --- INSERT (VALIDARE MANUALA) ---
+    @PostMapping
+    public ResponseEntity<?> createIncident(@RequestBody IncidentRequest req) {
+        // Validam datele folosind helper-ul
+        Map<String, String> errors = valideazaIncident(req);
+
+        // --- STOP DACA AVEM ERORI ---
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        // 5. CURATARE DATA (Empty -> Null)
+        String locFinal = (req.descriereLocatie != null && req.descriereLocatie.trim().isEmpty()) ? null : req.descriereLocatie;
+        String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
+
+        // Data curenta daca lipseste
+        LocalDateTime dataFinala = null;
+        if (req.dataEmitere != null) {
+            dataFinala = LocalDateTime.parse(req.dataEmitere);
+        } else {
+            dataFinala = LocalDateTime.now();
+        }
+
+        // 6. SQL INSERT
+        incidentRepository.insertIncident(
+                req.tipIncident,
+                dataFinala,
+                locFinal,
+                req.descriereIncident,
+                req.idPolitist,
+                req.idAdresa,
+                statusDeSalvat
+        );
+        return ResponseEntity.ok("Incident creat cu succes!");
+    }
+
+    // --- UPDATE (VALIDARE MANUALA) ---
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateIncident(@PathVariable Integer id, @RequestBody IncidentRequest req) {
+        incidentRepository.getIncidentByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Incidentul nu exista!"));
+
+        Map<String, String> errors = valideazaIncident(req);
+
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        // 5. CURATARE
+        String locFinal = (req.descriereLocatie != null && req.descriereLocatie.trim().isEmpty()) ? null : req.descriereLocatie;
+        String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
+        LocalDateTime dataFinala = LocalDateTime.parse(req.dataEmitere);
+
+        // 6. UPDATE
+        incidentRepository.updateIncident(
+                id,
+                req.tipIncident,
+                dataFinala,
+                locFinal,
+                req.descriereIncident,
+                req.idPolitist,
+                req.idAdresa,
+                statusDeSalvat
+        );
+        return ResponseEntity.ok("Incident modificat cu succes!");
+    }
+
+    // --- HELPER VALIDARE ---
+    private Map<String, String> valideazaIncident(IncidentRequest req) {
+        Map<String, String> errors = new HashMap<>();
+
+        // 1. TIP INCIDENT (Obligatoriu -> Regex -> Max 100)
+        String tip = req.tipIncident;
+        if (tip == null || tip.trim().isEmpty()) {
+            errors.put("tipIncident", "Tipul incidentului este obligatoriu!");
+        } else {
+            if (!tip.matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
+                errors.put("tipIncident", "Tipul incidentului poate conține doar litere, spații sau cratimă.");
+            } else if (tip.length() > 100) {
+                errors.put("tipIncident", "Tipul incidentului este prea lung (max 100 caractere).");
+            }
+        }
+
+        // 2. DESCRIERE INCIDENT (Obligatoriu)
+        if (req.descriereIncident == null || req.descriereIncident.trim().isEmpty()) {
+            errors.put("descriereIncident", "Descrierea incidentului este obligatorie!");
+        }
+
+        // 3. DESCRIERE LOCATIE (Optional -> Max 255)
+        if (req.descriereLocatie != null && req.descriereLocatie.length() > 255) {
+            errors.put("descriereLocatie", "Descrierea locației e prea lungă (max 255 caractere).");
+        }
+
+        // 4. DATA (Format + Logica 15 ani)
+        try {
+            if (req.dataEmitere != null) {
+                LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
+                if (!isDataValida(data)) {
+                    errors.put("dataEmitere", "Incidentul este mai vechi de 15 ani sau din viitor!");
+                }
+            }
+        } catch (Exception e) {
+            errors.put("dataEmitere", "Format dată invalid!");
+        }
+
+        return errors;
+    }
+
+    // --- STERGERE ---
+    @DeleteMapping("/{id}")
+    public String deleteIncident(@PathVariable Integer id) {
+        persoanaIncidentRepository.deleteByIncidentId(id);
+        incidentRepository.deleteIncidentNative(id);
+        return "Incidentul a fost șters cu succes!";
+    }
+
+    // --- PAGINARE ---
+    @GetMapping("/lista-paginata")
+    public Page<Incident> getIncidentePaginat(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "data_emitere"));
+        return incidentRepository.findAllNativePaginat(pageable);
+    }
+
+    // --- VERIFICARE STERGERE ---
     @GetMapping("/verifica-stergere/{id}")
     public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
         Incident incident = incidentRepository.getIncidentByIdNative(id)
@@ -58,152 +200,19 @@ public class IncidentController {
         }
     }
 
-    // --- GET METHODS (NEMODIFICAT) ---
-    @GetMapping
-    public List<Incident> getAllIncidente() {
-        return incidentRepository.getAllIncidenteNative();
-    }
-
-    @GetMapping("/{id}")
-    public Incident getIncidentById(@PathVariable Integer id) {
-        return incidentRepository.getIncidentByIdNative(id)
-                .orElseThrow(() -> new RuntimeException("Incidentul nu a fost gasit!"));
-    }
-
-    @GetMapping("/cauta")
-    public List<Incident> cautaIncidente(@RequestParam String termen) {
-        if (termen == null || termen.trim().isEmpty()) {
-            return incidentRepository.getAllIncidenteNative();
-        }
-        return incidentRepository.cautaDupaInceput(termen);
-    }
-
-    // --- INSERT SQL (MODIFICAT PT VALIDARI) ---
-    // Am schimbat return type in ResponseEntity<?> ca sa putem trimite erori
-    @PostMapping
-    public ResponseEntity<?> createIncident(@Valid @RequestBody IncidentRequest req) {
-        // 1. Transformam textul gol in NULL (pt locatii, descrieri)
-        if (req.descriereLocatie != null && req.descriereLocatie.trim().isEmpty()) req.descriereLocatie = null;
-
-        // 2. Validari Logice (Data 15 ani)
-        Map<String, String> eroriLogice = new HashMap<>();
-
-        // Parsăm data
-        LocalDateTime data;
-        try {
-            data = LocalDateTime.parse(req.dataEmitere);
-        } catch (Exception e) {
-            // Daca formatul e gresit, punem data curenta ca fallback SAU dam eroare
-            // Aici dam eroare ca sa stie userul
-            return ResponseEntity.badRequest().body(Map.of("dataEmitere", "Format dată invalid!"));
-        }
-
-        // Verificam regula de 15 ani
-        if (!isDataValida(data)) {
-            eroriLogice.put("dataEmitere", "Incidentul este mai vechi de 15 ani sau din viitor!");
-        }
-
-        if (!eroriLogice.isEmpty()) {
-            return ResponseEntity.badRequest().body(eroriLogice);
-        }
-
-        // 3. Verificam statusul
-        String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
-
-        // 4. Apelăm SQL-ul
-        incidentRepository.insertIncident(
-                req.tipIncident,
-                data,
-                req.descriereLocatie,
-                req.descriereIncident,
-                req.idPolitist,
-                req.idAdresa,
-                statusDeSalvat
-        );
-        return ResponseEntity.ok("Incident creat cu succes!");
-    }
-
-    // --- UPDATE SQL (MODIFICAT PT VALIDARI) ---
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateIncident(@PathVariable Integer id, @Valid @RequestBody IncidentRequest req) {
-        incidentRepository.getIncidentByIdNative(id)
-                .orElseThrow(() -> new RuntimeException("Incidentul nu exista!"));
-
-        // 1. Corectie Empty -> Null
-        if (req.descriereLocatie != null && req.descriereLocatie.trim().isEmpty()) req.descriereLocatie = null;
-
-        // 2. Validari Data
-        Map<String, String> eroriLogice = new HashMap<>();
-        LocalDateTime data;
-        try {
-            data = LocalDateTime.parse(req.dataEmitere);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("dataEmitere", "Format dată invalid!"));
-        }
-
-        if (!isDataValida(data)) {
-            eroriLogice.put("dataEmitere", "Dată invalidă (> 15 ani vechime sau viitor).");
-        }
-
-        if (!eroriLogice.isEmpty()) {
-            return ResponseEntity.badRequest().body(eroriLogice);
-        }
-
-        String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
-
-        // 3. Update
-        incidentRepository.updateIncident(
-                id,
-                req.tipIncident,
-                data,
-                req.descriereLocatie,
-                req.descriereIncident,
-                req.idPolitist,
-                req.idAdresa,
-                statusDeSalvat
-        );
-        return ResponseEntity.ok("Incident modificat cu succes!");
-    }
-
-    // --- DELETE INCIDENT (NEMODIFICAT) ---
-    @DeleteMapping("/{id}")
-    public String deleteIncident(@PathVariable Integer id) {
-        persoanaIncidentRepository.deleteByIncidentId(id);
-        incidentRepository.deleteIncidentNative(id);
-        return "Incidentul a fost șters cu succes!";
-    }
-
-    // --- ENDPOINT PAGINARE (NEMODIFICAT) ---
-    @GetMapping("/lista-paginata")
-    public Page<Incident> getIncidentePaginat(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "data_emitere"));
-        return incidentRepository.findAllNativePaginat(pageable);
-    }
-
-    // --- METODA AJUTATOARE (NOU) ---
     private boolean isDataValida(LocalDateTime data) {
         if (data == null) return false;
         LocalDateTime acum = LocalDateTime.now();
         LocalDateTime limitaTrecut = acum.minusYears(15);
-        // Sa nu fie mai vechi de 15 ani SI sa nu fie din viitor (cu 1 zi marja)
         return data.isAfter(limitaTrecut) && data.isBefore(acum.plusDays(1));
     }
 
-    // === CLASA DTO (MODIFICATA cu Adnotari) ===
+    // === DTO ===
     public static class IncidentRequest {
-        @Pattern(regexp = "^[a-zA-ZăâîșțĂÂÎȘȚ -]+$", message = "Tipul incidentului poate conține doar litere.")
         public String tipIncident;
-
         public String dataEmitere;
-
-        @Size(max = 255, message = "Descrierea locației e prea lungă (max 255 caractere).")
         public String descriereLocatie;
-
-        @NotBlank(message = "Descrierea incidentului este obligatorie!")
-        public String descriereIncident; // Fara limita (Text)
+        public String descriereIncident;
         public Integer idPolitist;
         public Integer idAdresa;
         public String status;

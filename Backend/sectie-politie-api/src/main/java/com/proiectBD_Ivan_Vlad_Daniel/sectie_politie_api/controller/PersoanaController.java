@@ -14,7 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import java.time.LocalDate;
 import java.time.Period;
@@ -61,101 +60,136 @@ public class PersoanaController {
                 .orElseThrow(() -> new RuntimeException("Persoana nu exista!"));
     }
 
-    // INSERT (Modificat pentru a preveni Eroarea 500 la duplicate)
+    // INSERT (VALIDARE MANUALA)
     @PostMapping
-    public ResponseEntity<?> addPersoana(@Valid @RequestBody Persoana p) {
-        // 1. Corectie Telefon (Empty -> Null)
-        if (p.getTelefon() != null && p.getTelefon().trim().isEmpty()) {
-            p.setTelefon(null);
-        }
+    public ResponseEntity<?> addPersoana(@RequestBody Persoana p) {
+        // 1. Curatare date
+        curataDatePersoana(p);
 
-        // 2. Validari Logice (CNP si Varsta)
-        Map<String, String> eroriLogice = new HashMap<>();
+        // 2. Validare Format (Regex, Lungime, etc.)
+        Map<String, String> errors = valideazaPersoana(p);
 
-        if (!isCnpValid(p.getCnp())) {
-            eroriLogice.put("cnp", "CNP-ul este invalid (cifra de control greșită)!");
-        }
-        if (p.getDataNasterii() != null && !isVarstaValida(p.getDataNasterii())) {
-            eroriLogice.put("dataNasterii", "Data nașterii invalidă (persoana ar avea peste 120 de ani sau e din viitor).");
-        }
-
-        // --- AICI ESTE FIX-UL PENTRU EROARE 500 ---
-        // Verificare UNICITATE CNP
-        if (persoanaRepository.verificaCnpUnic(p.getCnp(), null) > 0) {
-            eroriLogice.put("cnp", "Acest CNP există deja în baza de date!");
-        }
-
-        // Verificare UNICITATE Telefon (Doar daca nu e null)
-        if (p.getTelefon() != null) {
-            if (persoanaRepository.verificaTelefonUnic(p.getTelefon(), null) > 0) {
-                eroriLogice.put("telefon", "Acest telefon este deja asociat unei persoane!");
+        // 3. Validare Unicitate (Doar daca formatul e OK)
+        if (!errors.containsKey("cnp")) {
+            if (persoanaRepository.verificaCnpUnic(p.getCnp(), null) > 0) {
+                errors.put("cnp", "Acest CNP există deja în baza de date!");
             }
         }
 
-        // Daca avem erori logice, le returnam la fel ca @Valid (Bad Request)
-        if (!eroriLogice.isEmpty()) {
-            return ResponseEntity.badRequest().body(eroriLogice);
+        if (p.getTelefon() != null && !errors.containsKey("telefon")) {
+            if (persoanaRepository.verificaTelefonUnic(p.getTelefon(), null) > 0) {
+                errors.put("telefon", "Acest telefon este deja asociat unei persoane!");
+            }
         }
 
-        // 3. Salvare efectiva
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        // 4. Salvare efectiva
         persoanaRepository.insertPersoana(
-                p.getNume(),
-                p.getPrenume(),
-                p.getCnp(),
-                p.getDataNasterii(),
-                p.getTelefon()
+                p.getNume(), p.getPrenume(), p.getCnp(), p.getDataNasterii(), p.getTelefon()
         );
-        return ResponseEntity.ok("Persoana adăugată cu succes prin SQL!");
+        return ResponseEntity.ok("Persoana adăugată cu succes!");
     }
 
-    // UPDATE (Modificat pentru a preveni Eroarea 500 la duplicate)
+    // UPDATE (VALIDARE MANUALA)
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePersoana(@PathVariable Integer id, @Valid @RequestBody Persoana p) {
-        // Verificam existenta
+    public ResponseEntity<?> updatePersoana(@PathVariable Integer id, @RequestBody Persoana p) {
         persoanaRepository.getPersoanaByIdNative(id)
                 .orElseThrow(() -> new RuntimeException("Persoana nu exista!"));
 
-        // 1. Corectie Telefon
-        if (p.getTelefon() != null && p.getTelefon().trim().isEmpty()) {
-            p.setTelefon(null);
-        }
+        // 1. Curatare
+        curataDatePersoana(p);
 
-        // 2. Validari Logice
-        Map<String, String> eroriLogice = new HashMap<>();
-        if (!isCnpValid(p.getCnp())) {
-            eroriLogice.put("cnp", "CNP-ul este invalid!");
-        }
-        if (p.getDataNasterii() != null && !isVarstaValida(p.getDataNasterii())) {
-            eroriLogice.put("dataNasterii", "Data nașterii invalidă (> 120 ani).");
-        }
+        // 2. Validare Format
+        Map<String, String> errors = valideazaPersoana(p);
 
-        // --- AICI ESTE FIX-UL PENTRU EROARE 500 ---
-        // Verificare UNICITATE CNP (excludem ID curent)
-        if (persoanaRepository.verificaCnpUnic(p.getCnp(), id) > 0) {
-            eroriLogice.put("cnp", "Acest CNP există deja la altcineva!");
-        }
-
-        // Verificare UNICITATE Telefon
-        if (p.getTelefon() != null) {
-            if (persoanaRepository.verificaTelefonUnic(p.getTelefon(), id) > 0) {
-                eroriLogice.put("telefon", "Acest telefon este deja asociat altei persoane!");
+        // 3. Validare Unicitate
+        if (!errors.containsKey("cnp")) {
+            if (persoanaRepository.verificaCnpUnic(p.getCnp(), id) > 0) {
+                errors.put("cnp", "Acest CNP există deja la altcineva!");
             }
         }
 
-        if (!eroriLogice.isEmpty()) {
-            return ResponseEntity.badRequest().body(eroriLogice);
+        if (p.getTelefon() != null && !errors.containsKey("telefon")) {
+            if (persoanaRepository.verificaTelefonUnic(p.getTelefon(), id) > 0) {
+                errors.put("telefon", "Acest telefon este deja asociat altei persoane!");
+            }
         }
 
-        // 3. Update
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        // 4. Update
         persoanaRepository.updatePersoana(
-                id,
-                p.getNume(),
-                p.getPrenume(),
-                p.getCnp(),
-                p.getDataNasterii(),
-                p.getTelefon()
+                id, p.getNume(), p.getPrenume(), p.getCnp(), p.getDataNasterii(), p.getTelefon()
         );
-        return ResponseEntity.ok("Persoana modificată cu succes prin SQL!");
+        return ResponseEntity.ok("Persoana modificată cu succes!");
+    }
+
+    // --- HELPER: Curatare ---
+    private void curataDatePersoana(Persoana p) {
+        if (p.getTelefon() != null && p.getTelefon().trim().isEmpty()) {
+            p.setTelefon(null);
+        }
+    }
+
+    // --- HELPER: Validare "Babeasca" ---
+    private Map<String, String> valideazaPersoana(Persoana p) {
+        Map<String, String> errors = new HashMap<>();
+
+        // 1. NUME (Obligatoriu -> Regex -> Max 50)
+        if (p.getNume() == null || p.getNume().trim().isEmpty()) {
+            errors.put("nume", "Numele este obligatoriu!");
+        } else {
+            if (!p.getNume().matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
+                errors.put("nume", "Numele poate conține doar litere, spații sau cratimă.");
+            } else if (p.getNume().length() > 50) {
+                errors.put("nume", "Numele este prea lung (max 50 caractere).");
+            }
+        }
+
+        // 2. PRENUME (Obligatoriu -> Regex -> Max 50)
+        if (p.getPrenume() == null || p.getPrenume().trim().isEmpty()) {
+            errors.put("prenume", "Prenumele este obligatoriu!");
+        } else {
+            if (!p.getPrenume().matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
+                errors.put("prenume", "Prenumele poate conține doar litere, spații sau cratimă.");
+            } else if (p.getPrenume().length() > 50) {
+                errors.put("prenume", "Prenumele este prea lung (max 50 caractere).");
+            }
+        }
+
+        // 3. CNP (Obligatoriu -> Format 13 cifre -> Algoritm Control)
+        if (p.getCnp() == null || p.getCnp().trim().isEmpty()) {
+            errors.put("cnp", "CNP-ul este obligatoriu!");
+        } else {
+            if (!p.getCnp().matches("^\\d{13}$")) {
+                errors.put("cnp", "CNP-ul trebuie să aibă exact 13 cifre!");
+            } else if (!isCnpValidMatematic(p.getCnp())) {
+                errors.put("cnp", "CNP invalid");
+            }
+        }
+
+        // 4. DATA NASTERII (Obligatorie -> Logica Varsta)
+        if (p.getDataNasterii() == null) {
+            errors.put("dataNasterii", "Data nașterii este obligatorie!");
+        } else {
+            if (!isVarstaValida(p.getDataNasterii())) {
+                errors.put("dataNasterii", "Data nașterii invalidă (persoana > 120 ani sau din viitor).");
+            }
+        }
+
+        // 5. TELEFON (Optional -> Format)
+        if (p.getTelefon() != null) {
+            if (!p.getTelefon().matches("^07\\d{8}$")) {
+                errors.put("telefon", "Telefonul trebuie să înceapă cu '07' și să aibă 10 cifre.");
+            }
+        }
+
+        return errors;
     }
 
     // --- ENDPOINT PAGINARE ---
@@ -167,70 +201,39 @@ public class PersoanaController {
             @RequestParam(defaultValue = "asc") String dir
     ) {
         Sort.Direction direction = dir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-        // Sortare Primara: Nume, Secundara: Prenume
-        Sort sortare = Sort.by(direction, sortBy)
-                .and(Sort.by(Sort.Direction.ASC, "prenume"));
-
+        Sort sortare = Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.ASC, "prenume"));
         Pageable pageable = PageRequest.of(page, size, sortare);
         return persoanaRepository.findAllNativePaginat(pageable);
     }
 
-    // --- VERIFICARE STERGERE SMART ---
+    // --- VERIFICARE STERGERE ---
     @GetMapping("/verifica-stergere/{id}")
     public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
         List<BlockingItem> listaTotala = new ArrayList<>();
+        boolean hasRed = false;
+        boolean hasOrange = false;
 
-        boolean hasRed = false;    // Activ sau Neplatit
-        boolean hasOrange = false; // Inchis sau Platit
-
-        // 1. Analizam AMENZILE
         List<Amenda> toateAmenzile = amendaRepository.findAllNativeByPersoana(id);
-
         for (Amenda a : toateAmenzile) {
             String status = a.getStarePlata();
             String desc = status + " - " + a.getSuma() + " RON";
             listaTotala.add(new BlockingItem("Amendă", a.getIdAmenda(), desc));
-
-            if ("Neplatita".equalsIgnoreCase(status)) {
-                hasRed = true;
-            } else if ("Platita".equalsIgnoreCase(status)) {
-                hasOrange = true;
-            }
+            if ("Neplatita".equalsIgnoreCase(status)) hasRed = true;
+            else if ("Platita".equalsIgnoreCase(status)) hasOrange = true;
         }
 
-        // 2. Analizam INCIDENTELE
         List<Incident> incidenteImplicate = incidentRepository.findIncidenteByPersoana(id);
-
         for (Incident i : incidenteImplicate) {
             String status = i.getStatus();
             String desc = i.getTipIncident() + " (" + status + ")";
             listaTotala.add(new BlockingItem("Incident", i.getIdIncident(), desc));
-
-            if ("Activ".equalsIgnoreCase(status)) {
-                hasRed = true;
-            } else if ("Închis".equalsIgnoreCase(status)) {
-                hasOrange = true;
-            }
+            if ("Activ".equalsIgnoreCase(status)) hasRed = true;
+            else if ("Închis".equalsIgnoreCase(status)) hasOrange = true;
         }
 
-        // 3. Decidem Culoarea Finala
-        if (hasRed) {
-            return new DeleteConfirmation(
-                    false, "BLOCKED", "Ștergere Blocată - Elemente Active",
-                    "Persoana este implicată în incidente ACTIVE sau are amenzi NEPLĂTITE.", listaTotala
-            );
-        } else if (hasOrange) {
-            return new DeleteConfirmation(
-                    true, "WARNING", "Atenție - Ștergere cu Istoric",
-                    "Persoana are istoric (amenzi plătite sau incidente închise).", listaTotala
-            );
-        } else {
-            return new DeleteConfirmation(
-                    true, "SAFE", "Ștergere Sigură",
-                    "Persoana nu are istoric activ. Poate fi ștearsă.", listaTotala
-            );
-        }
+        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată - Elemente Active", "Persoana are incidente ACTIVE sau amenzi NEPLĂTITE.", listaTotala);
+        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere cu Istoric", "Persoana are istoric.", listaTotala);
+        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Nu există date asociate.", listaTotala);
     }
 
     // --- DELETE CASCADE ---
@@ -247,23 +250,18 @@ public class PersoanaController {
         return "Succes: " + nume + " a fost șters(ă) din sistem!";
     }
 
-    // --- METODE AJUTATOARE (CNP, VARSTA) ---
-    private boolean isCnpValid(String cnp) {
-        if (cnp == null || cnp.length() != 13) return false;
-
+    // --- VALIDARI LOGICE ---
+    private boolean isCnpValidMatematic(String cnp) {
         String constanta = "279146358279";
         int suma = 0;
-
         for (int i = 0; i < 12; i++) {
             int cifraCNP = Character.getNumericValue(cnp.charAt(i));
             int cifraConst = Character.getNumericValue(constanta.charAt(i));
             suma += cifraCNP * cifraConst;
         }
-
         int rest = suma % 11;
         int cifraControl = (rest == 10) ? 1 : rest;
         int cifraControlReala = Character.getNumericValue(cnp.charAt(12));
-
         return cifraControl == cifraControlReala;
     }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -12,10 +13,7 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
         politistId: null,
         persoanaId: null
     });
-    // State erori
     const [errors, setErrors] = useState({});
-
-    // State pt afisarea numelor in Live Search
     const [initialPolitistName, setInitialPolitistName] = useState('');
     const [initialPersoanaName, setInitialPersoanaName] = useState('');
 
@@ -39,7 +37,7 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                     if (data.politist) setInitialPolitistName(`${data.politist.nume} ${data.politist.prenume} (${data.politist.grad})`);
                     if (data.persoana) setInitialPersoanaName(`${data.persoana.nume} ${data.persoana.prenume} (CNP: ${data.persoana.cnp})`);
                 })
-                .catch(err => console.error("Eroare incarcare amenda:", err));
+                .catch(err => toast.error("Eroare la încărcare amendă."));
         }
     }, [id]);
 
@@ -61,13 +59,14 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
         })
             .then(() => {
                 setErrors({});
+                toast.success("Amendă actualizată!"); // <--- TOAST
                 onSaveSuccess();
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
                 } else {
-                    alert("Eroare la modificare!");
+                    toast.error("Eroare la modificare!"); // <--- TOAST
                 }
             });
     };

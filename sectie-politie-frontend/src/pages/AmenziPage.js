@@ -4,6 +4,7 @@ import AmenziList from '../components/AmenziList';
 import AddAmenda from '../components/AddAmenda';
 import EditAmenda from '../components/EditAmenda';
 import Modal from '../components/Modal';
+import toast from 'react-hot-toast';
 
 const AmenziPage = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -40,11 +41,10 @@ const AmenziPage = () => {
         }
     };
 
-    const handleAddSuccess = () => { setIsAddModalOpen(false); setRefreshTrigger(prev => prev + 1); alert("Amendă adăugată!"); };
+    const handleAddSuccess = () => { setIsAddModalOpen(false); setRefreshTrigger(prev => prev + 1); };
 
     const handleEditSuccess = () => {
         setRefreshTrigger(prev => prev + 1);
-        alert("Amendă modificată!");
         handleCloseOrFinish();
     };
 

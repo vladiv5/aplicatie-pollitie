@@ -19,13 +19,9 @@ import java.util.Optional;
 @Repository
 public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
 
-    // --- METODA PENTRU PAGINARE ---
-    @Query(value = "SELECT * FROM Persoane",
-            countQuery = "SELECT count(*) FROM Persoane",
-            nativeQuery = true)
+    @Query(value = "SELECT * FROM Persoane", countQuery = "SELECT count(*) FROM Persoane", nativeQuery = true)
     Page<Persoana> findAllNativePaginat(Pageable pageable);
 
-    // --- METODE STANDARD ---
     @Query(value = "SELECT * FROM Persoane", nativeQuery = true)
     List<Persoana> getAllPersoaneNative();
 
@@ -47,52 +43,23 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
     @Query(value = "DELETE FROM Persoane WHERE id_persoana = :id", nativeQuery = true)
     void deletePersoanaNative(@Param("id") Integer id);
 
-    @Query(value = "SELECT * FROM Persoane WHERE LOWER(nume) LIKE LOWER(CONCAT(:termen, '%')) OR LOWER(prenume) LIKE LOWER(CONCAT(:termen, '%')) OR cnp LIKE CONCAT(:termen, '%')", nativeQuery = true)
+    // === SEARCH INTELIGENT (_100_CI_AI) ===
+    @Query(value = "SELECT * FROM Persoane WHERE " +
+            "CONCAT(COALESCE(nume, ''), ' ', COALESCE(prenume, ''), ' ', COALESCE(cnp, ''), ' ', COALESCE(telefon, '')) " +
+            "COLLATE Latin1_General_100_CI_AI " +
+            "LIKE CONCAT('%', :termen, '%')", nativeQuery = true)
     List<Persoana> cautaDupaInceput(@Param("termen") String termen);
 
-    // =================================================================================
-    // === 📊 RAPOARTE SIMPLE SI COMPLEXE ===
-    // =================================================================================
+    // --- RAPOARTE ---
+    @Query(value = "SELECT p.nume, p.prenume, p.cnp, SUM(a.suma) as datorie_totala FROM persoane p JOIN amenzi a ON p.id_persoana = a.id_persoana WHERE a.stare_plata = 'Neplatita' AND (:startDate IS NULL OR a.data_emitere >= :startDate) AND (:endDate IS NULL OR a.data_emitere <= :endDate) GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp ORDER BY datorie_totala DESC", nativeQuery = true)
+    List<Map<String, Object>> getRauPlatnici(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    // --- RAPORT 3: Rău-Platnici ---
-    @Query(value = "SELECT p.nume, p.prenume, p.cnp, SUM(a.suma) as datorie_totala " +
-            "FROM persoane p " +
-            "JOIN amenzi a ON p.id_persoana = a.id_persoana " +
-            "WHERE a.stare_plata = 'Neplatita' " +
-            "  AND (:startDate IS NULL OR a.data_emitere >= :startDate) " +
-            "  AND (:endDate IS NULL OR a.data_emitere <= :endDate) " +
-            "GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp " +
-            "ORDER BY datorie_totala DESC", nativeQuery = true)
-    List<Map<String, Object>> getRauPlatnici(@Param("startDate") LocalDateTime startDate,
-                                             @Param("endDate") LocalDateTime endDate);
+    @Query(value = "SELECT p.nume, p.prenume, p.cnp, COUNT(a.id_amenda) as nr_abateri FROM Persoane p JOIN Amenzi a ON p.id_persoana = a.id_persoana WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) AND (:endDate IS NULL OR a.data_emitere <= :endDate) GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp HAVING COUNT(a.id_amenda) > (SELECT CAST(COUNT(*) AS FLOAT) / COUNT(DISTINCT id_persoana) FROM Amenzi a2 WHERE (:startDate IS NULL OR a2.data_emitere >= :startDate) AND (:endDate IS NULL OR a2.data_emitere <= :endDate)) ORDER BY nr_abateri DESC", nativeQuery = true)
+    List<Map<String, Object>> getRecidivisti(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-
-    // --- SUBCERERE 4: Recidiviști (Modificat sa aiba Order By) ---
-    @Query(value = "SELECT p.nume, p.prenume, p.cnp, COUNT(a.id_amenda) as nr_abateri " +
-            "FROM Persoane p " +
-            "JOIN Amenzi a ON p.id_persoana = a.id_persoana " +
-            "WHERE (:startDate IS NULL OR a.data_emitere >= :startDate) " +
-            "  AND (:endDate IS NULL OR a.data_emitere <= :endDate) " +
-            "GROUP BY p.id_persoana, p.nume, p.prenume, p.cnp " +
-            "HAVING COUNT(a.id_amenda) > (" +
-            "   SELECT CAST(COUNT(*) AS FLOAT) / COUNT(DISTINCT id_persoana) " +
-            "   FROM Amenzi a2 " +
-            "   WHERE (:startDate IS NULL OR a2.data_emitere >= :startDate) " +
-            "     AND (:endDate IS NULL OR a2.data_emitere <= :endDate) " +
-            ") " +
-            "ORDER BY nr_abateri DESC", nativeQuery = true) // <-- ORDER BY ADAUGAT
-    List<Map<String, Object>> getRecidivisti(@Param("startDate") LocalDateTime startDate,
-                                             @Param("endDate") LocalDateTime endDate);
-
-    // =================================================================================
-    // === 🛡️ METODE PENTRU VALIDARE UNICITATE ===
-    // =================================================================================
-
-    // Verifica CNP unic
     @Query(value = "SELECT count(*) FROM Persoane WHERE cnp = :cnp AND (:idExclus IS NULL OR id_persoana != :idExclus)", nativeQuery = true)
     int verificaCnpUnic(@Param("cnp") String cnp, @Param("idExclus") Integer idExclus);
 
-    // Verifica Telefon unic
     @Query(value = "SELECT count(*) FROM Persoane WHERE telefon = :tel AND (:idExclus IS NULL OR id_persoana != :idExclus)", nativeQuery = true)
     int verificaTelefonUnic(@Param("tel") String tel, @Param("idExclus") Integer idExclus);
 }

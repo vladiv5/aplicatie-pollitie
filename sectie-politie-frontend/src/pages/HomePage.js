@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import '../components/styles/Home.css';
+import toast from 'react-hot-toast';
 
 const HomePage = () => {
     const { user } = useAuth();

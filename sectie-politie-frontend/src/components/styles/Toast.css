@@ -1,0 +1,44 @@
+/* src/components/styles/Toast.css */
+
+/* Stilul de bază pentru TOATE notificările */
+.toast-base {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    background: #fff;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Umbra eleganta */
+    display: flex;
+    align-items: center;
+    min-width: 300px;
+    border: 1px solid rgba(0,0,0,0.05);
+    /* Animatie fina la hover */
+    transition: transform 0.2s ease;
+}
+
+.toast-base:hover {
+    transform: translateY(-2px);
+}
+
+/* Stil specific pentru SUCCES (Bara verde in stanga) */
+.toast-success {
+    border-left: 6px solid #28a745; /* Verde Politie */
+}
+
+/* Stil specific pentru EROARE (Bara rosie in stanga) */
+.toast-error {
+    border-left: 6px solid #dc3545; /* Rosu Alerta */
+}
+
+/* Stil specific pentru LOADING (Bara albastra) */
+.toast-loading {
+    border-left: 6px solid #1a3c6e; /* Albastru Politie */
+}
+
+/* Iconitele din interiorul notificarii (optional, daca vrei sa le maresti) */
+.toast-icon {
+    margin-right: 12px;
+    font-size: 18px;
+}

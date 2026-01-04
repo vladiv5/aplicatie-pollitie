@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useLocation, useNavigate } from 'react-router-dom'; // <--- IMPORT
+import { useLocation, useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
-import DeleteSmartModal from './DeleteSmartModal'; // <--- IMPORT
+import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const PersoaneList = ({
                           refreshTrigger,
@@ -24,7 +25,6 @@ const PersoaneList = ({
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
-    // --- NAVIGARE ---
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -54,16 +54,12 @@ const PersoaneList = ({
     }, [refreshTrigger]);
 
     // =========================================================
-    // LOGICA BUMERANG (Intoarcere de la Amenzi/Incidente)
+    // LOGICA BUMERANG
     // =========================================================
     useEffect(() => {
         if (location.state && location.state.triggerAction === 'reOpenDelete') {
             const idToReCheck = location.state.triggerId;
-
-            // Curatam state-ul browserului
             window.history.replaceState({}, document.title);
-
-            // Redeschidem verificarea
             if(idToReCheck) {
                 setTimeout(() => {
                     handleRequestDelete(idToReCheck);
@@ -73,7 +69,6 @@ const PersoaneList = ({
     }, [location]);
 
     const handlePageChange = (newPage) => loadPersoane(newPage, searchTerm);
-
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
         loadPersoane(0, e.target.value);
@@ -94,7 +89,7 @@ const PersoaneList = ({
             })
             .catch(err => {
                 console.error(err);
-                alert("Eroare la verificarea persoanei.");
+                toast.error("Eroare la verificarea persoanei."); // <--- TOAST
             });
     };
 
@@ -109,9 +104,9 @@ const PersoaneList = ({
                 setIsDeleteModalOpen(false);
                 setDeleteId(null);
                 setDeleteData(null);
-                alert(res.data); // Mesaj din backend
+                toast.success("Persoană ștearsă cu succes!"); // <--- TOAST
             })
-            .catch(err => alert("Eroare la ștergerea persoanei!"));
+            .catch(err => toast.error("Eroare la ștergerea persoanei!")); // <--- TOAST
     };
 
     const formatDataNasterii = (dateString) => {
@@ -164,7 +159,6 @@ const PersoaneList = ({
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
                                     <button className="action-btn edit-btn" onClick={() => onEditClick(p.idPersoana)}>Edit</button>
 
-                                    {/* BUTON SMART DELETE */}
                                     <button className="action-btn delete-btn" onClick={() => handleRequestDelete(p.idPersoana)}>Șterge</button>
 
                                     <button className="action-btn"
@@ -195,13 +189,12 @@ const PersoaneList = ({
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
             )}
 
-            {/* MODAL SMART */}
             <DeleteSmartModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
                 data={deleteData}
-                currentPolitistId={deleteId} // Folosim acelasi prop generic chiar daca e idPersoana
+                currentPolitistId={deleteId}
                 returnRoute="/persoane"
             />
         </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import './styles/TableStyles.css';
+import toast from "react-hot-toast";
 
 const GestionareParticipanti = ({ incidentId, onClose }) => {
     const [participanti, setParticipanti] = useState([]);
@@ -25,7 +26,7 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
     // Adaugă om nou
     const handleAdd = () => {
         if (!persoanaSelectata) {
-            alert("Selectează o persoană!");
+            toast.error("Selectează o persoană!");
             return;
         }
         const token = localStorage.getItem('token');
@@ -38,7 +39,7 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                 loadParticipanti(); // Refresh listă
                 setPersoanaSelectata(null); // Reset
             })
-            .catch(err => alert("Eroare (poate persoana e deja adăugată?)"));
+            .catch(err => toast.error("Eroare (poate persoana e deja adăugată?)"));
     };
 
     // Șterge om

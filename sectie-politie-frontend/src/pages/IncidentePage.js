@@ -6,6 +6,7 @@ import EditIncident from "../components/EditIncident";
 import ViewIncident from "../components/ViewIncident";
 import GestionareParticipanti from "../components/GestionareParticipanti";
 import Modal from "../components/Modal";
+import toast from 'react-hot-toast';
 
 const IncidentePage = () => {
     // --- STATE MODALE ---
@@ -51,12 +52,11 @@ const IncidentePage = () => {
         }
     };
 
-    const handleAddSuccess = () => { setIsAddModalOpen(false); setRefreshTrigger(prev => prev + 1); alert("Incident adăugat!"); };
+    const handleAddSuccess = () => { setIsAddModalOpen(false); setRefreshTrigger(prev => prev + 1); };
 
     // La succes, folosim tot handleCloseOrFinish
     const handleEditSuccess = () => {
         setRefreshTrigger(prev => prev + 1);
-        alert("Incident modificat!");
         handleCloseOrFinish();
     };
 

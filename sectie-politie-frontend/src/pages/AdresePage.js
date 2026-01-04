@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState } from 'react';
 import AdreseList from '../components/AdreseList';
 import AddAdresa from '../components/AddAdresa';
@@ -18,14 +19,13 @@ const AdresePage = () => {
     const handleAddSuccess = () => {
         setIsAddModalOpen(false);
         setRefreshTrigger(prev => prev + 1);
-        alert("Adresă adăugată cu succes!");
+
     };
 
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditId(null);
         setRefreshTrigger(prev => prev + 1);
-        alert("Adresă modificată cu succes!");
     };
 
     return (

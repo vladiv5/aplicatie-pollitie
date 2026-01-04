@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -16,8 +17,6 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
 
     const [initialPolitistName, setInitialPolitistName] = useState('');
     const [initialAdresaName, setInitialAdresaName] = useState('');
-
-    // State pentru erorile venite din Backend
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -45,7 +44,7 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                         setInitialAdresaName(`${data.adresaIncident.strada} Nr. ${data.adresaIncident.numar}, ${data.adresaIncident.localitate}`);
                     }
                 })
-                .catch(error => console.error("Eroare incarcare:", error));
+                .catch(error => toast.error("Eroare la încărcarea datelor!"));
         }
     }, [id]);
 
@@ -66,15 +65,16 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(() => {
-                setErrors({}); // Curățăm erorile la succes
+                setErrors({});
+                toast.success("Incident actualizat cu succes!"); // <--- TOAST
                 onSaveSuccess();
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
-                    // Preluam harta cu erori din Java
                     setErrors(error.response.data);
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
-                    alert("Eroare la modificare!");
+                    toast.error("Eroare la modificare!"); // <--- TOAST
                 }
             });
     };
@@ -140,7 +140,6 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     value={formData.descriereIncident}
                     onChange={(e) => setFormData({...formData, descriereIncident: e.target.value})}
                 />
-                {/* Fara eroare aici, e text liber */}
             </div>
 
             <div className="modal-footer">

@@ -3,6 +3,7 @@ import PolitistiList from '../components/PolitistiList';
 import AddPolitist from "../components/AddPolitist";
 import EditPolitist from "../components/EditPolitist";
 import Modal from "../components/Modal";
+import toast from 'react-hot-toast';
 
 const PolitistiPage = () => {
     // --- STATE MODALE ADD/EDIT (Globale pentru pagina) ---
@@ -16,14 +17,13 @@ const PolitistiPage = () => {
     const handleAddSuccess = () => {
         setIsAddModalOpen(false);
         setRefreshTrigger(prev => prev + 1);
-        alert("Polițist adăugat!");
     };
 
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditId(null);
         setRefreshTrigger(prev => prev + 1);
-        alert("Polițist modificat!");
+
     };
 
     return (

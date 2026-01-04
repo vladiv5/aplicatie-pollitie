@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './styles/Pagination.css';
+import toast from "react-hot-toast";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     // State local pentru inputul "Mergi la pagina"
@@ -26,7 +27,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         } else {
             // Daca a scris prostii, resetam la pagina curenta
             setInputPage(currentPage + 1);
-            alert(`Te rog introdu o pagină validă (1 - ${totalPages})`);
+            toast.error(`Te rog introdu o pagină validă (1 - ${totalPages})`);
         }
     };
 

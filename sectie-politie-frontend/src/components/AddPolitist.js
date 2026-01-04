@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast'; // <--- IMPORT CORECT
 
-const AddPolitist = ({ onSaveSuccess, onCancel }) => { // Primim funcții de la părinte
+const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         nume: '',
         prenume: '',
@@ -9,17 +10,13 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => { // Primim funcții de la 
         functie: '',
         telefon: ''
     });
-    const [errors, setErrors] = useState({}); // Aici tinem erorile primite de la backend
-
+    const [errors, setErrors] = useState({});
     const [isValid, setIsValid] = useState(false);
 
-    // Verificăm validarea la fiecare schimbare
     useEffect(() => {
         const { nume, prenume } = formData;
-
-        // Validare simplă: Doar numele si prenumele obligatorii!
         const valid = nume.trim().length > 0 && prenume.trim().length > 0;
-        setIsValid(true); // Am renuntat la validarile in frontend, functia nu are niciun sens dar daca o scot imi crapa site-ul asa ca am lasat-o asa :)
+        setIsValid(true);
     }, [formData]);
 
     const handleChange = (e) => {
@@ -32,20 +29,24 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => { // Primim funcții de la 
             prenume: formData.prenume,
             grad: formData.grad,
             functie: formData.functie,
-            telefon_serviciu: formData.telefon // Atenție la numele din backend!
+            telefon_serviciu: formData.telefon
         })
             .then(() => {
-                // Curățăm formularul și anunțăm părintele
                 setFormData({ nume: '', prenume: '', grad: '', functie: '', telefon: '' });
+
+                // 1. AICI AM ADAUGAT NOTIFICAREA DE SUCCES
+                toast.success("Polițist înregistrat în sistem!");
+
                 onSaveSuccess();
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
-                    // Aici primim harta cu erori din Java (GlobalExceptionHandler)
                     setErrors(error.response.data);
+                    // Optional: Poti pune un toast mic si aici
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
                     console.error("Eroare:", error);
-                    alert("A apărut o eroare neașteptată!");
+                    toast.error("Eroare la salvare!");
                 }
             });
     };
@@ -73,7 +74,7 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => { // Primim funcții de la 
                 <button
                     className="save-btn"
                     onClick={handleSave}
-                    disabled={!isValid} // Butonul e gri dacă nu e valid
+                    disabled={!isValid}
                 >
                     Salvează
                 </button>

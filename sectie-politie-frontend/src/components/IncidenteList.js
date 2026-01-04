@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Pagination from './Pagination';
-import DeleteSmartModal from './DeleteSmartModal'; // Importam modalul
+import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const IncidenteList = ({
                            refreshTrigger, onAddClick, onEditClick, onViewClick, onManageParticipantsClick
                        }) => {
-    // --- STATE DATE ---
     const [incidente, setIncidente] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // --- STATE DELETE SMART ---
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
-    // --- FETCH ---
     const loadIncidente = (page, term = '') => {
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/incidente/lista-paginata?page=${page}&size=10`;
@@ -44,8 +42,6 @@ const IncidenteList = ({
     const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadIncidente(0, e.target.value); };
 
     // --- LOGICA DELETE SMART ---
-
-    // 1. Verificare
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/incidente/verifica-stergere/${id}`, {
@@ -58,11 +54,10 @@ const IncidenteList = ({
             })
             .catch(err => {
                 console.error(err);
-                alert("Eroare la verificarea incidentului.");
+                toast.error("Eroare la verificarea incidentului."); // <--- TOAST
             });
     };
 
-    // 2. Confirmare
     const handleConfirmDelete = () => {
         const token = localStorage.getItem('token');
 
@@ -70,21 +65,15 @@ const IncidenteList = ({
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then((res) => {
-                // Facem refresh la tabel
                 loadIncidente(currentPage, searchTerm);
-
-                // Inchidem modalul
                 setIsDeleteModalOpen(false);
                 setDeleteData(null);
                 setDeleteId(null);
-
-                // --- AFISAM CONFIRMAREA ---
-                alert(res.data); // "Incidentul a fost șters cu succes!"
+                toast.success("Incidentul a fost șters!"); // <--- TOAST
             })
-            .catch(err => alert("Eroare la ștergere!"));
+            .catch(err => toast.error("Eroare la ștergere!")); // <--- TOAST
     };
 
-    // Funcție pentru culoarea statusului
     const getStatusStyle = (status) => {
         switch(status) {
             case 'Activ': return { backgroundColor: '#28a745', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' };
@@ -128,10 +117,7 @@ const IncidenteList = ({
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
                                     <button className="action-btn" style={{ backgroundColor: '#17a2b8', color: 'white' }} onClick={() => onViewClick(inc)}>Vezi</button>
                                     <button className="action-btn edit-btn" onClick={() => onEditClick(inc.idIncident)}>Edit</button>
-
-                                    {/* BUTON DELETE SMART */}
                                     <button className="action-btn delete-btn" onClick={() => handleRequestDelete(inc.idIncident)}>Șterge</button>
-
                                     <button className="action-btn" style={{ backgroundColor: '#6f42c1', color: 'white', marginLeft: '5px' }} onClick={() => onManageParticipantsClick(inc.idIncident)}><i className="fa fa-users"></i> Pers</button>
                                 </div>
                             </td>
@@ -139,16 +125,8 @@ const IncidenteList = ({
                     ))) : (<tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>)}
                 </tbody>
             </table>
-
             {!searchTerm && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
-
-            {/* MODAL SMART RANDA IN LISTA */}
-            <DeleteSmartModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleConfirmDelete}
-                data={deleteData}
-            />
+            <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
         </div>
     );
 };

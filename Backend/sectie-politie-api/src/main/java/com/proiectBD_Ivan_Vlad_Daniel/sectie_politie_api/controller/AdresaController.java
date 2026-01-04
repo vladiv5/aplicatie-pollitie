@@ -8,19 +8,17 @@ import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.AdresaReposi
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.IncidentRepository;
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.PersoanaAdresaRepository;
 import com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.repository.PersoanaIncidentRepository;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/adrese")
@@ -36,6 +34,7 @@ public class AdresaController {
     @Autowired
     private PersoanaIncidentRepository persoanaIncidentRepository;
 
+    // --- GETTERS (Neschimbate) ---
     @GetMapping
     public List<Adresa> getAllAdrese() { return adresaRepository.getAllAdreseNative(); }
 
@@ -50,51 +49,102 @@ public class AdresaController {
         return adresaRepository.getAdresaByIdNative(id).orElseThrow(() -> new RuntimeException("Adresa nu exista!"));
     }
 
-    // INSERT (Folosim Request DTO)
+    // --- INSERT (VALIDARE MANUALA) ---
     @PostMapping
-    public ResponseEntity<?> addAdresa(@Valid @RequestBody AdresaRequest req) {
-        // Corectie Empty -> Null
-        if (req.bloc != null && req.bloc.trim().isEmpty()) req.bloc = null;
+    public ResponseEntity<?> addAdresa(@RequestBody AdresaRequest req) {
+        Map<String, String> errors = valideazaAdresa(req);
 
-        // Conversie Apartament String -> Integer (Sigur e valid aici datorita Regex)
-        Integer apInt = null;
-        if (req.apartament != null && !req.apartament.trim().isEmpty()) {
-            apInt = Integer.parseInt(req.apartament);
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
         }
 
+        // Conversii finale
+        String blocFinal = (req.bloc != null && req.bloc.trim().isEmpty()) ? null : req.bloc;
+        Integer apInt = (req.apartament != null && !req.apartament.trim().isEmpty()) ? Integer.parseInt(req.apartament) : null;
+
         adresaRepository.insertAdresa(
-                req.judetSauSector,
-                req.localitate,
-                req.strada,
-                req.numar,
-                req.bloc,
-                apInt // <--- Trimitem Integer
+                req.judetSauSector, req.localitate, req.strada, req.numar, blocFinal, apInt
         );
         return ResponseEntity.ok("Adresa salvată cu succes!");
     }
 
-    // UPDATE (Folosim Request DTO)
+    // --- UPDATE (VALIDARE MANUALA) ---
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateAdresa(@PathVariable Integer id, @Valid @RequestBody AdresaRequest req) {
+    public ResponseEntity<?> updateAdresa(@PathVariable Integer id, @RequestBody AdresaRequest req) {
         adresaRepository.getAdresaByIdNative(id).orElseThrow(() -> new RuntimeException("Adresa nu exista!"));
 
-        if (req.bloc != null && req.bloc.trim().isEmpty()) req.bloc = null;
+        Map<String, String> errors = valideazaAdresa(req);
 
-        Integer apInt = null;
-        if (req.apartament != null && !req.apartament.trim().isEmpty()) {
-            apInt = Integer.parseInt(req.apartament);
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
         }
 
+        String blocFinal = (req.bloc != null && req.bloc.trim().isEmpty()) ? null : req.bloc;
+        Integer apInt = (req.apartament != null && !req.apartament.trim().isEmpty()) ? Integer.parseInt(req.apartament) : null;
+
         adresaRepository.updateAdresa(
-                id,
-                req.judetSauSector,
-                req.localitate,
-                req.strada,
-                req.numar,
-                req.bloc,
-                apInt
+                id, req.judetSauSector, req.localitate, req.strada, req.numar, blocFinal, apInt
         );
         return ResponseEntity.ok("Adresa actualizată cu succes!");
+    }
+
+    // --- LOGICA DE VALIDARE COMUNA ---
+    private Map<String, String> valideazaAdresa(AdresaRequest req) {
+        Map<String, String> errors = new HashMap<>();
+
+        // 1. Strada (Obligatoriu -> Regex -> Max 100)
+        if (req.strada == null || req.strada.trim().isEmpty()) {
+            errors.put("strada", "Strada este obligatorie!");
+        } else if (!req.strada.matches("^[a-zA-ZăâîșțĂÂÎȘȚ ]+$")) {
+            errors.put("strada", "Strada poate conține doar litere și spații.");
+        } else if (req.strada.length() > 100) {
+            errors.put("strada", "Strada este prea lungă (max 100 caractere).");
+        }
+
+        // 2. Numar (Obligatoriu -> Regex -> Max 10)
+        if (req.numar == null || req.numar.trim().isEmpty()) {
+            errors.put("numar", "Numărul este obligatoriu!");
+        } else if (!req.numar.matches("^[a-zA-Z0-9]+$")) {
+            errors.put("numar", "Nr. poate conține doar litere și cifre.");
+        } else if (req.numar.length() > 10) {
+            errors.put("numar", "Numărul este prea lung (max 10 caractere).");
+        }
+
+        // 3. Localitate (Obligatoriu -> Regex -> Max 50)
+        if (req.localitate == null || req.localitate.trim().isEmpty()) {
+            errors.put("localitate", "Localitatea este obligatorie!");
+        } else if (!req.localitate.matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
+            errors.put("localitate", "Localitatea poate conține doar litere, spații sau cratimă.");
+        } else if (req.localitate.length() > 50) {
+            errors.put("localitate", "Localitatea este prea lungă (max 50 caractere).");
+        }
+
+        // 4. Judet (Obligatoriu -> Regex -> Max 50)
+        if (req.judetSauSector == null || req.judetSauSector.trim().isEmpty()) {
+            errors.put("judetSauSector", "Județul/Sectorul este obligatoriu!");
+        } else if (!req.judetSauSector.matches("^[a-zA-ZăâîșțĂÂÎȘȚ0-9 ]+$")) {
+            errors.put("judetSauSector", "Câmpul poate conține doar litere, cifre și spații.");
+        } else if (req.judetSauSector.length() > 50) {
+            errors.put("judetSauSector", "Județul/Sectorul este prea lung (max 50 caractere).");
+        }
+
+        // 5. Bloc (OPTIONAL -> Regex -> Max 10)
+        if (req.bloc != null && !req.bloc.trim().isEmpty()) {
+            if (!req.bloc.matches("^[a-zA-Z0-9 ]+$")) {
+                errors.put("bloc", "Blocul poate conține doar litere, cifre și spații.");
+            } else if (req.bloc.length() > 10) {
+                errors.put("bloc", "Blocul este prea lung (max 10 caractere).");
+            }
+        }
+
+        // 6. Apartament (OPTIONAL -> Regex)
+        if (req.apartament != null && !req.apartament.trim().isEmpty()) {
+            if (!req.apartament.matches("^\\d+$")) {
+                errors.put("apartament", "Apartamentul poate conține doar cifre.");
+            }
+        }
+
+        return errors;
     }
 
     // DELETE (Raman neschimbate)
@@ -133,28 +183,13 @@ public class AdresaController {
         else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Se poate șterge.", listaTotala);
     }
 
-    // === CLASA DTO INTERNA ===
+    // === CLASA DTO (FARA ADNOTARI - ACUM ESTE "POJO") ===
     public static class AdresaRequest {
-        @NotBlank(message = "Strada este obligatorie!")
-        @Pattern(regexp = "^$|^[a-zA-ZăâîșțĂÂÎȘȚ ]+$", message = "Strada poate conține doar litere și spații.")
         public String strada;
-
-        @NotBlank(message = "Numărul este obligatoriu!")
-        @Pattern(regexp = "^$|^[a-zA-Z0-9]+$", message = "Nr. poate conține doar litere și cifre.")
         public String numar;
-
-        public String bloc; // Optional
-
-        // AICI E CHEIA: Primim String, validam Regex, apoi in controller facem Int
-        @Pattern(regexp = "^$|^\\d+$", message = "Apartamentul poate conține doar cifre.")
-        public String apartament;
-
-        @NotBlank(message = "Localitatea este obligatorie!")
-        @Pattern(regexp = "^$|^[a-zA-ZăâîșțĂÂÎȘȚ -]+$", message = "Localitatea poate conține doar litere, spații sau cratimă.")
+        public String bloc;
+        public String apartament; // String pt a putea verifica regex
         public String localitate;
-
-        @NotBlank(message = "Județul/Sectorul este obligatoriu!")
-        @Pattern(regexp = "^$|^[a-zA-ZăâîșțĂÂÎȘȚ0-9 ]+$", message = "Câmpul poate conține doar litere, cifre și spații.")
         public String judetSauSector;
     }
 }

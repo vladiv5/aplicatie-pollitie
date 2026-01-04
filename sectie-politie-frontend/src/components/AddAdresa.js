@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './styles/TableStyles.css';
+import toast from 'react-hot-toast'; // <--- IMPORT
 
 const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -14,10 +15,7 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     const [errors, setErrors] = useState({});
 
     const handleSave = () => {
-        // Validare automata prin Backend (scos alert manual)
         const token = localStorage.getItem('token');
-
-        // Curatam datele: apartament gol -> null
         const payload = {
             ...formData,
             apartament: formData.apartament ? formData.apartament : null
@@ -28,13 +26,15 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
         })
             .then(() => {
                 setErrors({});
+                toast.success("Adresă înregistrată!"); // <--- TOAST
                 onSaveSuccess();
             })
             .catch(err => {
                 if (err.response && err.response.status === 400) {
                     setErrors(err.response.data);
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
-                    alert("Eroare la salvare!");
+                    toast.error("Eroare la salvare!"); // <--- TOAST
                 }
             });
     };
@@ -71,7 +71,7 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
                     </div>
                     <div style={{width:'30%'}}>
                         <input name="bloc" placeholder="Bloc" className="modal-input" value={formData.bloc} onChange={handleChange} />
-                        {/* Bloc e optional, fara erori de @NotBlank */}
+                        {errors.bloc && <span style={{color: 'red', fontSize: '12px'}}>{errors.bloc}</span>}
                     </div>
                     <div style={{width:'30%'}}>
                         <input name="apartament" placeholder="Ap." className="modal-input" value={formData.apartament} onChange={handleChange} />
