@@ -6,13 +6,20 @@ import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
 
-const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, onHighlightComplete }) => {
+const PolitistiList = ({
+                           refreshTrigger,
+                           onAddClick,
+                           onEditClick,
+                           highlightId,
+                           onHighlightComplete,
+                           setHighlightId // <--- Primim setter-ul
+                       }) => {
     // --- STATE ---
     const [politisti, setPolitisti] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState('nume'); // Default sort by Nume
+    const [sortBy, setSortBy] = useState('nume');
 
     // Referințe pentru rânduri (pentru scroll)
     const rowRefs = useRef({});
@@ -26,18 +33,32 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, o
     const navigate = useNavigate();
 
     // --- LOAD DATA ---
-    const loadPolitisti = (page, term = '') => {
+    // Modificat putin pentru a accepta parametri expliciti (page, term)
+    // Daca nu sunt dati, foloseste state-ul curent (currentPage, searchTerm)
+    const loadPolitisti = (pageArg, termArg) => {
         const token = localStorage.getItem('token');
-        let url = `http://localhost:8080/api/politisti/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
-        if (term) url = `http://localhost:8080/api/politisti/cauta?termen=${term}`;
 
-        // Returnăm Promise ca să putem înlănțui (chain) logica de focus
+        // Folosim argumentele daca exista, altfel folosim state-ul
+        // Atentie: pageArg poate fi 0, deci verificam undefined
+        const page = (pageArg !== undefined) ? pageArg : currentPage;
+        const term = (termArg !== undefined) ? termArg : searchTerm;
+
+        let url = `http://localhost:8080/api/politisti/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
+
+        // Daca avem termen de cautare, schimbam endpointul
+        if (term) {
+            url = `http://localhost:8080/api/politisti/cauta?termen=${term}`;
+        }
+
+        // Returnăm Promise pentru chaining
         return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
+                    // La cautare, backendul returneaza lista simpla (fara paginare spring data)
                     setPolitisti(res.data);
                     setTotalPages(1);
                 } else {
+                    // La lista paginata, backendul returneaza Page<Politist>
                     setPolitisti(res.data.content);
                     setTotalPages(res.data.totalPages);
                 }
@@ -47,20 +68,52 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, o
             .catch(err => console.error("Eroare incarcare:", err));
     };
 
+    // =========================================================
+    // LOGICA BUMERANG V2 (SESSION STORAGE - Rezistent la Back)
+    // =========================================================
+    useEffect(() => {
+        // 1. Verificăm Session Storage la montare
+        const rawData = sessionStorage.getItem('boomerang_pending');
+
+        if (rawData) {
+            const data = JSON.parse(rawData);
+
+            // Verificăm dacă bumerangul este destinat acestei pagini
+            if (data.returnRoute === '/politisti' && data.triggerId) {
+
+                // A. Redeschidem modalul de verificare (ca să vedem dacă s-a rezolvat problema)
+                if (data.triggerAction === 'reOpenDelete') {
+                    // Punem un mic delay ca să se randeze pagina întâi
+                    setTimeout(() => {
+                        handleRequestDelete(data.triggerId);
+                    }, 300);
+                }
+
+                // B. Activăm Highlight-ul pe rând (Vizual)
+                if (setHighlightId) {
+                    setHighlightId(data.triggerId);
+                }
+
+                // C. Curățăm storage-ul ca să nu se repete la infinit
+                sessionStorage.removeItem('boomerang_pending');
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+
     // --- REFRESH + AUTO JUMP LOGIC ---
     useEffect(() => {
-        // 1. Încărcăm datele curente
-        loadPolitisti(currentPage, searchTerm).then(() => {
-            // 2. Dacă avem un ID de evidențiat (highlightId)
+        loadPolitisti(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
-                // Verificăm dacă e DEJA pe ecran
-                const isOnScreen = rowRefs.current[highlightId];
-
-                if (!isOnScreen) {
-                    // Dacă NU e pe ecran, trebuie să aflăm pe ce pagină este
-                    findPageForId(highlightId);
+                const currentList = responseData.content || responseData;
+                // Verificam siguranta (currentList poate fi null la eroare)
+                if (currentList) {
+                    const existsOnPage = currentList.some(p => p.idPolitist === highlightId);
+                    if (!existsOnPage) {
+                        findPageForId(highlightId);
+                    }
                 }
-                // Dacă e pe ecran, useEffect-ul de mai jos se va ocupa de scroll
             }
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,30 +123,21 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, o
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            // Luăm TOATĂ lista simplă (doar ID-uri ideal, dar aici luăm tot pt simplitate)
-            // Dacă ai endpoint de 'toata-lista', e perfect. Dacă nu, e mai greu.
-            // Presupunând că ai endpoint-ul de la rapoarte/dropdown-uri:
             const res = await axios.get(`http://localhost:8080/api/politisti/toata-lista`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
 
-            // Sortăm client-side EXACT cum sortează serverul (Nume ASC implicit)
-            // Atenție: Dacă utilizatorul a schimbat sortarea, trebuie să reflectăm asta aici.
-            // Momentan hardcodam sortarea default (Nume)
             allData.sort((a, b) => a.nume.localeCompare(b.nume));
 
-            // Găsim indexul
             const index = allData.findIndex(p => p.idPolitist === id);
 
             if (index !== -1) {
-                // Calculăm pagina (Index / PageSize)
                 const targetPage = Math.floor(index / 10);
-
-                // Dacă pagina țintă e diferită de cea curentă, încărcăm acea pagină
                 if (targetPage !== currentPage) {
                     loadPolitisti(targetPage, searchTerm);
-                    // După ce se încarcă, useEffect-ul de Scroll se va activa
+                } else {
+                    loadPolitisti(currentPage, searchTerm);
                 }
             }
         } catch (err) {
@@ -104,20 +148,24 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, o
     // --- EFFECT: SCROLL & FLASH ---
     useEffect(() => {
         if (highlightId && rowRefs.current[highlightId]) {
-            // 1. Scroll lin la element
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-            // 2. Curățăm ID-ul după 3 secunde (cât ține animația CSS)
             const timer = setTimeout(() => {
                 if (onHighlightComplete) onHighlightComplete();
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [politisti, highlightId]); // Se activează când lista se randează și conține elementul
+    }, [politisti, highlightId]);
 
     // --- HANDLERS STANDARD ---
     const handlePageChange = (newPage) => loadPolitisti(newPage, searchTerm);
-    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadPolitisti(0, e.target.value); };
+
+    // Cand scriem in search, resetam la pagina 0 si trimitem termenul
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setSearchTerm(val);
+        loadPolitisti(0, val);
+    };
 
     // --- DELETE LOGIC ---
     const handleRequestDelete = (id) => {
@@ -144,12 +192,32 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, o
         }).catch(() => toast.error("Eroare la ștergere!"));
     };
 
-    // --- RENDER ---
+    // --- FUNCȚIA NOUĂ DE CLEAR ---
+    const handleClearSearch = () => {
+        setSearchTerm(''); // Golim state-ul local
+        loadPolitisti(0, ''); // Fortăm incarcarea listei complete (pagina 0, termen gol)
+    };
+
     return (
         <div className="page-container">
             <h2 className="page-title">Gestiune Polițiști</h2>
             <div className="controls-container">
-                <input type="text" className="search-input" placeholder="Căutați după nume..." value={searchTerm} onChange={handleSearchChange} />
+
+                {/* SEARCH WRAPPER CU BUTON X */}
+                <div className="search-wrapper">
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Căutați după nume..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    {/* Afisam butonul X doar daca avem text */}
+                    {searchTerm && (
+                        <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
+                    )}
+                </div>
+
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Polițist</button>
             </div>
 
@@ -170,7 +238,6 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, o
                         politisti.map(politist => (
                             <tr
                                 key={politist.idPolitist}
-                                // AICI E MAGIA: Legăm referința și clasa CSS condiționată
                                 ref={(el) => (rowRefs.current[politist.idPolitist] = el)}
                                 className={highlightId === politist.idPolitist ? 'flash-row' : ''}
                             >
@@ -195,7 +262,14 @@ const PolitistiList = ({ refreshTrigger, onAddClick, onEditClick, highlightId, o
             </div>
             {!searchTerm && totalPages > 1 && (<Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />)}
 
-            <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} currentPolitistId={deleteId} />
+            <DeleteSmartModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                data={deleteData}
+                currentPolitistId={deleteId}
+                returnRoute="/politisti" // Spune modalului cine l-a chemat
+            />
         </div>
     );
 };

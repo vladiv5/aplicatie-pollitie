@@ -1,12 +1,12 @@
-/* Container Principal */
-.stats-container {
+/* --- CONTAINER PRINCIPAL --- */
+.st-stats-container {
     padding: 20px 40px;
     background-color: #f0f2f5;
     min-height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.page-title {
+.st-page-title {
     color: #1a1a1a;
     margin-bottom: 25px;
     font-weight: 700;
@@ -15,34 +15,34 @@
 }
 
 /* --- COMMAND BAR (Filtre) --- */
-.command-bar {
+.st-command-bar {
     background: white;
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     display: flex;
     align-items: center;
-    justify-content: center; /* Aici e cheia centrarii */
+    justify-content: center;
     gap: 20px;
     margin-bottom: 30px;
-    flex-wrap: wrap; /* Permite elementelor să cadă pe rândul următor pe ecrane mici */
+    flex-wrap: wrap;
     text-align: center;
 }
 
-.filter-group {
+.st-filter-group {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Etichetele rămân aliniate cu inputul */
+    align-items: flex-start;
 }
 
-.filter-group label {
+.st-filter-group label {
     font-size: 12px;
     font-weight: bold;
     color: #666;
     margin-bottom: 5px;
 }
 
-.date-input {
+.st-date-input {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -50,8 +50,8 @@
     font-family: inherit;
 }
 
-.reset-btn {
-    margin-top: 18px; /* Aliniere cu inputurile */
+.st-reset-btn {
+    margin-top: 18px;
     padding: 10px 20px;
     background-color: #6c757d;
     color: white;
@@ -61,17 +61,17 @@
     transition: all 0.2s;
 }
 
-.reset-btn:hover { background-color: #5a6268; }
+.st-reset-btn:hover { background-color: #5a6268; }
 
 /* --- SECTIUNE GRAFICE (Charts) --- */
-.charts-grid {
+.st-charts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     gap: 25px;
     margin-bottom: 40px;
 }
 
-.chart-card {
+.st-chart-card {
     background: white;
     padding: 20px;
     border-radius: 12px;
@@ -82,28 +82,27 @@
 }
 
 /* --- COMPLEX ANALYSIS GRID --- */
-.analysis-grid {
+.st-analysis-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
     margin-bottom: 40px;
 }
 
-.analysis-card {
+.st-analysis-card {
     background: white;
     border-radius: 10px;
     padding: 15px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border-top: 4px solid #ddd; /* Default border */
+    border-top: 4px solid #ddd;
 }
 
-/* Culori specifice pentru carduri */
-.card-green { border-top-color: #28a745; } /* Zone Sigure */
-.card-red { border-top-color: #dc3545; }   /* Recidivisti */
-.card-orange { border-top-color: #fd7e14; } /* Agenti Severi */
-.card-blue { border-top-color: #007bff; }   /* Zile Critice */
+.st-card-green { border-top-color: #28a745; }
+.st-card-red { border-top-color: #dc3545; }
+.st-card-orange { border-top-color: #fd7e14; }
+.st-card-blue { border-top-color: #007bff; }
 
-.analysis-card h3 {
+.st-analysis-card h3 {
     font-size: 1.1em;
     margin-top: 0;
     color: #444;
@@ -112,19 +111,38 @@
     margin-bottom: 15px;
 }
 
-/* --- TABELE INTERNE --- */
-.mini-table {
+/* --- TABELE INTERNE (General) --- */
+.st-mini-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9em;
 }
 
-.mini-table th { text-align: left; color: #888; font-weight: 600; padding: 5px; border-bottom: 1px solid #eee; }
-.mini-table td { padding: 8px 5px; border-bottom: 1px solid #f9f9f9; }
-.mini-table tr:last-child td { border-bottom: none; }
+.st-mini-table th { text-align: left; color: #888; font-weight: 600; padding: 5px; border-bottom: 1px solid #eee; }
+.st-mini-table td { padding: 8px 5px; border-bottom: 1px solid #f9f9f9; }
+.st-mini-table tr:last-child td { border-bottom: none; }
 
-/* Interactive Section */
-.interactive-section {
+/* --- FIX SUPRAPUNERE TEXT CARDURI (Specific Analysis Grid) --- */
+.st-analysis-grid table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.st-analysis-grid table td {
+    padding: 8px 5px;
+    border-bottom: 1px solid #f9f9f9;
+    font-size: 0.9em;
+    vertical-align: middle;
+}
+
+/* Distanțare coloana dreapta (valori) */
+.st-analysis-grid table td:last-child {
+    padding-left: 20px;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.st-interactive-section {
     background: white;
     border-radius: 12px;
     padding: 25px;
@@ -133,7 +151,7 @@
 }
 
 /* --- CAROUSEL / SLIDESHOW --- */
-.carousel-container {
+.st-carousel-container {
     background: white;
     border-radius: 12px;
     padding: 20px;
@@ -142,24 +160,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 450px; /* Înălțime fixă ca să nu "sară" pagina */
+    min-height: 450px;
     margin-bottom: 40px;
     overflow: hidden;
 }
 
-.carousel-content {
+.st-carousel-content {
     width: 85%;
     text-align: center;
-    /* Animația de intrare */
-    animation: fadeIn 0.5s ease-in-out;
+    animation: stFadeIn 0.5s ease-in-out;
 }
 
-@keyframes fadeIn {
+@keyframes stFadeIn {
     from { opacity: 0; transform: scale(0.98); }
     to { opacity: 1; transform: scale(1); }
 }
 
-.nav-arrow {
+.st-nav-arrow {
     background-color: #f8f9fa;
     border: 1px solid #ddd;
     border-radius: 50%;
@@ -177,30 +194,30 @@
     z-index: 10;
 }
 
-.nav-arrow:hover {
+.st-nav-arrow:hover {
     background-color: #007bff;
     color: white;
     transform: scale(1.1);
 }
 
-.nav-prev { left: 20px; }
-.nav-next { right: 20px; }
+.st-nav-prev { left: 20px; }
+.st-nav-next { right: 20px; }
 
-.slide-title {
+.st-slide-title {
     font-size: 1.5rem;
     color: #444;
     margin-bottom: 20px;
     font-weight: 700;
 }
 
-.slide-indicator {
+.st-slide-indicator {
     position: absolute;
     bottom: 15px;
     display: flex;
     gap: 8px;
 }
 
-.dot {
+.st-dot {
     width: 10px;
     height: 10px;
     background-color: #ddd;
@@ -208,12 +225,12 @@
     transition: background-color 0.3s;
 }
 
-.dot.active {
+.st-dot.st-active {
     background-color: #007bff;
 }
 
 /* --- DATE SPLITTER (ZI - LUNA - AN) --- */
-.date-splitter-group {
+.st-date-splitter-group {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -223,7 +240,7 @@
     border-radius: 8px;
 }
 
-.date-part-input {
+.st-date-part-input {
     border: none;
     background: #f9f9f9;
     padding: 8px;
@@ -234,31 +251,29 @@
     outline: none;
 }
 
-.date-part-input:focus {
+.st-date-part-input:focus {
     background: #eef;
     color: #007bff;
 }
 
-/* Input mic pentru Zi și Lună */
-.w-small { width: 40px; }
-/* Input mai mare pentru An */
-.w-medium { width: 60px; }
+.st-w-small { width: 40px; }
+.st-w-medium { width: 60px; }
 
-.date-separator {
+.st-date-separator {
     font-weight: bold;
     color: #888;
 }
 
 /* --- DATA FILTER GROUP --- */
-.filter-container {
+.st-filter-container {
     display: flex;
-    align-items: flex-end; /* Aliniem inputurile cu butonul la bază */
+    align-items: flex-end;
     gap: 15px;
     flex-wrap: wrap;
     justify-content: center;
 }
 
-.date-input-text {
+.st-date-input-text {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 6px;
@@ -267,30 +282,30 @@
     font-size: 14px;
 }
 
-.date-input-text:focus {
+.st-date-input-text:focus {
     border-color: #007bff;
     outline: none;
     background-color: #f0f8ff;
 }
 
-.apply-btn {
+.st-apply-btn {
     padding: 10px 25px;
-    background-color: #007bff; /* Albastru principal */
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    height: 38px; /* Aceeași înălțime cu inputul */
+    height: 38px;
     transition: background 0.2s;
 }
 
-.apply-btn:hover {
+.st-apply-btn:hover {
     background-color: #0056b3;
 }
 
-.reset-btn {
-    background-color: #6c757d; /* Gri */
+.st-reset-btn {
+    background-color: #6c757d;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -299,59 +314,92 @@
     height: 38px;
 }
 
-.error-msg {
+.st-error-msg {
     color: #dc3545;
     font-size: 12px;
     margin-top: 5px;
     display: block;
 }
 
-/* --- SEARCH AREA MODERNIZAT --- */
-.search-wrapper {
-    display: flex;
-    gap: 15px;
-    align-items: flex-end;
-    background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+/* --- STILURI PENTRU ARHIVA (GRID & SEARCH) --- */
+
+/* Grid Principal Arhivă */
+.st-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+    align-items: start;
 }
 
-.search-btn-modern {
-    padding: 12px 25px;
+/* Search Wrapper Aliniat */
+.st-search-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end; /* Aliniere jos */
+    gap: 15px;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border: 1px solid #eef0f2;
+    transition: transform 0.2s;
+}
+
+.st-search-wrapper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.08);
+}
+
+/* Container Input: Eliminăm marginea internă */
+.st-search-input-container {
+    flex: 1;
+}
+.st-search-input-container .form-group {
+    margin-bottom: 0 !important;
+}
+
+/* Buton Deschide Dosar - Aliniat */
+.st-search-btn-modern {
+    padding: 0 25px;
     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 600;
+    font-size: 14px;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
     transition: all 0.3s ease;
-    height: 45px;
+
+    height: 42px; /* Fix înălțime */
+    margin-bottom: 2px; /* Ajustare fină aliniere */
+
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    white-space: nowrap;
 }
 
-.search-btn-modern:hover {
+.st-search-btn-modern:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 8px rgba(0, 123, 255, 0.4);
 }
 
-/* --- STILIZARE "DOSAR" (FILE FOLDER) --- */
-.dossier-card {
-    background-color: #fdfbf7; /* Culoare de hârtie veche/oficială */
+/* --- STILIZARE DOSAR --- */
+.st-dossier-card {
+    background-color: #fdfbf7;
     border: 1px solid #d3d3d3;
     padding: 40px;
     margin-top: 25px;
     border-radius: 4px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     position: relative;
-    font-family: 'Courier New', Courier, monospace; /* Font tip mașină de scris pentru realism */
+    font-family: 'Courier New', Courier, monospace;
 }
 
-/* Linia colorată de sus (ca la dosare) */
-.dossier-top-bar {
+.st-dossier-top-bar {
     position: absolute;
     top: 0;
     left: 0;
@@ -368,7 +416,7 @@
     border-top-right-radius: 4px;
 }
 
-.dossier-header {
+.st-dossier-header {
     display: flex;
     justify-content: space-between;
     border-bottom: 2px solid #333;
@@ -376,7 +424,7 @@
     margin-bottom: 20px;
 }
 
-.dossier-photo-placeholder {
+.st-dossier-photo-placeholder {
     width: 100px;
     height: 120px;
     background-color: #e0e0e0;
@@ -388,20 +436,20 @@
     color: #666;
 }
 
-.dossier-info h2 {
+.st-dossier-info h2 {
     margin: 0 0 10px 0;
     text-transform: uppercase;
     color: #000;
     font-size: 24px;
 }
 
-.dossier-detail {
+.st-dossier-detail {
     font-size: 14px;
     margin-bottom: 5px;
     color: #444;
 }
 
-.stamp {
+.st-stamp {
     border: 3px solid #d00;
     color: #d00;
     display: inline-block;
@@ -417,26 +465,26 @@
     letter-spacing: 2px;
 }
 
-.dossier-table {
+.st-dossier-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 14px;
 }
 
-.dossier-table th {
+.st-dossier-table th {
     border-bottom: 2px solid #000;
     text-align: left;
     padding: 8px;
     text-transform: uppercase;
 }
 
-.dossier-table td {
+.st-dossier-table td {
     border-bottom: 1px solid #ccc;
     padding: 8px;
 }
 
-.print-btn {
+.st-print-btn {
     background-color: #333;
     color: white;
     border: none;
@@ -450,155 +498,150 @@
     transition: background 0.2s;
 }
 
-.print-btn:hover {
+.st-print-btn:hover {
     background-color: #000;
 }
 
-/* --- PRINT RULES (Ce se întâmplă când dai Print) --- */
+/* --- TOOLTIP & TEXT --- */
+.st-tooltip-wrapper {
+    position: relative;
+    cursor: help;
+}
+
+.st-custom-tooltip-box {
+    visibility: hidden;
+    width: 200px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: pre-line;
+    font-weight: normal;
+}
+
+.st-tooltip-wrapper:hover .st-custom-tooltip-box {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Text Trunchiat */
+.st-truncated-text {
+    display: inline-block;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+/* --- PAGINATED CARD STYLES --- */
+.st-paginated-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 340px;
+    max-height: 340px;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.st-card-content-relative {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.st-table-container-full {
+    width: 100%;
+    padding: 0 45px;
+}
+
+.st-fixed-height-table {
+    width: 100%;
+}
+
+.st-fixed-height-table td {
+    height: 38px;
+    vertical-align: middle;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+.st-nav-circle-absolute {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background-color: white;
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+.st-nav-circle-absolute.left { left: 10px; }
+.st-nav-circle-absolute.right { right: 10px; }
+
+.st-nav-circle-absolute:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.st-analysis-card.st-card-blue .st-nav-circle-absolute { color: #007bff; border: 1px solid #cce5ff; }
+.st-analysis-card.st-card-red .st-nav-circle-absolute { color: #dc3545; border: 1px solid #f5c6cb; }
+.st-analysis-card.st-card-green .st-nav-circle-absolute { color: #28a745; border: 1px solid #c3e6cb; }
+.st-analysis-card.st-card-orange .st-nav-circle-absolute { color: #fd7e14; border: 1px solid #ffeeba; }
+
+.st-page-counter {
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 2px 10px;
+    border-radius: 10px;
+    align-self: center;
+}
+
+.st-empty-state {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 50px;
+    font-style: italic;
+}
+
+/* Print Rules */
 @media print {
-    body * {
-        visibility: hidden; /* Ascunde tot site-ul */
-    }
-
-    /* Afișează doar dosarul */
-    .dossier-card, .dossier-card * {
-        visibility: visible;
-    }
-
-    .dossier-card {
+    body * { visibility: hidden; }
+    .st-dossier-card, .st-dossier-card * { visibility: visible; }
+    .st-dossier-card {
         position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 20px;
-        box-shadow: none;
-        border: 2px solid #000;
+        left: 0; top: 0; width: 100%; margin: 0; padding: 20px;
+        box-shadow: none; border: 2px solid #000;
     }
-
-    /* Ascunde butoanele de pe dosar când printezi */
-    .print-btn, .nav-arrow, .command-bar {
-        display: none !important;
-    }
-
-    /* --- PAGINATED CARD STYLES --- */
-    /* --- PAGINATED CARD STYLES UPDATED --- */
-    .paginated-card {
-        display: flex;
-        flex-direction: column;
-        /* Inaltime fixa putin mai mare pentru a acomoda textul de jos */
-        min-height: 340px;
-        max-height: 340px;
-        position: relative;
-        padding-bottom: 10px;
-    }
-
-    /* Container relativ pentru a pozitiona butoanele fata de el */
-    .card-content-relative {
-        position: relative;
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-    }
-
-    /* Container tabel - lasam spatiu stanga/dreapta pentru butoane */
-    .table-container-full {
-        width: 100%;
-        padding: 0 45px; /* Spatiu ca sa nu intre textul sub butoane */
-    }
-
-    /* Tabel fix */
-    .fixed-height-table {
-        width: 100%;
-    }
-
-    .fixed-height-table td {
-        height: 38px; /* Inaltimea randului */
-        vertical-align: middle;
-        font-size: 13px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 160px;
-    }
-
-    /* --- BUTOANE ABSOLUTE (MARGINI) --- */
-    .nav-circle-absolute {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%); /* Centrare verticala perfecta */
-        width: 32px;
-        height: 32px;
-        border-radius: 50%; /* Perfect rotunde */
-        border: none;
-        background-color: white;
-        color: #333;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        z-index: 10;
-        transition: all 0.2s;
-    }
-
-    .nav-circle-absolute.left {
-        left: 10px; /* Lipit de stanga */
-    }
-
-    .nav-circle-absolute.right {
-        right: 10px; /* Lipit de dreapta */
-    }
-
-    .nav-circle-absolute:hover {
-        background-color: #f0f0f0;
-        transform: translateY(-50%) scale(1.1); /* Efect hover pastrand centrarea */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Culori specifice pentru butoane in functie de card */
-    .analysis-card.card-blue .nav-circle-absolute {
-        color: #007bff;
-        border: 1px solid #cce5ff;
-    }
-
-    .analysis-card.card-red .nav-circle-absolute {
-        color: #dc3545;
-        border: 1px solid #f5c6cb;
-    }
-
-    .analysis-card.card-green .nav-circle-absolute {
-        color: #28a745;
-        border: 1px solid #c3e6cb;
-    }
-
-    .analysis-card.card-orange .nav-circle-absolute {
-        color: #fd7e14;
-        border: 1px solid #ffeeba;
-    }
-
-    /* --- CONTOR PAGINA (JOS) --- */
-    .page-counter {
-        text-align: center;
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.9); /* Text alb usor transparent */
-        font-weight: 600;
-        margin-top: 5px;
-        letter-spacing: 0.5px;
-        background-color: rgba(0, 0, 0, 0.1); /* Fundal fin pentru contrast */
-        padding: 2px 10px;
-        border-radius: 10px;
-        align-self: center; /* Centrat orizontal in flex column */
-    }
-
-    /* Empty state styling */
-    .empty-state {
-        text-align: center;
-        color: rgba(255, 255, 255, 0.8);
-        margin-top: 50px;
-        font-style: italic;
-    }
+    .st-print-btn, .st-nav-arrow, .st-command-bar { display: none !important; }
 }

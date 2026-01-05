@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './styles/TableStyles.css';
-import toast from 'react-hot-toast'; // <--- IMPORT
+import toast from 'react-hot-toast';
 
 const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -14,8 +14,22 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     });
     const [errors, setErrors] = useState({});
 
+    // --- FUNCȚIE NOUĂ: ȘTERGERE CÂMP (X) ---
+    const handleClear = (fieldName) => {
+        setFormData({ ...formData, [fieldName]: '' });
+    };
+
+    const handleChange = (e) => {
+        setFormData({...formData, [e.target.name]: e.target.value});
+        if (errors[e.target.name]) {
+            setErrors({ ...errors, [e.target.name]: null });
+        }
+    };
+
     const handleSave = () => {
         const token = localStorage.getItem('token');
+        setErrors({});
+
         const payload = {
             ...formData,
             apartament: formData.apartament ? formData.apartament : null
@@ -25,61 +39,74 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then((response) => {
-                // MODIFICARE AICI:
                 const newId = response.data ? response.data.idAdresa : null;
-
                 setErrors({});
                 toast.success("Adresă înregistrată!");
-                onSaveSuccess(newId); // Trimitem ID-ul
+                onSaveSuccess(newId);
             })
             .catch(err => {
                 if (err.response && err.response.status === 400) {
                     setErrors(err.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
-                    toast.error("Eroare la salvare!"); // <--- TOAST
+                    toast.error("Eroare la salvare!");
                 }
             });
     };
 
-    const handleChange = (e) => {
-        setFormData({...formData, [e.target.name]: e.target.value});
-    };
+    // --- HELPER INPUT (Cu X și Erori) ---
+    const renderInput = (name, placeholder, style = {}) => (
+        <div style={{ ...style, position: 'relative', marginBottom: '15px' }}>
+            <div style={{ position: 'relative' }}>
+                <input
+                    name={name}
+                    placeholder={placeholder}
+                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    style={{ paddingRight: '25px', width: '100%' }} // Loc pt X
+                />
+
+                {formData[name] && (
+                    <span
+                        onClick={() => handleClear(name)}
+                        style={{
+                            position: 'absolute',
+                            right: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            cursor: 'pointer',
+                            color: '#999',
+                            fontWeight: 'bold',
+                            fontSize: '16px',
+                            lineHeight: '1',
+                            userSelect: 'none'
+                        }}
+                        title="Șterge"
+                    >
+                        &times;
+                    </span>
+                )}
+            </div>
+            {errors[name] && (
+                <span style={{ color: '#dc3545', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+                    {errors[name]}
+                </span>
+            )}
+        </div>
+    );
 
     return (
         <div>
             <div className="form-group">
-                <input
-                    name="judetSauSector" placeholder="Județ / Sector" className="modal-input"
-                    value={formData.judetSauSector} onChange={handleChange}
-                />
-                {errors.judetSauSector && <span style={{color: 'red', fontSize: '12px'}}>{errors.judetSauSector}</span>}
-
-                <input
-                    name="localitate" placeholder="Localitate" className="modal-input"
-                    value={formData.localitate} onChange={handleChange}
-                />
-                {errors.localitate && <span style={{color: 'red', fontSize: '12px'}}>{errors.localitate}</span>}
-
-                <input
-                    name="strada" placeholder="Stradă" className="modal-input"
-                    value={formData.strada} onChange={handleChange}
-                />
-                {errors.strada && <span style={{color: 'red', fontSize: '12px'}}>{errors.strada}</span>}
+                {renderInput("judetSauSector", "Județ / Sector")}
+                {renderInput("localitate", "Localitate")}
+                {renderInput("strada", "Stradă")}
 
                 <div style={{display:'flex', gap:'10px'}}>
-                    <div style={{width:'30%'}}>
-                        <input name="numar" placeholder="Nr." className="modal-input" value={formData.numar} onChange={handleChange} />
-                        {errors.numar && <span style={{color: 'red', fontSize: '12px'}}>{errors.numar}</span>}
-                    </div>
-                    <div style={{width:'30%'}}>
-                        <input name="bloc" placeholder="Bloc" className="modal-input" value={formData.bloc} onChange={handleChange} />
-                        {errors.bloc && <span style={{color: 'red', fontSize: '12px'}}>{errors.bloc}</span>}
-                    </div>
-                    <div style={{width:'30%'}}>
-                        <input name="apartament" placeholder="Ap." className="modal-input" value={formData.apartament} onChange={handleChange} />
-                        {errors.apartament && <span style={{color: 'red', fontSize: '12px'}}>{errors.apartament}</span>}
-                    </div>
+                    {renderInput("numar", "Nr.", { width: '30%' })}
+                    {renderInput("bloc", "Bloc", { width: '30%' })}
+                    {renderInput("apartament", "Ap.", { width: '30%' })}
                 </div>
             </div>
 

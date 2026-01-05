@@ -94,29 +94,108 @@ action-buttons-container {
 
 .controls-container {
     display: flex;
-    justify-content: space-between; /* Le împinge la capete opuse */
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    background-color: white;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* O umbră foarte fină */
+    margin-bottom: 25px;
+
+    /* Fundalul Albastru */
+    background: linear-gradient(135deg, #0056b3, #007bff);
+    padding: 15px 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 86, 179, 0.25);
+    color: white;
 }
 
 /* Stil pentru Input-ul de Căutare */
 .search-input {
-    padding: 10px 15px;
-    width: 300px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-    transition: border-color 0.3s;
+    width: 100%;
+    /* Padding dreapta mare (50px) ca să nu scriem peste butonul X */
+    padding: 12px 50px 12px 20px !important;
+    border: none;
+    border-radius: 30px; /* Rotunjit complet (Pill shape) */
+    font-size: 15px;
+    height: 45px; /* Puțin mai înalt */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.search-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 450px; /* Lățime generoasă */
+    margin-right: 15px;
+
+    /* ESENȚIAL: Fără fundal, fără padding, fără border */
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .search-input:focus {
-    outline: none;
-    border-color: #0056b3; /* Albastru când scrii */
-    box-shadow: 0 0 5px rgba(0, 86, 179, 0.2);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4); /* Glow alb la focus */
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 12px; /* Distanța față de margine */
+    top: 50%;
+    transform: translateY(-50%);
+
+    /* Dimensiuni cerculeț */
+    width: 26px;
+    height: 26px;
+
+    /* Stil Cerc */
+    border-radius: 50%;
+    background-color: #e9ecef; /* Gri deschis inițial */
+    border: none;
+
+    /* Iconița X */
+    color: #555;
+    font-size: 16px;
+    line-height: 1;
+    font-weight: bold;
+
+    /* Poziționare centrată a X-ului */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efect elastic */
+    z-index: 5;
+}
+
+/* Efect Hover pe X */
+.search-clear-btn:hover {
+    background-color: #dc3545; /* Roșu */
+    color: white; /* X devine alb */
+    transform: translateY(-50%) scale(1.15); /* Se mărește puțin */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Modificăm și butonul de Adăugare ca să arate bine pe albastru */
+.add-btn-primary {
+    background-color: #28a745; /* Verde */
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 30px; /* Rotunjit la fel ca search-ul */
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-btn-primary:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
 }
 
 /* Butonul Standard de "Adăugare Nou" (Verde) */

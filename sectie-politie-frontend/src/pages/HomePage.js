@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import '../components/styles/Home.css';
-import toast from 'react-hot-toast';
+import Modal from '../components/Modal';
+import MyActivityModal from '../components/MyActivityModal';
 
 const HomePage = () => {
     const { user } = useAuth();
     const [time, setTime] = useState(new Date());
+    const [isActivityOpen, setIsActivityOpen] = useState(false);
 
-    // Efect pentru ceasul live
     useEffect(() => {
         const timer = setInterval(() => {
             setTime(new Date());
@@ -16,7 +17,6 @@ const HomePage = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // Formatare data si ora
     const formatTime = (date) => {
         return date.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
     };
@@ -25,7 +25,6 @@ const HomePage = () => {
         return date.toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     };
 
-    // Daca userul e null (desi ProtectedRoute previne asta), afisam loading
     if (!user) return <div>Se încarcă profilul...</div>;
 
     return (
@@ -120,10 +119,34 @@ const HomePage = () => {
                             <span className="shortcut-desc">Zone de risc și domicilii cetățeni</span>
                         </Link>
 
+                        {/* --- BUTONUL NOU: DOSARUL MEU (FĂRĂ STILURI INLINE ACUM) --- */}
+                        <div
+                            className="shortcut-card"
+                            onClick={() => setIsActivityOpen(true)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <span className="shortcut-icon">📂</span>
+                            <span className="shortcut-title">Activitatea Mea</span>
+                            <span className="shortcut-desc">Dosar personal & Statistici proprii</span>
+                        </div>
+
                     </div>
                 </div>
 
             </div>
+
+            {/* --- MODALUL PENTRU ACTIVITATE --- */}
+            <Modal
+                isOpen={isActivityOpen}
+                onClose={() => setIsActivityOpen(false)}
+                title={`Activitate: ${user.nume} ${user.prenume}`}
+                maxWidth="900px"
+            >
+                <MyActivityModal
+                    userId={user.idPolitist}
+                    onClose={() => setIsActivityOpen(false)}
+                />
+            </Modal>
         </div>
     );
 };

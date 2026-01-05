@@ -19,20 +19,27 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
     }
 
     const handleJump = (type, itemId) => {
+        // 1. Salvăm în SessionStorage datele pentru Bumerang
+        // Asta rezistă și dacă dăm Back din browser
+        if (currentPolitistId) {
+            const boomerangData = {
+                triggerAction: 'reOpenDelete', // Vrem să redeschidem verificarea
+                triggerId: currentPolitistId,  // ID-ul polițistului la care ne întoarcem
+                returnRoute: returnRoute       // Ca să știm că e pentru pagina asta
+            };
+            sessionStorage.setItem('boomerang_pending', JSON.stringify(boomerangData));
+        }
+
+        // 2. Navigăm normal (fără state, că folosim storage)
         const targetRoute = type === 'Incident' ? '/incidente' : '/amenzi';
+        // Putem trimite totuși openEditId prin state pentru pagina țintă
         navigate(targetRoute, {
-            state: {
-                openEditId: itemId,
-                returnTo: returnRoute,
-                returnAction: 'reOpenDelete',
-                returnId: currentPolitistId
-            }
+            state: { openEditId: itemId }
         });
     };
 
     return (
         <div className="modal-overlay">
-            {/* APLICAM CLASA NOUA AICI: modal-content-auto */}
             <div className="modal-content modal-content-auto" style={{ maxWidth: '600px', width: '90%' }}>
 
                 <div className="modal-header" style={{ borderBottomColor: headerColor }}>
@@ -88,7 +95,7 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                                                     fontWeight: 'bold'
                                                 }}
                                             >
-                                                Modifică
+                                                Rezolvă
                                             </button>
                                         </td>
                                     </tr>
@@ -99,7 +106,6 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                     )}
                 </div>
 
-                {/* FOLOSIM CLASA NOUA PENTRU FOOTER */}
                 <div className="modal-footer-auto" style={{ padding: '20px' }}>
                     <button
                         className="action-btn"

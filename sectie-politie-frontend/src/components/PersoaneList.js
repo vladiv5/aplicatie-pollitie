@@ -13,26 +13,21 @@ const PersoaneList = ({
                           onViewHistoryClick,
                           onViewAdreseClick,
                           highlightId,
-                          onHighlightComplete
+                          onHighlightComplete,
+                          setHighlightId
                       }) => {
-    // --- STATE INTERN ---
     const [persoane, setPersoane] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy] = useState('nume');
 
-    // Ref pentru randuri
     const rowRefs = useRef({});
 
-    // --- STATE DELETE SMART ---
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
-    const location = useLocation();
-
-    // --- FETCH DATA ---
     const loadPersoane = (page, term = '') => {
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/persoane/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
@@ -48,35 +43,45 @@ const PersoaneList = ({
                     setTotalPages(res.data.totalPages);
                 }
                 setCurrentPage(page);
-                // Returnam datele brute pentru verificare
                 return res.data;
             })
             .catch(err => console.error("Eroare incarcare persoane:", err));
     };
 
-    // --- REFRESH & AUTO JUMP ---
+    useEffect(() => {
+        const rawData = sessionStorage.getItem('boomerang_pending');
+
+        if (rawData) {
+            const data = JSON.parse(rawData);
+
+            if (data.returnRoute === '/persoane' && data.triggerId) {
+                if (data.triggerAction === 'reOpenDelete') {
+                    setTimeout(() => {
+                        handleRequestDelete(data.triggerId);
+                    }, 300);
+                }
+                if (setHighlightId) {
+                    setHighlightId(data.triggerId);
+                }
+                sessionStorage.removeItem('boomerang_pending');
+            }
+        }
+    }, []);
+
     useEffect(() => {
         loadPersoane(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
-                // --- FIX EDITARE ---
-                // Verificăm dacă ID-ul există în DATELE primite, nu în DOM (refs)
-                // responseData poate fi array simplu (la search) sau obiect { content: [...] } (la paginare)
                 const currentList = responseData.content || responseData;
-
-                // Căutăm ID-ul în lista curentă de date
-                const existsOnPage = currentList.some(p => p.idPersoana === highlightId);
-
-                // Dacă NU e în datele paginii curente, înseamnă că s-a mutat -> Căutăm pagina
-                if (!existsOnPage) {
-                    findPageForId(highlightId);
+                if (currentList) {
+                    const existsOnPage = currentList.some(p => p.idPersoana === highlightId);
+                    if (!existsOnPage) {
+                        findPageForId(highlightId);
+                    }
                 }
-                // Dacă E în date, useEffect-ul de scroll de mai jos își va face treaba
             }
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
-    // --- LOGICA DE CAUTARE PAGINA ---
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -85,18 +90,15 @@ const PersoaneList = ({
             });
             const allData = res.data;
 
-            // Sortam by Nume (default) pentru a găsi indexul corect
             allData.sort((a, b) => a.nume.localeCompare(b.nume));
 
             const index = allData.findIndex(p => p.idPersoana === id);
 
             if (index !== -1) {
                 const targetPage = Math.floor(index / 10);
-                // Încărcăm pagina nouă doar dacă e diferită
                 if (targetPage !== currentPage) {
                     loadPersoane(targetPage, searchTerm);
                 } else {
-                    // Dacă prin absurd e aceeași pagină (dar nu apăruse în datele vechi), reîncărcăm
                     loadPersoane(currentPage, searchTerm);
                 }
             }
@@ -105,25 +107,31 @@ const PersoaneList = ({
         }
     };
 
-    // --- SCROLL & FLASH ---
     useEffect(() => {
-        // Acest effect rulează CÂND se actualizează lista 'persoane'
         if (highlightId && rowRefs.current[highlightId]) {
-            // Dacă elementul a apărut în DOM, facem scroll la el
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
-
             const timer = setTimeout(() => {
                 if (onHighlightComplete) onHighlightComplete();
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [persoane, highlightId]); // Dependența 'persoane' e cheia
+    }, [persoane, highlightId]);
 
-    // --- Handlere Standard ---
     const handlePageChange = (newPage) => loadPersoane(newPage, searchTerm);
-    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadPersoane(0, e.target.value); };
 
-    // --- Delete Logic ---
+    // --- MODIFICARE 1: Search ---
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setSearchTerm(val);
+        loadPersoane(0, val);
+    };
+
+    // --- MODIFICARE 2: Clear ---
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        loadPersoane(0, '');
+    };
+
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/persoane/verifica-stergere/${id}`, {
@@ -135,7 +143,6 @@ const PersoaneList = ({
                 setIsDeleteModalOpen(true);
             })
             .catch(err => {
-                console.error(err);
                 toast.error("Eroare la verificarea persoanei.");
             });
     };
@@ -158,10 +165,7 @@ const PersoaneList = ({
     const formatDataNasterii = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        const zi = String(date.getDate()).padStart(2, '0');
-        const luna = String(date.getMonth() + 1).padStart(2, '0');
-        const an = date.getFullYear();
-        return `${zi}.${luna}.${an}`;
+        return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
     };
 
     return (
@@ -169,13 +173,21 @@ const PersoaneList = ({
             <h2 className="page-title">Registru Persoane</h2>
 
             <div className="controls-container">
-                <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Căutați după nume, prenume sau CNP..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                />
+                {/* --- MODIFICARE 3: Wrapper --- */}
+                <div className="search-wrapper">
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Căutați după nume, prenume sau CNP..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    {searchTerm && (
+                        <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
+                    )}
+                </div>
+                {/* ----------------------------- */}
+
                 <button className="add-btn-primary" onClick={onAddClick}>
                     <span>+</span> Adăugați Persoană
                 </button>
@@ -197,7 +209,6 @@ const PersoaneList = ({
                     persoane.map((p) => (
                         <tr
                             key={p.idPersoana}
-                            // AICI LEGĂM REF-UL PENTRU SCROLL
                             ref={(el) => (rowRefs.current[p.idPersoana] = el)}
                             className={highlightId === p.idPersoana ? 'flash-row' : ''}
                         >
@@ -246,7 +257,7 @@ const PersoaneList = ({
                 onConfirm={handleConfirmDelete}
                 data={deleteData}
                 currentPolitistId={deleteId}
-                returnRoute="/persoane"
+                returnRoute="/persoane" // RUTA CORECTĂ
             />
         </div>
     );

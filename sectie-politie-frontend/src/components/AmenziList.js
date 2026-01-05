@@ -7,14 +7,14 @@ import toast from 'react-hot-toast';
 
 const AmenziList = ({
                         refreshTrigger, onAddClick, onEditClick,
-                        highlightId, onHighlightComplete // <--- PROPS
+                        highlightId, onHighlightComplete
                     }) => {
     const [amenzi, setAmenzi] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const rowRefs = useRef({}); // <--- REF
+    const rowRefs = useRef({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
@@ -40,7 +40,6 @@ const AmenziList = ({
             .catch(err => console.error("Eroare incarcare amenzi:", err));
     };
 
-    // --- REFRESH & AUTO JUMP ---
     useEffect(() => {
         loadAmenzi(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
@@ -54,7 +53,6 @@ const AmenziList = ({
         });
     }, [refreshTrigger]);
 
-    // --- LOGICA FIND PAGE ---
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -63,7 +61,6 @@ const AmenziList = ({
             });
             const allData = res.data;
 
-            // SORTARE: Backend sortează după data_emitere DESC
             allData.sort((a, b) => new Date(b.dataEmitere) - new Date(a.dataEmitere));
 
             const index = allData.findIndex(a => a.idAmenda === id);
@@ -81,7 +78,6 @@ const AmenziList = ({
         }
     };
 
-    // --- SCROLL & FLASH ---
     useEffect(() => {
         if (highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -94,11 +90,21 @@ const AmenziList = ({
     }, [amenzi, highlightId]);
 
     const handlePageChange = (newPage) => loadAmenzi(newPage, searchTerm);
-    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadAmenzi(0, e.target.value); };
 
-    // ... Handler-ele de ștergere și formatare rămân neschimbate ...
+    // --- MODIFICARE 1: Search ---
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setSearchTerm(val);
+        loadAmenzi(0, val);
+    };
+
+    // --- MODIFICARE 2: Clear ---
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        loadAmenzi(0, '');
+    };
+
     const handleRequestDelete = (id) => {
-        // ... (vezi codul original)
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/amenzi/verifica-stergere/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -144,7 +150,21 @@ const AmenziList = ({
         <div className="page-container">
             <h2 className="page-title">Registru Amenzi</h2>
             <div className="controls-container">
-                <input type="text" className="search-input" placeholder="Căutați..." value={searchTerm} onChange={handleSearchChange} />
+                {/* --- MODIFICARE 3: Wrapper --- */}
+                <div className="search-wrapper">
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Căutați..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    {searchTerm && (
+                        <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
+                    )}
+                </div>
+                {/* ----------------------------- */}
+
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Amendă</button>
             </div>
 
@@ -165,7 +185,6 @@ const AmenziList = ({
                     amenzi.map((amenda) => (
                         <tr
                             key={amenda.idAmenda}
-                            // REF & CLASS
                             ref={(el) => (rowRefs.current[amenda.idAmenda] = el)}
                             className={highlightId === amenda.idAmenda ? 'flash-row' : ''}
                         >

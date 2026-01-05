@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import toast from 'react-hot-toast'; // <--- IMPORT
-
+import toast from 'react-hot-toast';
 import './styles/TableStyles.css';
 
 const AddPersoana = ({ onSaveSuccess, onCancel }) => {
@@ -14,22 +13,33 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
     });
     const [errors, setErrors] = useState({});
 
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+        // Ștergem eroarea vizuală când utilizatorul scrie
+        if (errors[e.target.name]) {
+            setErrors({ ...errors, [e.target.name]: null });
+        }
+    };
+
+    // --- FUNCȚIE ȘTERGERE CÂMP (X) ---
+    const handleClear = (fieldName) => {
+        setFormData({ ...formData, [fieldName]: '' });
+    };
+
     const handleSave = () => {
         const token = localStorage.getItem('token');
+        setErrors({}); // Resetăm erorile
 
         axios.post('http://localhost:8080/api/persoane', formData, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then((response) => {
-                // MODIFICARE AICI: Extragem ID-ul
                 const newId = response.data ? response.data.idPersoana : null;
-
                 setErrors({});
                 toast.success("Persoană adăugată cu succes!");
-                onSaveSuccess(newId); // Trimitem ID-ul
+                onSaveSuccess(newId);
             })
             .catch(error => {
-                // ... erori ...
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
@@ -40,45 +50,72 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    // --- HELPER INPUT (Cu X, Erori și suport pentru Data/MaxLength) ---
+    const renderInput = (name, placeholder, type = 'text', maxLength = null, label = null) => (
+        <div style={{ marginBottom: '15px' }}>
+            {/* Afișăm label doar dacă este specificat (ex: la Data Nașterii) */}
+            {label && (
+                <label style={{ fontSize: '12px', color: '#666', marginLeft: '2px', display: 'block', marginBottom: '5px' }}>
+                    {label}
+                </label>
+            )}
+
+            <div style={{ position: 'relative' }}>
+                <input
+                    type={type}
+                    name={name}
+                    placeholder={placeholder}
+                    maxLength={maxLength}
+                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    style={{ paddingRight: '30px' }}
+                />
+
+                {/* Butonul X (Apare doar dacă avem text și nu e tip 'date' - la date browserele pun X-ul lor uneori, dar îl punem și noi pt consistență dacă dorești) */}
+                {/* Notă: La type='date', value e mereu validă sau goală, X-ul nostru o va goli */}
+                {formData[name] && (
+                    <span
+                        onClick={() => handleClear(name)}
+                        style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            cursor: 'pointer',
+                            color: '#999',
+                            fontWeight: 'bold',
+                            fontSize: '18px',
+                            lineHeight: '1',
+                            userSelect: 'none'
+                        }}
+                        title="Șterge"
+                    >
+                        &times;
+                    </span>
+                )}
+            </div>
+
+            {/* Mesaj Eroare (fără bold) */}
+            {errors[name] && (
+                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
+                    {errors[name]}
+                </span>
+            )}
+        </div>
+    );
 
     return (
         <div>
             <div className="form-group">
-                <input
-                    type="text" name="nume" placeholder="Nume"
-                    className="modal-input" onChange={handleChange} value={formData.nume}
-                />
-                {errors.nume && <span style={{color: 'red', fontSize: '12px'}}>{errors.nume}</span>}
+                {renderInput("nume", "Nume")}
+                {renderInput("prenume", "Prenume")}
+                {renderInput("cnp", "CNP", "text", 13)}
 
-                <input
-                    type="text" name="prenume" placeholder="Prenume"
-                    className="modal-input" onChange={handleChange} value={formData.prenume}
-                />
-                {errors.prenume && <span style={{color: 'red', fontSize: '12px'}}>{errors.prenume}</span>}
+                {/* Aici folosim parametrul label pentru Data Nașterii */}
+                {renderInput("dataNasterii", "", "date", null, "Data Nașterii:")}
 
-                <input
-                    type="text" name="cnp" placeholder="CNP" maxLength="13"
-                    className="modal-input" onChange={handleChange} value={formData.cnp}
-                />
-                {errors.cnp && <span style={{color: 'red', fontSize: '12px'}}>{errors.cnp}</span>}
-
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label style={{ fontSize: '12px', color: '#666', marginLeft: '2px' }}>Data Nașterii:</label>
-                    <input
-                        type="date" name="dataNasterii"
-                        className="modal-input" onChange={handleChange} value={formData.dataNasterii}
-                    />
-                    {errors.dataNasterii && <span style={{color: 'red', fontSize: '12px'}}>{errors.dataNasterii}</span>}
-                </div>
-
-                <input
-                    type="text" name="telefon" placeholder="Telefon"
-                    className="modal-input" onChange={handleChange} value={formData.telefon}
-                />
-                {errors.telefon && <span style={{color: 'red', fontSize: '12px'}}>{errors.telefon}</span>}
+                {renderInput("telefon", "Telefon")}
             </div>
 
             <div className="modal-footer">

@@ -4,6 +4,18 @@ import './styles/TableStyles.css';
 const ViewIncident = ({ incident, onClose }) => {
     if (!incident) return null;
 
+    // --- FUNCȚIE FORMATARE DATĂ (DD-MM-YYYY HH:MM) ---
+    const formatData = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        const zi = String(date.getDate()).padStart(2, '0');
+        const luna = String(date.getMonth() + 1).padStart(2, '0');
+        const an = date.getFullYear();
+        const ora = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        return `${zi}-${luna}-${an} ${ora}:${min}`;
+    };
+
     return (
         <div className="view-container">
             <div className="view-row">
@@ -20,7 +32,8 @@ const ViewIncident = ({ incident, onClose }) => {
 
             <div className="view-row">
                 <strong>Data și Ora: </strong>
-                <span>{incident.dataEmitere ? incident.dataEmitere.replace('T', ' ') : '-'}</span>
+                {/* AICI AM APLICAT FORMATAREA */}
+                <span>{formatData(incident.dataEmitere)}</span>
             </div>
 
             <hr style={{margin: '10px 0', border: '0', borderTop: '1px solid #eee'}}/>

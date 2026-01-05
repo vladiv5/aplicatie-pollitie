@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import './styles/TableStyles.css';
-import toast from 'react-hot-toast'; // <--- IMPORT
+import toast from 'react-hot-toast';
 
 const AddAmenda = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -15,10 +15,23 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
     });
     const [errors, setErrors] = useState({});
 
+    // --- FUNCȚIE NOUĂ: ȘTERGERE CÂMP (X) ---
+    const handleClear = (fieldName) => {
+        setFormData({ ...formData, [fieldName]: '' });
+    };
+
+    const handleChange = (fieldName, value) => {
+        setFormData({ ...formData, [fieldName]: value });
+        if (errors[fieldName]) {
+            setErrors({ ...errors, [fieldName]: null });
+        }
+    };
+
     const handleSave = () => {
         const token = localStorage.getItem('token');
-        let dataFinala = formData.dataEmitere;
+        setErrors({});
 
+        let dataFinala = formData.dataEmitere;
         if (!dataFinala) {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -41,64 +54,86 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then((response) => {
-            // MODIFICARE AICI:
-            const newId = response.data ? response.data.idAmenda : null;
-
-            setErrors({});
-            toast.success("Amendă emisă cu succes!");
-            onSaveSuccess(newId); // Trimitem ID-ul
-        })
+                const newId = response.data ? response.data.idAmenda : null;
+                setErrors({});
+                toast.success("Amendă emisă cu succes!");
+                onSaveSuccess(newId);
+            })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
                     console.error("Eroare salvare:", error);
-                    toast.error("Eroare la salvare!"); // <--- TOAST
+                    toast.error("Eroare la salvare!");
                 }
             });
     };
 
+    // --- HELPER INPUT (Cu X si Erori) ---
+    const renderInput = (label, name, placeholder, type = 'text') => (
+        <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{label}</label>
+            <div style={{ position: 'relative' }}>
+                <input
+                    type={type}
+                    placeholder={placeholder}
+                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
+                    value={formData[name]}
+                    onChange={(e) => handleChange(name, e.target.value)}
+                    style={{ paddingRight: '30px' }}
+                />
+
+                {/* Buton X (Nu îl punem la datetime-local) */}
+                {formData[name] && type !== 'datetime-local' && (
+                    <span
+                        onClick={() => handleClear(name)}
+                        style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            cursor: 'pointer',
+                            color: '#999',
+                            fontWeight: 'bold',
+                            fontSize: '18px',
+                            lineHeight: '1',
+                            userSelect: 'none'
+                        }}
+                        title="Șterge"
+                    >
+                        &times;
+                    </span>
+                )}
+            </div>
+            {errors[name] && (
+                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
+                    {errors[name]}
+                </span>
+            )}
+        </div>
+    );
+
     return (
         <div>
             <div className="form-group">
-                <label>Motiv</label>
-                <input
-                    type="text" placeholder="ex: Parcare ilegală" className="modal-input"
-                    value={formData.motiv}
-                    onChange={(e) => setFormData({...formData, motiv: e.target.value})}
-                />
-                {errors.motiv && <span style={{color: 'red', fontSize: '12px'}}>{errors.motiv}</span>}
+                {renderInput("Motiv", "motiv", "ex: Parcare ilegală")}
+                {renderInput("Sumă (RON)", "suma", "", "number")}
 
-                <label>Sumă (RON)</label>
-                <input
-                    type="number" className="modal-input"
-                    value={formData.suma}
-                    onChange={(e) => setFormData({...formData, suma: e.target.value})}
-                />
-                {errors.suma && <span style={{color: 'red', fontSize: '12px'}}>{errors.suma}</span>}
-
-                <label>Stare Plată</label>
-                <select
-                    className="modal-input"
-                    value={formData.starePlata}
-                    onChange={(e) => setFormData({...formData, starePlata: e.target.value})}
-                >
-                    <option value="Neplatita">Neplatita</option>
-                    <option value="Platita">Platita</option>
-                    <option value="Anulata">Anulata</option>
-                </select>
-                {errors.starePlata && <span style={{color: 'red', fontSize: '12px'}}>{errors.starePlata}</span>}
-
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label style={{ fontSize: '12px', color: '#666', marginLeft: '2px' }}>Data Acordării:</label>
-                    <input
-                        type="datetime-local" className="modal-input"
-                        value={formData.dataEmitere}
-                        onChange={(e) => setFormData({...formData, dataEmitere: e.target.value})}
-                    />
-                    {errors.dataEmitere && <span style={{color: 'red', fontSize: '12px'}}>{errors.dataEmitere}</span>}
+                <div style={{ marginBottom: '15px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Stare Plată</label>
+                    <select
+                        className="modal-input"
+                        value={formData.starePlata}
+                        onChange={(e) => handleChange('starePlata', e.target.value)}
+                    >
+                        <option value="Neplatita">Neplatita</option>
+                        <option value="Platita">Platita</option>
+                        <option value="Anulata">Anulata</option>
+                    </select>
                 </div>
+
+                {renderInput("Data Acordării", "dataEmitere", "", "datetime-local")}
 
                 <LiveSearchInput
                     label="Agent Constatator"

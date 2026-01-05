@@ -7,14 +7,14 @@ import toast from 'react-hot-toast';
 
 const IncidenteList = ({
                            refreshTrigger, onAddClick, onEditClick, onViewClick, onManageParticipantsClick,
-                           highlightId, onHighlightComplete // <--- PROPS
+                           highlightId, onHighlightComplete
                        }) => {
     const [incidente, setIncidente] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const rowRefs = useRef({}); // <--- REF
+    const rowRefs = useRef({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
@@ -35,12 +35,11 @@ const IncidenteList = ({
                     setTotalPages(res.data.totalPages);
                 }
                 setCurrentPage(page);
-                return res.data; // Returnam datele
+                return res.data;
             })
             .catch(err => console.error(err));
     };
 
-    // --- REFRESH & AUTO JUMP ---
     useEffect(() => {
         loadIncidente(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
@@ -54,7 +53,6 @@ const IncidenteList = ({
         });
     }, [refreshTrigger]);
 
-    // --- LOGICA FIND PAGE ---
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -63,8 +61,6 @@ const IncidenteList = ({
             });
             const allData = res.data;
 
-            // ATENTIE: Backendul returneaza implicit sortat dupa Data DESC
-            // Trebuie sa sortam la fel aici ca sa gasim indexul corect
             allData.sort((a, b) => new Date(b.dataEmitere) - new Date(a.dataEmitere));
 
             const index = allData.findIndex(inc => inc.idIncident === id);
@@ -82,7 +78,6 @@ const IncidenteList = ({
         }
     };
 
-    // --- SCROLL & FLASH ---
     useEffect(() => {
         if (highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -95,9 +90,20 @@ const IncidenteList = ({
     }, [incidente, highlightId]);
 
     const handlePageChange = (newPage) => loadIncidente(newPage, searchTerm);
-    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadIncidente(0, e.target.value); };
 
-    // --- DELETE ---
+    // --- MODIFICARE 1: Search ---
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setSearchTerm(val);
+        loadIncidente(0, val);
+    };
+
+    // --- MODIFICARE 2: Clear ---
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        loadIncidente(0, '');
+    };
+
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/incidente/verifica-stergere/${id}`, {
@@ -141,7 +147,21 @@ const IncidenteList = ({
         <div className="page-container">
             <h2 className="page-title">Registru Incidente</h2>
             <div className="controls-container">
-                <input type="text" className="search-input" placeholder="Căutați..." value={searchTerm} onChange={handleSearchChange} />
+                {/* --- MODIFICARE 3: Wrapper --- */}
+                <div className="search-wrapper">
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Căutați..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    {searchTerm && (
+                        <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
+                    )}
+                </div>
+                {/* ----------------------------- */}
+
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Incident</button>
             </div>
 
@@ -162,7 +182,6 @@ const IncidenteList = ({
                     incidente.map((inc) => (
                         <tr
                             key={inc.idIncident}
-                            // REF & CLASS
                             ref={(el) => (rowRefs.current[inc.idIncident] = el)}
                             className={highlightId === inc.idIncident ? 'flash-row' : ''}
                         >

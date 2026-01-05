@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import './styles/TableStyles.css';
-import toast from 'react-hot-toast'; // <--- IMPORT
+import toast from 'react-hot-toast';
 
 const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -48,8 +48,21 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
         }
     }, [id]);
 
+    // --- FUNCȚII NOI PENTRU X ---
+    const handleClear = (fieldName) => {
+        setFormData({ ...formData, [fieldName]: '' });
+    };
+
+    const handleChange = (fieldName, value) => {
+        setFormData({ ...formData, [fieldName]: value });
+        if (errors[fieldName]) {
+            setErrors({ ...errors, [fieldName]: null });
+        }
+    };
+
     const handleSave = () => {
         const token = localStorage.getItem('token');
+        setErrors({});
 
         const payload = {
             tipIncident: formData.tipIncident,
@@ -65,53 +78,84 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then((response) => {
-                // MODIFICARE AICI:
                 const updatedId = response.data ? response.data.idIncident : id;
-
                 setErrors({});
                 toast.success("Incident actualizat cu succes!");
-                onSaveSuccess(updatedId); // Trimitem ID-ul
+                onSaveSuccess(updatedId);
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
-                    toast.error("Eroare la modificare!"); // <--- TOAST
+                    toast.error("Eroare la modificare!");
                 }
             });
     };
 
+    // --- HELPER INPUT (Cu X și Erori) ---
+    const renderInput = (label, name, type = 'text', Component = 'input') => (
+        <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{label}</label>
+            <div style={{ position: 'relative' }}>
+                <Component
+                    type={type}
+                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
+                    value={formData[name]}
+                    onChange={(e) => handleChange(name, e.target.value)}
+                    rows={Component === 'textarea' ? 3 : undefined}
+                    style={{ paddingRight: '30px' }}
+                />
+
+                {formData[name] && type !== 'datetime-local' && (
+                    <span
+                        onClick={() => handleClear(name)}
+                        style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: Component === 'textarea' ? '10px' : '50%',
+                            transform: Component === 'textarea' ? 'none' : 'translateY(-50%)',
+                            cursor: 'pointer',
+                            color: '#999',
+                            fontWeight: 'bold',
+                            fontSize: '18px',
+                            lineHeight: '1',
+                            userSelect: 'none'
+                        }}
+                        title="Șterge"
+                    >
+                        &times;
+                    </span>
+                )}
+            </div>
+            {errors[name] && (
+                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
+                    {errors[name]}
+                </span>
+            )}
+        </div>
+    );
+
     return (
         <div>
             <div className="form-group">
-                <label>Tip Incident</label>
-                <input
-                    type="text" className="modal-input"
-                    value={formData.tipIncident}
-                    onChange={(e) => setFormData({...formData, tipIncident: e.target.value})}
-                />
-                {errors.tipIncident && <span style={{color: 'red', fontSize: '12px'}}>{errors.tipIncident}</span>}
+                {renderInput("Tip Incident", "tipIncident")}
 
-                <label>Stare Incident</label>
-                <select
-                    className="modal-input"
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    style={{fontWeight: 'bold', color: formData.status === 'Activ' ? 'green' : formData.status === 'Închis' ? 'gray' : 'orange'}}
-                >
-                    <option value="Activ">Activ</option>
-                    <option value="Închis">Închis</option>
-                    <option value="Arhivat">Arhivat</option>
-                </select>
+                <div style={{ marginBottom: '15px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Stare Incident</label>
+                    <select
+                        className="modal-input"
+                        value={formData.status}
+                        onChange={(e) => handleChange('status', e.target.value)}
+                        style={{fontWeight: 'bold', color: formData.status === 'Activ' ? 'green' : formData.status === 'Închis' ? 'gray' : 'orange'}}
+                    >
+                        <option value="Activ">Activ</option>
+                        <option value="Închis">Închis</option>
+                        <option value="Arhivat">Arhivat</option>
+                    </select>
+                </div>
 
-                <label>Data și Ora</label>
-                <input
-                    type="datetime-local" className="modal-input"
-                    value={formData.dataEmitere}
-                    onChange={(e) => setFormData({...formData, dataEmitere: e.target.value})}
-                />
-                {errors.dataEmitere && <span style={{color: 'red', fontSize: '12px'}}>{errors.dataEmitere}</span>}
+                {renderInput("Data și Ora", "dataEmitere", "datetime-local")}
 
                 <LiveSearchInput
                     label="Polițist Responsabil"
@@ -129,20 +173,9 @@ const EditIncident = ({ id, onSaveSuccess, onCancel }) => {
                     onSelect={(item) => setFormData({...formData, adresaId: item ? item.idAdresa : null})}
                 />
 
-                <label>Descriere Locație</label>
-                <input
-                    type="text" className="modal-input"
-                    value={formData.descriereLocatie}
-                    onChange={(e) => setFormData({...formData, descriereLocatie: e.target.value})}
-                />
-                {errors.descriereLocatie && <span style={{color: 'red', fontSize: '12px'}}>{errors.descriereLocatie}</span>}
+                {renderInput("Descriere Locație", "descriereLocatie")}
 
-                <label>Detalii Incident</label>
-                <textarea
-                    className="modal-input" rows="3"
-                    value={formData.descriereIncident}
-                    onChange={(e) => setFormData({...formData, descriereIncident: e.target.value})}
-                />
+                {renderInput("Detalii Incident", "descriereIncident", "text", "textarea")}
             </div>
 
             <div className="modal-footer">

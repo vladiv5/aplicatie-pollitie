@@ -1,23 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const AddPolitist = ({ onSaveSuccess, onCancel }) => {
-    // ... (state și handleChange rămân la fel) ...
     const [formData, setFormData] = useState({
         nume: '', prenume: '', grad: '', functie: '', telefon: ''
     });
+    // State pentru erorile venite din Backend
     const [errors, setErrors] = useState({});
-    const [isValid, setIsValid] = useState(false);
 
-    useEffect(() => {
-        const { nume, prenume } = formData;
-        setIsValid(nume.trim().length > 0 && prenume.trim().length > 0);
-    }, [formData]);
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+        // Ștergem eroarea vizuală când utilizatorul începe să scrie
+        if (errors[e.target.name]) {
+            setErrors({ ...errors, [e.target.name]: null });
+        }
+    };
 
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    // --- FUNCȚIE ȘTERGERE CÂMP (X) ---
+    const handleClear = (fieldName) => {
+        setFormData({ ...formData, [fieldName]: '' });
+    };
 
     const handleSave = () => {
+        setErrors({}); // Resetăm erorile înainte de request
+
         axios.post('http://localhost:8080/api/politisti', {
             nume: formData.nume,
             prenume: formData.prenume,
@@ -26,14 +33,9 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
             telefon_serviciu: formData.telefon
         })
             .then((response) => {
-                // Backend-ul trebuie să returneze obiectul salvat (ex: { idPolitist: 105, ... })
-                // Daca nu returneaza, va fi 'undefined' si nu va face flash, dar tot merge.
                 const newId = response.data ? response.data.idPolitist : null;
-
                 setFormData({ nume: '', prenume: '', grad: '', functie: '', telefon: '' });
                 toast.success("Polițist înregistrat în sistem!");
-
-                // Trimitem ID-ul către părinte
                 onSaveSuccess(newId);
             })
             .catch(error => {
@@ -47,23 +49,57 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
+    // --- HELPER INPUT (Cu X si Erori fara Bold) ---
+    const renderInput = (name, placeholder) => (
+        <div style={{ position: 'relative', marginBottom: '15px' }}>
+            <input
+                type="text"
+                name={name}
+                placeholder={placeholder}
+                className={`modal-input ${errors[name] ? 'input-error' : ''}`}
+                value={formData[name]}
+                onChange={handleChange}
+                style={{ paddingRight: '30px' }}
+            />
+            {formData[name] && (
+                <span
+                    onClick={() => handleClear(name)}
+                    style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '12px', // Ajustat manual pentru aliniere
+                        cursor: 'pointer',
+                        color: '#999',
+                        fontWeight: 'bold',
+                        fontSize: '18px',
+                        lineHeight: '1',
+                        userSelect: 'none'
+                    }}
+                    title="Șterge"
+                >
+                    &times;
+                </span>
+            )}
+            {/* EROAREA: Fără bold acum */}
+            {errors[name] && (
+                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
+                    {errors[name]}
+                </span>
+            )}
+        </div>
+    );
+
     return (
         <div>
-            {/* ... (JSX-ul formularului rămâne identic) ... */}
             <div className="form-group">
-                <input type="text" name="nume" placeholder="Nume" className="modal-input" value={formData.nume} onChange={handleChange} />
-                {errors.nume && <span style={{color: 'red', fontSize: '12px'}}>{errors.nume}</span>}
-                <input type="text" name="prenume" placeholder="Prenume" className="modal-input" value={formData.prenume} onChange={handleChange} />
-                {errors.prenume && <span style={{color: 'red', fontSize: '12px'}}>{errors.prenume}</span>}
-                <input type="text" name="grad" placeholder="Grad" className="modal-input" value={formData.grad} onChange={handleChange} />
-                {errors.grad && <span style={{color: 'red', fontSize: '12px'}}>{errors.grad}</span>}
-                <input type="text" name="functie" placeholder="Funcție" className="modal-input" value={formData.functie} onChange={handleChange} />
-                {errors.functie && <span style={{color: 'red', fontSize: '12px'}}>{errors.functie}</span>}
-                <input type="text" name="telefon" placeholder="Telefon Serviciu" className="modal-input" value={formData.telefon} onChange={handleChange} />
-                {errors.telefon_serviciu && <span style={{color: 'red', fontSize: '12px'}}>{errors.telefon_serviciu}</span>}
+                {renderInput("nume", "Nume")}
+                {renderInput("prenume", "Prenume")}
+                {renderInput("grad", "Grad")}
+                {renderInput("functie", "Funcție")}
+                {renderInput("telefon", "Telefon Serviciu")}
             </div>
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave} disabled={!isValid}>Salvați</button>
+                <button className="save-btn" onClick={handleSave}>Salvați</button>
             </div>
         </div>
     );

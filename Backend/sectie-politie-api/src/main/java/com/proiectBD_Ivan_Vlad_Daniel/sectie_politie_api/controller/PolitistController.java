@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -154,12 +155,57 @@ public class PolitistController {
         return "Succes: " + numeComplet + " a fost șters definitiv din sistem!";
     }
 
-    // ... Restul metodelor (verificaStergere, getPolitistiPaginati) raman la fel ...
     @GetMapping("/verifica-stergere/{id}")
     public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
-        // (Pastreaza codul tau existent aici)
-        return new DeleteConfirmation(true, "SAFE", "Dummy Check", "Verificare...", new ArrayList<>());
-        // Am pus dummy doar ca sa fie scurt aici, tu pastreaza-l pe al tau complet!
+        List<BlockingItem> listaTotala = new ArrayList<>();
+
+        // 1. Verificăm Amenzile
+        List<Amenda> toateAmenzile = amendaRepository.findAllNativeByPolitist(id);
+        for (Amenda a : toateAmenzile) {
+            String desc = a.getStarePlata() + " - " + a.getSuma() + " RON";
+            listaTotala.add(new BlockingItem("Amendă", a.getIdAmenda(), desc));
+        }
+
+        // 2. Verificăm Incidentele
+        List<Incident> toateIncidentele = incidentRepository.findAllNativeByPolitist(id);
+        for (Incident i : toateIncidentele) {
+            String desc = i.getTipIncident() + " (" + i.getStatus() + ")";
+            listaTotala.add(new BlockingItem("Incident", i.getIdIncident(), desc));
+        }
+
+        // 3. Analizăm dacă există elemente care blochează ștergerea ("Active" sau "Neplatite")
+        // Verificăm textul din descriere pentru a determina gravitatea
+        boolean areActive = listaTotala.stream()
+                .anyMatch(item -> item.getDescriere().contains("Activ") || item.getDescriere().contains("Neplatita"));
+
+        boolean areIstoric = !listaTotala.isEmpty();
+
+        // 4. Returnăm rezultatul
+        if (areActive) {
+            return new DeleteConfirmation(
+                    false,
+                    "BLOCKED",
+                    "Ștergere Blocată",
+                    "Polițistul are elemente active (Incidente în lucru sau Amenzi neplătite). Nu poate fi șters până la rezolvarea lor!",
+                    listaTotala
+            );
+        } else if (areIstoric) {
+            return new DeleteConfirmation(
+                    true,
+                    "WARNING",
+                    "Atenție - Ștergere Istoric",
+                    "Polițistul nu mai are cazuri active, dar are istoric. Ștergerea lui va duce la ștergerea definitivă din baza de date a următoarelor înregistrări:",
+                    listaTotala
+            );
+        } else {
+            return new DeleteConfirmation(
+                    true,
+                    "SAFE",
+                    "Ștergere Sigură",
+                    "Nu există date asociate acestui polițist. Ștergerea se poate face fără probleme!",
+                    listaTotala
+            );
+        }
     }
 
     @GetMapping("/lista-paginata")
@@ -173,5 +219,46 @@ public class PolitistController {
         Sort sortare = Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.ASC, "prenume"));
         Pageable pageable = PageRequest.of(page, size, sortare);
         return politistRepository.findAllNative(pageable);
+    }
+
+    @GetMapping("/{id}/dosar-personal")
+    public ResponseEntity<?> getDosarPersonal(@PathVariable Integer id) {
+
+        // 1. TRATARE SPECIALĂ PENTRU ADMINUL BACKDOOR (ID -1)
+        if (id == -1) {
+            Map<String, Object> emptyDosar = new HashMap<>();
+            emptyDosar.put("incidente", new ArrayList<>());
+            emptyDosar.put("amenzi", new ArrayList<>());
+            emptyDosar.put("totalAmenziValoare", BigDecimal.ZERO);
+            emptyDosar.put("totalIncidente", 0);
+            emptyDosar.put("totalAmenziCount", 0);
+            return ResponseEntity.ok(emptyDosar);
+        }
+
+        // 2. Verificăm existența în DB (Pentru polițiști reali)
+        politistRepository.findByIdNative(id)
+                .orElseThrow(() -> new RuntimeException("Polițistul nu există!"));
+
+        // 3. Extragem datele
+        List<Incident> incidente = incidentRepository.findAllNativeByPolitist(id);
+        List<Amenda> amenzi = amendaRepository.findAllNativeByPolitist(id);
+
+        // 4. Calculăm totalul
+        BigDecimal totalValoare = BigDecimal.ZERO;
+        for (Amenda a : amenzi) {
+            if (a.getSuma() != null) {
+                totalValoare = totalValoare.add(a.getSuma());
+            }
+        }
+
+        // 5. Construim răspunsul
+        Map<String, Object> dosar = new HashMap<>();
+        dosar.put("incidente", incidente);
+        dosar.put("amenzi", amenzi);
+        dosar.put("totalAmenziValoare", totalValoare);
+        dosar.put("totalIncidente", incidente.size());
+        dosar.put("totalAmenziCount", amenzi.size());
+
+        return ResponseEntity.ok(dosar);
     }
 }

@@ -3,8 +3,8 @@ import axios from 'axios';
 
 import LiveSearchInput from '../components/LiveSearchInput';
 import PaginatedCard from '../components/PaginatedCard';
-import '../components/styles/TableStyles.css';
-import '../components/styles/Statistici.css';
+import '../components/styles/TableStyles.css'; // Stiluri comune
+import '../components/styles/Statistici.css';  // Stiluri specifice cu prefix st-
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import toast from 'react-hot-toast';
@@ -41,7 +41,7 @@ const CustomChartTooltip = ({ active, payload, label, type }) => {
         const data = payload[0].payload; // Datele complete ale barei
 
         return (
-            <div className="custom-tooltip-box" style={{visibility:'visible', opacity:1, position:'relative', bottom:'auto', left:'auto', transform:'none', margin:0}}>
+            <div className="st-custom-tooltip-box" style={{visibility:'visible', opacity:1, pointerEvents:'none'}}>
                 {/* Header comun */}
                 <div style={{fontWeight:'bold', borderBottom:'1px solid rgba(255,255,255,0.2)', marginBottom:'5px', paddingBottom:'3px'}}>
                     {data.nume ? `${data.nume} ${data.prenume || ''}` : label}
@@ -168,11 +168,8 @@ const StatisticiPage = () => {
             id: 0, title: "🏆 Top Polițiști (Valoare Amenzi)",
             component: (
                 <ResponsiveContainer width="100%" height={350}>
-                    {/* Folosim slice(0, 10) pentru a limita la primii 10 */}
                     <BarChart data={topPolitisti.slice(0, 20)} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-
-                        {/* Axa X arata Nume + Prenume */}
                         <XAxis
                             dataKey={(row) => `${row.nume} ${row.prenume}`}
                             tick={{fontSize: 11}}
@@ -181,10 +178,7 @@ const StatisticiPage = () => {
                             interval={0}
                         />
                         <YAxis />
-
-                        {/* Tooltip Personalizat Politist */}
                         <Tooltip content={<CustomChartTooltip type="politist"/>} />
-
                         <Legend wrapperStyle={{paddingTop: '20px'}}/>
                         <Bar dataKey="total_valoare" fill="#007bff" name="Total RON Generat" barSize={40} radius={[5, 5, 0, 0]} />
                     </BarChart>
@@ -209,11 +203,8 @@ const StatisticiPage = () => {
             id: 2, title: "🔥 Top 20 Străzi (Zone de Risc)",
             component: (
                 <ResponsiveContainer width="100%" height={350}>
-                    {/* 1. Am scos layout="vertical" si am marit marginea de jos pt text */}
                     <BarChart data={topStrazi.slice(0, 20)} margin={{ top: 20, right: 30, left: 20, bottom: 70 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-
-                        {/* 2. AXA X: Acum afișează Strada (rotită să încapă) */}
                         <XAxis
                             dataKey="strada"
                             tick={{fontSize: 11}}
@@ -221,14 +212,9 @@ const StatisticiPage = () => {
                             textAnchor="end"
                             interval={0}
                         />
-
-                        {/* 3. AXA Y: Acum afișează Numerele (automat) */}
                         <YAxis />
-
                         <Tooltip content={<CustomChartTooltip type="strada"/>} />
                         <Legend wrapperStyle={{paddingTop: '20px'}}/>
-
-                        {/* Barele sunt acum verticale */}
                         <Bar dataKey="nr_incidente" fill="#dc3545" name="Nr. Incidente" barSize={30} radius={[5, 5, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
@@ -238,11 +224,8 @@ const StatisticiPage = () => {
             id: 3, title: "⚠️ Top Rău-Platnici",
             component: (
                 <ResponsiveContainer width="100%" height={350}>
-                    {/* Limitare la 10 persoane */}
                     <BarChart data={rauPlatnici.slice(0, 20)} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-
-                        {/* Axa X arata Nume + Prenume */}
                         <XAxis
                             dataKey={(row) => `${row.nume} ${row.prenume}`}
                             tick={{fontSize: 11}}
@@ -251,10 +234,7 @@ const StatisticiPage = () => {
                             interval={0}
                         />
                         <YAxis />
-
-                        {/* Tooltip Personalizat Persoana (cu CNP) */}
                         <Tooltip content={<CustomChartTooltip type="persoana"/>} />
-
                         <Legend wrapperStyle={{paddingTop: '20px'}}/>
                         <Bar dataKey="datorie_totala" fill="#FF8042" name="Datorie (RON)" barSize={40} radius={[5, 5, 0, 0]} />
                     </BarChart>
@@ -290,21 +270,21 @@ const StatisticiPage = () => {
     };
 
     return (
-        <div className="stats-container">
-            <h2 className="page-title">Dashboard Analitic & Statistici</h2>
+        <div className="st-stats-container">
+            <h2 className="st-page-title">Dashboard Analitic & Statistici</h2>
 
-            <div className="command-bar">
-                <div className="filter-container">
-                    <div className="filter-group">
+            <div className="st-command-bar">
+                <div className="st-filter-container">
+                    <div className="st-filter-group">
                         <label>Data Început:</label>
-                        <input type="text" className="date-input-text" placeholder="ZZ-LL-AAAA" value={startInput} onChange={(e) => setStartInput(e.target.value)} />
+                        <input type="text" className="st-date-input-text" placeholder="ZZ-LL-AAAA" value={startInput} onChange={(e) => setStartInput(e.target.value)} />
                     </div>
-                    <div className="filter-group">
+                    <div className="st-filter-group">
                         <label>Data Sfârșit:</label>
-                        <input type="text" className="date-input-text" placeholder="ZZ-LL-AAAA" value={endInput} onChange={(e) => setEndInput(e.target.value)} />
+                        <input type="text" className="st-date-input-text" placeholder="ZZ-LL-AAAA" value={endInput} onChange={(e) => setEndInput(e.target.value)} />
                     </div>
-                    <button className="apply-btn" onClick={handleApplyFilters}>🔍 Aplică Filtre</button>
-                    <button className="reset-btn" onClick={handleReset}>↺ Reset</button>
+                    <button className="st-apply-btn" onClick={handleApplyFilters}>🔍 Aplică Filtre</button>
+                    <button className="st-reset-btn" onClick={handleReset}>↺ Reset</button>
                 </div>
             </div>
 
@@ -313,18 +293,20 @@ const StatisticiPage = () => {
                     (<span style={{color: '#666', fontStyle: 'italic'}}>{activeStartDate && activeEndDate ? `📊 Analiză activă: ${formatDateDisplay(activeStartDate)} ➔ ${formatDateDisplay(activeEndDate)}` : "📊 Se afișează istoricul complet (All Time)"}</span>)}
             </div>
 
-            <div className="carousel-container">
-                <button className="nav-arrow nav-prev" onClick={prevSlide}>&#10094;</button>
-                <div className="carousel-content" key={currentSlide}>
-                    <h3 className="slide-title">{slides[currentSlide].title}</h3>
+            <div className="st-carousel-container">
+                <button className="st-nav-arrow st-nav-prev" onClick={prevSlide}>&#10094;</button>
+                <div className="st-carousel-content" key={currentSlide}>
+                    <h3 className="st-slide-title">{slides[currentSlide].title}</h3>
                     {slides[currentSlide].component}
                 </div>
-                <button className="nav-arrow nav-next" onClick={nextSlide}>&#10095;</button>
-                <div className="slide-indicator">{slides.map((_, idx) => (<div key={idx} className={`dot ${currentSlide === idx ? 'active' : ''}`} onClick={() => setCurrentSlide(idx)}></div>))}</div>
+                <button className="st-nav-arrow st-nav-next" onClick={nextSlide}>&#10095;</button>
+                <div className="st-slide-indicator">
+                    {slides.map((_, idx) => (<div key={idx} className={`st-dot ${currentSlide === idx ? 'st-active' : ''}`} onClick={() => setCurrentSlide(idx)}></div>))}
+                </div>
             </div>
 
             {/* --- ANALYSIS GRID --- */}
-            <div className="analysis-grid">
+            <div className="st-analysis-grid">
 
                 {/* 1. Zone Sigure */}
                 <PaginatedCard
@@ -336,11 +318,11 @@ const StatisticiPage = () => {
                     renderItem={(item, idx) => (
                         <tr key={idx}>
                             <td>
-                                <div className="tooltip-wrapper">
-                                    <span className="truncated-text">
+                                <div className="st-tooltip-wrapper">
+                                    <span className="st-truncated-text">
                                         {item.strada}, {item.localitate}
                                     </span>
-                                    <div className="custom-tooltip-box">
+                                    <div className="st-custom-tooltip-box">
                                         Localitate: {item.localitate}{'\n'}
                                         Strada: {item.strada}
                                     </div>
@@ -360,12 +342,12 @@ const StatisticiPage = () => {
                     renderItem={(item, idx) => (
                         <tr key={idx}>
                             <td>
-                                <div className="tooltip-wrapper">
-                                    <span className="truncated-text">
+                                <div className="st-tooltip-wrapper">
+                                    <span className="st-truncated-text">
                                         <b>{item.nume} {item.prenume}</b><br/>
                                         <span style={{fontSize:'11px', opacity:0.8}}>{item.grad}, {item.functie}</span>
                                     </span>
-                                    <div className="custom-tooltip-box">
+                                    <div className="st-custom-tooltip-box">
                                         Nume: {item.nume} {item.prenume}{'\n'}
                                         Grad: {item.grad}{'\n'}
                                         Funcție: {item.functie}
@@ -389,12 +371,12 @@ const StatisticiPage = () => {
                     renderItem={(item, idx) => (
                         <tr key={idx}>
                             <td>
-                                <div className="tooltip-wrapper">
-                                    <span className="truncated-text">
+                                <div className="st-tooltip-wrapper">
+                                    <span className="st-truncated-text">
                                         <b>{item.nume} {item.prenume}</b><br/>
                                         <span style={{fontSize:'11px', opacity:0.8}}>CNP: {item.cnp}</span>
                                     </span>
-                                    <div className="custom-tooltip-box">
+                                    <div className="st-custom-tooltip-box">
                                         Nume: {item.nume} {item.prenume}{'\n'}
                                         CNP: {item.cnp}
                                     </div>
@@ -424,13 +406,13 @@ const StatisticiPage = () => {
             </div>
 
             {/* --- ARHIVA OPERATIVA (DOSARE) --- */}
-            <h2 className="page-title" style={{marginTop:'50px'}}>📂 Arhivă Operativă (Dosare)</h2>
+            <h2 className="st-page-title" style={{marginTop:'50px'}}>📂 Arhivă Operativă (Dosare)</h2>
 
-            <div className="dashboard-grid">
+            <div className="st-dashboard-grid">
                 {/* DOSAR POLITIST */}
-                <div>
-                    <div className="search-wrapper">
-                        <div style={{flex:1}}>
+                <div className="st-archive-column">
+                    <div className="st-search-wrapper">
+                        <div className="st-search-input-container">
                             <LiveSearchInput
                                 label="Căutați Polițist"
                                 placeholder="Nume, Prenume..."
@@ -439,27 +421,27 @@ const StatisticiPage = () => {
                                 onSelect={(item) => setSelectedPolitist(item)}
                             />
                         </div>
-                        <button className="search-btn-modern" onClick={() => handleCautaPolitist()}>
+                        <button className="st-search-btn-modern" onClick={() => handleCautaPolitist()}>
                             🔍 Deschide Dosar
                         </button>
                     </div>
                     {rezultatPolitist && selectedPolitist && (
-                        <div className="dossier-card">
-                            <div className="dossier-top-bar"></div>
-                            <div className="stamp">DOSAR PERSONAL</div>
-                            <div className="dossier-header">
-                                <div className="dossier-photo-placeholder">FOTO</div>
-                                <div className="dossier-info" style={{flex:1, marginLeft:'20px'}}>
+                        <div className="st-dossier-card">
+                            <div className="st-dossier-top-bar"></div>
+                            <div className="st-stamp">DOSAR PERSONAL</div>
+                            <div className="st-dossier-header">
+                                <div className="st-dossier-photo-placeholder">FOTO</div>
+                                <div className="st-dossier-info" style={{flex:1, marginLeft:'20px'}}>
                                     <h2>{selectedPolitist.nume} {selectedPolitist.prenume}</h2>
-                                    <div className="dossier-detail"><b>Grad:</b> {selectedPolitist.grad}</div>
-                                    <div className="dossier-detail"><b>Funcție:</b> {selectedPolitist.functie}</div>
-                                    <div className="dossier-detail"><b>Telefon:</b> {selectedPolitist.telefon_serviciu}</div>
-                                    <div className="dossier-detail"><b>ID Serviciu:</b> {selectedPolitist.idPolitist}</div>
+                                    <div className="st-dossier-detail"><b>Grad:</b> {selectedPolitist.grad}</div>
+                                    <div className="st-dossier-detail"><b>Funcție:</b> {selectedPolitist.functie}</div>
+                                    <div className="st-dossier-detail"><b>Telefon:</b> {selectedPolitist.telefon_serviciu}</div>
+                                    <div className="st-dossier-detail"><b>ID Serviciu:</b> {selectedPolitist.idPolitist}</div>
                                 </div>
                             </div>
                             <h4 style={{borderBottom:'1px solid #333'}}>RAPORT DE ACTIVITATE (INCIDENTE GESTIONATE)</h4>
                             {rezultatPolitist.length > 0 ? (
-                                <table className="dossier-table">
+                                <table className="st-dossier-table">
                                     <thead><tr><th>Dată</th><th>Tip Incident</th><th>Locație</th></tr></thead>
                                     <tbody>
                                     {rezultatPolitist.map((r, i) => (
@@ -472,15 +454,15 @@ const StatisticiPage = () => {
                                     </tbody>
                                 </table>
                             ) : <p>Nu există activitate înregistrată în perioada selectată.</p>}
-                            <button className="print-btn" onClick={handlePrint}>🖨️ Printează Dosar</button>
+                            <button className="st-print-btn" onClick={handlePrint}>🖨️ Printează Dosar</button>
                         </div>
                     )}
                 </div>
 
                 {/* DOSAR CETATEAN */}
-                <div>
-                    <div className="search-wrapper">
-                        <div style={{flex:1}}>
+                <div className="st-archive-column">
+                    <div className="st-search-wrapper">
+                        <div className="st-search-input-container">
                             <LiveSearchInput
                                 label="Căutați Cetățean"
                                 placeholder="Nume sau CNP..."
@@ -489,26 +471,26 @@ const StatisticiPage = () => {
                                 onSelect={(item) => setSelectedPersoana(item)}
                             />
                         </div>
-                        <button className="search-btn-modern" onClick={() => handleCautaCnp()}>
+                        <button className="st-search-btn-modern" onClick={() => handleCautaCnp()}>
                             🔍 Deschide Dosar
                         </button>
                     </div>
                     {rezultatCnp && selectedPersoana && (
-                        <div className="dossier-card">
-                            <div className="dossier-top-bar"></div>
-                            <div className="stamp">CAZIER FISCAL</div>
-                            <div className="dossier-header">
-                                <div className="dossier-photo-placeholder">FOTO</div>
-                                <div className="dossier-info" style={{flex:1, marginLeft:'20px'}}>
+                        <div className="st-dossier-card">
+                            <div className="st-dossier-top-bar"></div>
+                            <div className="st-stamp">CAZIER FISCAL</div>
+                            <div className="st-dossier-header">
+                                <div className="st-dossier-photo-placeholder">FOTO</div>
+                                <div className="st-dossier-info" style={{flex:1, marginLeft:'20px'}}>
                                     <h2>{selectedPersoana.nume} {selectedPersoana.prenume}</h2>
-                                    <div className="dossier-detail"><b>CNP:</b> {selectedPersoana.cnp}</div>
-                                    <div className="dossier-detail"><b>Telefon:</b> {selectedPersoana.telefon}</div>
-                                    <div className="dossier-detail"><b>Data Nașterii:</b> {formatDateDisplay(selectedPersoana.dataNasterii)}</div>
+                                    <div className="st-dossier-detail"><b>CNP:</b> {selectedPersoana.cnp}</div>
+                                    <div className="st-dossier-detail"><b>Telefon:</b> {selectedPersoana.telefon}</div>
+                                    <div className="st-dossier-detail"><b>Data Nașterii:</b> {formatDateDisplay(selectedPersoana.dataNasterii)}</div>
                                 </div>
                             </div>
                             <h4 style={{borderBottom:'1px solid #333'}}>ISTORIC AMENZI & SANCȚIUNI</h4>
                             {rezultatCnp.length > 0 ? (
-                                <table className="dossier-table">
+                                <table className="st-dossier-table">
                                     <thead><tr><th>Dată</th><th>Motiv</th><th>Sumă</th><th>Status</th><th>Agent</th></tr></thead>
                                     <tbody>
                                     {rezultatCnp.map((r, i) => (
@@ -523,7 +505,7 @@ const StatisticiPage = () => {
                                     </tbody>
                                 </table>
                             ) : <p>Persoana nu are amenzi înregistrate.</p>}
-                            <button className="print-btn" onClick={handlePrint}>🖨️ Printează Dosar</button>
+                            <button className="st-print-btn" onClick={handlePrint}>🖨️ Printează Dosar</button>
                         </div>
                     )}
                 </div>

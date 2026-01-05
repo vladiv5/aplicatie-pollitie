@@ -11,14 +11,16 @@ const AdreseList = ({
                         onAddClick,
                         onEditClick,
                         onViewLocatariClick,
-                        highlightId, onHighlightComplete // <--- PROPS
+                        highlightId,
+                        onHighlightComplete,
+                        setHighlightId
                     }) => {
     const [adrese, setAdrese] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const rowRefs = useRef({}); // <--- REF
+    const rowRefs = useRef({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
@@ -47,7 +49,26 @@ const AdreseList = ({
             .catch(err => console.error("Eroare incarcare adrese:", err));
     };
 
-    // --- REFRESH & AUTO JUMP ---
+    useEffect(() => {
+        const rawData = sessionStorage.getItem('boomerang_pending');
+
+        if (rawData) {
+            const data = JSON.parse(rawData);
+
+            if (data.returnRoute === '/adrese' && data.triggerId) {
+                if (data.triggerAction === 'reOpenDelete') {
+                    setTimeout(() => {
+                        handleRequestDelete(data.triggerId);
+                    }, 300);
+                }
+                if (setHighlightId) {
+                    setHighlightId(data.triggerId);
+                }
+                sessionStorage.removeItem('boomerang_pending');
+            }
+        }
+    }, []);
+
     useEffect(() => {
         loadAdrese(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
@@ -61,7 +82,6 @@ const AdreseList = ({
         });
     }, [refreshTrigger]);
 
-    // --- LOGICA FIND PAGE ---
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -70,15 +90,11 @@ const AdreseList = ({
             });
             const allData = res.data;
 
-            // SORTARE COMPLEXA (La fel ca in Backend)
-            // 1. Localitate -> 2. Judet/Sector -> 3. Strada
             allData.sort((a, b) => {
                 const locComparison = a.localitate.localeCompare(b.localitate);
                 if (locComparison !== 0) return locComparison;
-
                 const judComparison = a.judetSauSector.localeCompare(b.judetSauSector);
                 if (judComparison !== 0) return judComparison;
-
                 return a.strada.localeCompare(b.strada);
             });
 
@@ -97,11 +113,9 @@ const AdreseList = ({
         }
     };
 
-    // --- SCROLL & FLASH ---
     useEffect(() => {
         if (highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
-
             const timer = setTimeout(() => {
                 if (onHighlightComplete) onHighlightComplete();
             }, 3000);
@@ -110,9 +124,20 @@ const AdreseList = ({
     }, [adrese, highlightId]);
 
     const handlePageChange = (newPage) => loadAdrese(newPage, searchTerm);
-    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadAdrese(0, e.target.value); };
 
-    // --- DELETE LOGIC ---
+    // --- MODIFICARE 1: Cand se schimba search-ul, trimitem valoarea la loadAdrese
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setSearchTerm(val);
+        loadAdrese(0, val);
+    };
+
+    // --- MODIFICARE 2: Functia de Clear Search
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        loadAdrese(0, '');
+    };
+
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/adrese/verifica-stergere/${id}`, {
@@ -147,7 +172,21 @@ const AdreseList = ({
         <div className="page-container">
             <h2 className="page-title">Registru Adrese</h2>
             <div className="controls-container">
-                <input type="text" className="search-input" placeholder="Căutați..." value={searchTerm} onChange={handleSearchChange} />
+                {/* --- MODIFICARE 3: Wrapper pentru Search + X --- */}
+                <div className="search-wrapper">
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Căutați..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    {searchTerm && (
+                        <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
+                    )}
+                </div>
+                {/* ----------------------------------------------- */}
+
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Adresă</button>
             </div>
 
@@ -168,7 +207,6 @@ const AdreseList = ({
                     adrese.map((adresa) => (
                         <tr
                             key={adresa.idAdresa}
-                            // REF & CLASS
                             ref={(el) => (rowRefs.current[adresa.idAdresa] = el)}
                             className={highlightId === adresa.idAdresa ? 'flash-row' : ''}
                         >

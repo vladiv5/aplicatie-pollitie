@@ -16,18 +16,18 @@ const PersoanePage = () => {
 
     // Refresh & Highlight
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const [highlightId, setHighlightId] = useState(null); // <--- STATE NOU
+    const [highlightId, setHighlightId] = useState(null);
 
     const handleAddSuccess = (newId) => {
         setIsAddModalOpen(false);
-        setHighlightId(newId); // Setam ID
+        setHighlightId(newId);
         setRefreshTrigger(prev => prev + 1);
     };
 
     const handleEditSuccess = (savedId) => {
         setIsEditModalOpen(false);
         setEditId(null);
-        setHighlightId(savedId); // Setam ID
+        setHighlightId(savedId);
         setRefreshTrigger(prev => prev + 1);
     };
 
@@ -40,9 +40,12 @@ const PersoanePage = () => {
                 onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
                 onViewHistoryClick={(id) => setHistoryId(id)}
                 onViewAdreseClick={(id) => setAdreseId(id)}
-                // Props noi
+
+                // --- Highlight Props ---
                 highlightId={highlightId}
                 onHighlightComplete={() => setHighlightId(null)}
+                // IMPORTANT: Trimitem setter-ul pentru Bumerang
+                setHighlightId={setHighlightId}
             />
 
             {/* MODALE */}

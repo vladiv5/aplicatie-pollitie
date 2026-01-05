@@ -15,33 +15,37 @@ const AdresePage = () => {
 
     // --- REFRESH & HIGHLIGHT ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const [highlightId, setHighlightId] = useState(null); // <--- STATE NOU
+    const [highlightId, setHighlightId] = useState(null);
 
-    const handleAddSuccess = (newId) => { // Primim ID
+    const handleAddSuccess = (newId) => {
         setIsAddModalOpen(false);
-        setHighlightId(newId); // Setam Focus
+        setHighlightId(newId);
         setRefreshTrigger(prev => prev + 1);
     };
 
-    const handleEditSuccess = (savedId) => { // Primim ID
+    const handleEditSuccess = (savedId) => {
         setIsEditModalOpen(false);
         setEditId(null);
-        setHighlightId(savedId); // Setam Focus
+        setHighlightId(savedId);
         setRefreshTrigger(prev => prev + 1);
     };
 
     return (
         <div>
+            {/* Lista inteligenta */}
             <AdreseList
                 refreshTrigger={refreshTrigger}
                 onAddClick={() => setIsAddModalOpen(true)}
                 onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
                 onViewLocatariClick={(id) => setLocatariAdresaId(id)}
-                // PROPS NOI
+
+                // Highlight props
                 highlightId={highlightId}
                 onHighlightComplete={() => setHighlightId(null)}
+                setHighlightId={setHighlightId} // <--- IMPORTANT
             />
 
+            {/* MODALE */}
             <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Adresă">
                 <AddAdresa onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
