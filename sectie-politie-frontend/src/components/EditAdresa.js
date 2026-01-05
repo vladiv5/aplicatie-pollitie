@@ -45,10 +45,13 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
         axios.put(`http://localhost:8080/api/adrese/${id}`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
+            .then((response) => {
+                // MODIFICARE AICI:
+                const updatedId = response.data ? response.data.idAdresa : id;
+
                 setErrors({});
-                toast.success("Adresă actualizată!"); // <--- TOAST
-                onSaveSuccess();
+                toast.success("Adresă actualizată!");
+                onSaveSuccess(updatedId); // Trimitem ID-ul
             })
             .catch(err => {
                 if (err.response && err.response.status === 400) {
@@ -107,7 +110,7 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvează Modificări</button>
+                <button className="save-btn" onClick={handleSave}>Salvați Modificări</button>
             </div>
         </div>
     );

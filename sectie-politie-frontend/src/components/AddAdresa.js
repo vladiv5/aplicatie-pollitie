@@ -24,10 +24,13 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
         axios.post('http://localhost:8080/api/adrese', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
+            .then((response) => {
+                // MODIFICARE AICI:
+                const newId = response.data ? response.data.idAdresa : null;
+
                 setErrors({});
-                toast.success("Adresă înregistrată!"); // <--- TOAST
-                onSaveSuccess();
+                toast.success("Adresă înregistrată!");
+                onSaveSuccess(newId); // Trimitem ID-ul
             })
             .catch(err => {
                 if (err.response && err.response.status === 400) {
@@ -81,7 +84,7 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvează Adresa</button>
+                <button className="save-btn" onClick={handleSave}>Salvați Adresa</button>
             </div>
         </div>
     );

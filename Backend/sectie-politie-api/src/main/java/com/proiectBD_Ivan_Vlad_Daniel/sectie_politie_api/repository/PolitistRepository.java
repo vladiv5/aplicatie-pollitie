@@ -17,6 +17,19 @@ import java.util.Optional;
 @Repository
 public interface PolitistRepository extends JpaRepository<Politist, Integer> {
 
+    // --- METODE PENTRU LOGIN & ACTIVARE ---
+
+    // 1. Login: Cauta dupa username si parola (exacte)
+    Optional<Politist> findByUsernameAndPassword(String username, String password);
+
+    // 2. Activare: Cauta politistul dupa datele personale ca sa il identificam
+    // Folosim o lista/optional, dar telefonul e unic oricum
+    @Query(value = "SELECT * FROM Politisti WHERE nume = :nume AND prenume = :prenume AND telefon_serviciu = :telefon", nativeQuery = true)
+    Optional<Politist> findForActivation(@Param("nume") String nume, @Param("prenume") String prenume, @Param("telefon") String telefon);
+
+    // 3. Verificare unicitate username la inregistrare
+    Optional<Politist> findByUsername(String username);
+
     @Query(value = "SELECT * FROM Politisti", countQuery = "SELECT count(*) FROM Politisti", nativeQuery = true)
     Page<Politist> findAllNative(Pageable pageable);
 
@@ -33,7 +46,9 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
     @Query(value = "DELETE FROM Politisti WHERE id_politist = :id", nativeQuery = true)
     void stergePolitistManual(@Param("id") Integer id);
 
-    Optional<Politist> findByNume(String nume);
+    // --- METODA NOUĂ PENTRU A GĂSI ULTIMUL ID (SQL PUR) ---
+    @Query(value = "SELECT MAX(id_politist) FROM Politisti", nativeQuery = true)
+    Integer getLastInsertedId();
 
     @Modifying
     @Transactional

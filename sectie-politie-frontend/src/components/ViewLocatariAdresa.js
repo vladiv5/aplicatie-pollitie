@@ -68,7 +68,7 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
 
             <div className="modal-footer" style={{ marginTop: '20px' }}>
                 <button className="action-btn" onClick={onClose} style={{ background: '#6c757d', color: 'white' }}>
-                    Închide
+                    Închideți
                 </button>
             </div>
         </div>

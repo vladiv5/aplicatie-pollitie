@@ -34,7 +34,7 @@ const HomePage = () => {
             {/* Banner Superior */}
             <div className="welcome-banner">
                 <div className="welcome-text">
-                    <h1>Bine ai venit, {user.nume} {user.prenume}!</h1>
+                    <h1>Bine ați venit, {user.nume} {user.prenume}!</h1>
                     <p>Panou de Control Operativ - Secția Centrală</p>
                 </div>
                 <div className="live-clock">
@@ -87,37 +87,37 @@ const HomePage = () => {
                         <Link to="/incidente" className="shortcut-card">
                             <span className="shortcut-icon">🚨</span>
                             <span className="shortcut-title">Registru Incidente</span>
-                            <span className="shortcut-desc">Adaugă sau vizualizează intervenții</span>
+                            <span className="shortcut-desc">Adăugați sau vizualizați incidente</span>
                         </Link>
 
                         <Link to="/amenzi" className="shortcut-card">
                             <span className="shortcut-icon">📝</span>
                             <span className="shortcut-title">Gestiune Amenzi</span>
-                            <span className="shortcut-desc">Verifică plăți și sancțiuni</span>
+                            <span className="shortcut-desc">Verificați plăți și sancțiuni</span>
                         </Link>
 
                         <Link to="/persoane" className="shortcut-card">
                             <span className="shortcut-icon">👥</span>
                             <span className="shortcut-title">Bază Date Persoane</span>
-                            <span className="shortcut-desc">Căutare după CNP sau Nume</span>
+                            <span className="shortcut-desc">Căutați persoane</span>
                         </Link>
 
                         <Link to="/statistici" className="shortcut-card">
                             <span className="shortcut-icon">📊</span>
                             <span className="shortcut-title">Rapoarte & Analiză</span>
-                            <span className="shortcut-desc">Vezi performanța secției</span>
+                            <span className="shortcut-desc">Vizualizați performanța secției</span>
                         </Link>
 
                         <Link to="/politisti" className="shortcut-card">
                             <span className="shortcut-icon">👮</span>
                             <span className="shortcut-title">Colegi</span>
-                            <span className="shortcut-desc">Lista personalului activ</span>
+                            <span className="shortcut-desc">Lista personalului</span>
                         </Link>
 
                         <Link to="/adrese" className="shortcut-card">
                             <span className="shortcut-icon">📍</span>
-                            <span className="shortcut-title">Harta Adrese</span>
-                            <span className="shortcut-desc">Zone de risc și locații</span>
+                            <span className="shortcut-title">Hartă Adrese</span>
+                            <span className="shortcut-desc">Zone de risc și domicilii cetățeni</span>
                         </Link>
 
                     </div>

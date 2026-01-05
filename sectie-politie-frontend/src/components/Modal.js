@@ -1,13 +1,17 @@
 import React from 'react';
 import './styles/TableStyles.css';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+// Am adaugat prop-ul 'maxWidth' cu o valoare default (null)
+const Modal = ({ isOpen, onClose, title, children, maxWidth = null }) => {
     if (!isOpen) return null;
 
     return (
         <div className="modal-overlay">
-            {/* Modal Content are acum max-height: 80vh */}
-            <div className="modal-content">
+            {/* Aplicam maxWidth dinamic daca este trimis */}
+            <div
+                className="modal-content"
+                style={ maxWidth ? { maxWidth: maxWidth, width: '95%' } : {} }
+            >
 
                 {/* Header-ul RĂMÂNE FIX sus */}
                 <div className="modal-header">
@@ -15,7 +19,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
-                {/* DOAR AICI apare scroll-ul dacă e prea lung */}
+                {/* Scroll doar pe body */}
                 <div className="modal-body-scroll">
                     {children}
                 </div>

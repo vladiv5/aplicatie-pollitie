@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
-import toast from 'react-hot-toast'; // <--- IMPORT
+import toast from 'react-hot-toast';
 
 const AdreseList = ({
                         refreshTrigger,
                         onAddClick,
                         onEditClick,
-                        onViewLocatariClick
+                        onViewLocatariClick,
+                        highlightId, onHighlightComplete // <--- PROPS
                     }) => {
     const [adrese, setAdrese] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
+
+    const rowRefs = useRef({}); // <--- REF
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
@@ -29,7 +32,7 @@ const AdreseList = ({
         let url = `http://localhost:8080/api/adrese/lista-paginata?page=${page}&size=10`;
         if (term) url = `http://localhost:8080/api/adrese/cauta?termen=${term}`;
 
-        axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
+        return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
                     setAdrese(res.data);
@@ -39,30 +42,77 @@ const AdreseList = ({
                     setTotalPages(res.data.totalPages);
                 }
                 setCurrentPage(page);
+                return res.data;
             })
             .catch(err => console.error("Eroare incarcare adrese:", err));
     };
 
+    // --- REFRESH & AUTO JUMP ---
     useEffect(() => {
-        loadAdrese(currentPage, searchTerm);
+        loadAdrese(currentPage, searchTerm).then((responseData) => {
+            if (highlightId) {
+                const currentList = responseData.content || responseData;
+                const existsOnPage = currentList.some(a => a.idAdresa === highlightId);
+
+                if (!existsOnPage) {
+                    findPageForId(highlightId);
+                }
+            }
+        });
     }, [refreshTrigger]);
 
-    useEffect(() => {
-        if (location.state && location.state.triggerAction === 'reOpenDelete') {
-            const idToReCheck = location.state.triggerId;
-            window.history.replaceState({}, document.title);
-            if(idToReCheck) {
-                setTimeout(() => {
-                    handleRequestDelete(idToReCheck);
-                }, 100);
+    // --- LOGICA FIND PAGE ---
+    const findPageForId = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`http://localhost:8080/api/adrese`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const allData = res.data;
+
+            // SORTARE COMPLEXA (La fel ca in Backend)
+            // 1. Localitate -> 2. Judet/Sector -> 3. Strada
+            allData.sort((a, b) => {
+                const locComparison = a.localitate.localeCompare(b.localitate);
+                if (locComparison !== 0) return locComparison;
+
+                const judComparison = a.judetSauSector.localeCompare(b.judetSauSector);
+                if (judComparison !== 0) return judComparison;
+
+                return a.strada.localeCompare(b.strada);
+            });
+
+            const index = allData.findIndex(a => a.idAdresa === id);
+
+            if (index !== -1) {
+                const targetPage = Math.floor(index / 10);
+                if (targetPage !== currentPage) {
+                    loadAdrese(targetPage, searchTerm);
+                } else {
+                    loadAdrese(currentPage, searchTerm);
+                }
             }
+        } catch (err) {
+            console.error("Nu am putut calcula pagina automata:", err);
         }
-    }, [location]);
+    };
+
+    // --- SCROLL & FLASH ---
+    useEffect(() => {
+        if (highlightId && rowRefs.current[highlightId]) {
+            rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const timer = setTimeout(() => {
+                if (onHighlightComplete) onHighlightComplete();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [adrese, highlightId]);
 
     const handlePageChange = (newPage) => loadAdrese(newPage, searchTerm);
     const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadAdrese(0, e.target.value); };
 
-    // --- LOGICA DELETE SMART ---
+    // --- DELETE LOGIC ---
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/adrese/verifica-stergere/${id}`, {
@@ -74,8 +124,7 @@ const AdreseList = ({
                 setIsDeleteModalOpen(true);
             })
             .catch(err => {
-                console.error(err);
-                toast.error("Eroare la verificarea adresei."); // <--- TOAST
+                toast.error("Eroare la verificarea adresei.");
             });
     };
 
@@ -89,17 +138,17 @@ const AdreseList = ({
                 setIsDeleteModalOpen(false);
                 setDeleteId(null);
                 setDeleteData(null);
-                toast.success("Adresă ștearsă!"); // <--- TOAST
+                toast.success("Adresă ștearsă!");
             })
-            .catch(err => toast.error("Eroare la ștergerea adresei!")); // <--- TOAST
+            .catch(err => toast.error("Eroare la ștergerea adresei!"));
     };
 
     return (
         <div className="page-container">
             <h2 className="page-title">Registru Adrese</h2>
             <div className="controls-container">
-                <input type="text" className="search-input" placeholder="Caută..." value={searchTerm} onChange={handleSearchChange} />
-                <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adaugă Adresă</button>
+                <input type="text" className="search-input" placeholder="Căutați..." value={searchTerm} onChange={handleSearchChange} />
+                <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Adresă</button>
             </div>
 
             <table className="styled-table">
@@ -117,7 +166,12 @@ const AdreseList = ({
                 <tbody>
                 {adrese && adrese.length > 0 ? (
                     adrese.map((adresa) => (
-                        <tr key={adresa.idAdresa}>
+                        <tr
+                            key={adresa.idAdresa}
+                            // REF & CLASS
+                            ref={(el) => (rowRefs.current[adresa.idAdresa] = el)}
+                            className={highlightId === adresa.idAdresa ? 'flash-row' : ''}
+                        >
                             <td>{adresa.judetSauSector}</td>
                             <td>{adresa.localitate}</td>
                             <td>{adresa.strada}</td>
@@ -126,9 +180,9 @@ const AdreseList = ({
                             <td>{adresa.apartament ? adresa.apartament : ''}</td>
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button className="action-btn edit-btn" onClick={() => onEditClick(adresa.idAdresa)}>Edit</button>
-                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(adresa.idAdresa)}>Șterge</button>
-                                    <button className="action-btn" style={{ backgroundColor: '#fd7e14', color: 'white', marginRight: '5px' }} onClick={() => onViewLocatariClick(adresa.idAdresa)} title="Vezi Locatari"><i className="fa fa-users"></i> Locatari</button>
+                                    <button className="action-btn edit-btn" onClick={() => onEditClick(adresa.idAdresa)}>Editați</button>
+                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(adresa.idAdresa)}>Ștergeți</button>
+                                    <button className="action-btn" style={{ backgroundColor: '#fd7e14', color: 'white', marginRight: '5px' }} onClick={() => onViewLocatariClick(adresa.idAdresa)} title="Vizualizați Locatari"><i className="fa fa-users"></i> Locatari</button>
                                 </div>
                             </td>
                         </tr>

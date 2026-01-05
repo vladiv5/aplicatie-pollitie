@@ -46,4 +46,7 @@ public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
             "COLLATE Latin1_General_100_CI_AI " +
             "LIKE CONCAT('%', :termen, '%')", nativeQuery = true)
     List<Adresa> cautaDupaInceput(@Param("termen") String termen);
+
+    @Query(value = "SELECT MAX(id_adresa) FROM Adrese", nativeQuery = true)
+    Integer getLastInsertedId();
 }

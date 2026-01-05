@@ -20,18 +20,22 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
         axios.post('http://localhost:8080/api/persoane', formData, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
+            .then((response) => {
+                // MODIFICARE AICI: Extragem ID-ul
+                const newId = response.data ? response.data.idPersoana : null;
+
                 setErrors({});
-                toast.success("Persoană adăugată cu succes!"); // <--- SUCCES
-                onSaveSuccess();
+                toast.success("Persoană adăugată cu succes!");
+                onSaveSuccess(newId); // Trimitem ID-ul
             })
             .catch(error => {
+                // ... erori ...
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
-                    toast.error("Verifică câmpurile invalide!"); // <--- EROARE FORMULAR
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
                     console.error(error);
-                    toast.error("Eroare la salvare! CNP-ul există deja?"); // <--- EROARE SERVER
+                    toast.error("Eroare la salvare!");
                 }
             });
     };
@@ -79,7 +83,7 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
 
             <div className="modal-footer">
                 <button className="save-btn" onClick={handleSave}>
-                    Salvează Persoana
+                    Salvați Persoana
                 </button>
             </div>
         </div>

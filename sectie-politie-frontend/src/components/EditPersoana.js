@@ -36,17 +36,21 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
         axios.put(`http://localhost:8080/api/persoane/${id}`, formData, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
+            .then((response) => {
+                // MODIFICARE AICI
+                const updatedId = response.data ? response.data.idPersoana : id;
+
                 setErrors({});
-                toast.success("Datele au fost actualizate!"); // <--- SUCCES
-                onSaveSuccess();
+                toast.success("Datele au fost actualizate!");
+                onSaveSuccess(updatedId); // Trimitem ID-ul
             })
             .catch(error => {
+                // ... erori ...
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
-                    toast.error("Eroare la salvarea modificărilor!"); // <--- EROARE
+                    toast.error("Eroare la salvarea modificărilor!");
                 }
             });
     };
@@ -92,7 +96,7 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
 
             <div className="modal-footer">
                 <button className="save-btn" onClick={handleSave}>
-                    Salvează Modificări
+                    Salvați Modificări
                 </button>
             </div>
         </div>

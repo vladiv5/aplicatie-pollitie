@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom'; // <--- IMPORTURI
+import { useLocation, useNavigate } from 'react-router-dom';
 import IncidenteList from '../components/IncidenteList';
 import AddIncident from "../components/AddIncident";
 import EditIncident from "../components/EditIncident";
 import ViewIncident from "../components/ViewIncident";
 import GestionareParticipanti from "../components/GestionareParticipanti";
 import Modal from "../components/Modal";
-import toast from 'react-hot-toast';
 
 const IncidentePage = () => {
-    // --- STATE MODALE ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -17,28 +15,26 @@ const IncidentePage = () => {
     const [editId, setEditId] = useState(null);
     const [selectedIncident, setSelectedIncident] = useState(null);
     const [participantsId, setParticipantsId] = useState(null);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // --- NAVIGARE ---
+    // REFRESH & HIGHLIGHT
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [highlightId, setHighlightId] = useState(null); // <--- STATE NOU
+
     const location = useLocation();
     const navigate = useNavigate();
 
-    // 1. JUMP IN (Deschide Edit cand venim din alta parte)
+    // 1. JUMP IN
     useEffect(() => {
         if (location.state && location.state.openEditId) {
             setEditId(location.state.openEditId);
             setIsEditModalOpen(true);
-            // ATENTIE: NU mai curatam state-ul aici! Avem nevoie de el la iesire.
         }
     }, [location]);
 
-    // 2. JUMP OUT (Functia inteligenta de inchidere)
+    // 2. JUMP OUT
     const handleCloseOrFinish = () => {
-        // Inchidem modalul local
         setIsEditModalOpen(false);
         setEditId(null);
-
-        // Verificam daca avem bilet de intoarcere
         if (location.state && location.state.returnTo) {
             navigate(location.state.returnTo, {
                 state: {
@@ -47,16 +43,19 @@ const IncidentePage = () => {
                 }
             });
         } else {
-            // Doar daca NU ne intoarcem, curatam istoricul
             window.history.replaceState({}, document.title);
         }
     };
 
-    const handleAddSuccess = () => { setIsAddModalOpen(false); setRefreshTrigger(prev => prev + 1); };
-
-    // La succes, folosim tot handleCloseOrFinish
-    const handleEditSuccess = () => {
+    const handleAddSuccess = (newId) => { // Primim ID
+        setIsAddModalOpen(false);
+        setHighlightId(newId); // Setam Focus
         setRefreshTrigger(prev => prev + 1);
+    };
+
+    const handleEditSuccess = (savedId) => { // Primim ID
+        setRefreshTrigger(prev => prev + 1);
+        setHighlightId(savedId); // Setam Focus
         handleCloseOrFinish();
     };
 
@@ -68,14 +67,17 @@ const IncidentePage = () => {
                 onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
                 onViewClick={(inc) => { setSelectedIncident(inc); setIsViewModalOpen(true); }}
                 onManageParticipantsClick={(id) => setParticipantsId(id)}
+                // PROPS NOI
+                highlightId={highlightId}
+                onHighlightComplete={() => setHighlightId(null)}
             />
 
-            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Incident">
+            {/* MODALELE raman la fel, doar le-am legat la noile handlere */}
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Incident">
                 <AddIncident onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* AICI FOLOSIM handleCloseOrFinish la onClose si onCancel */}
-            <Modal isOpen={isEditModalOpen} onClose={handleCloseOrFinish} title="Editează Incident">
+            <Modal isOpen={isEditModalOpen} onClose={handleCloseOrFinish} title="Editați Incident">
                 {editId && <EditIncident id={editId} onSaveSuccess={handleEditSuccess} onCancel={handleCloseOrFinish} />}
             </Modal>
 

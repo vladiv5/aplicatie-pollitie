@@ -103,4 +103,7 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Transactional
     @Query(value = "DELETE FROM Incidente WHERE id_adresa_incident = :idAdresa", nativeQuery = true)
     void deleteByAdresaId(@Param("idAdresa") Integer idAdresa);
+
+    @Query(value = "SELECT MAX(id_incident) FROM Incidente", nativeQuery = true)
+    Integer getLastInsertedId();
 }

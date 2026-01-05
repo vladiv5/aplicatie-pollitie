@@ -31,11 +31,11 @@ public class AmendaController {
         String stare = amenda.getStarePlata();
 
         if ("Neplatita".equalsIgnoreCase(stare)) {
-            return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată - Debit Activ", "Această amendă figurează ca NEPLĂTITĂ.", null);
+            return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Această amendă figurează ca neplătită și nu poate fi ștearsă din sistem!", null);
         } else if ("Platita".equalsIgnoreCase(stare)) {
-            return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere Document Fiscal", "Amenda a fost plătită. Ștergerea ei va elimina dovada.", null);
+            return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere Document Fiscal", "Amenda a fost plătită. Ștergerea ei va elimina dovada!", null);
         } else {
-            return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Amenda este anulată juridic. Poate fi ștearsă.", null);
+            return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Amenda este anulată juridic. Poate fi ștearsă fără probleme!", null);
         }
     }
 
@@ -58,133 +58,54 @@ public class AmendaController {
     public ResponseEntity<?> createAmenda(@RequestBody AmendaRequest req) {
         Map<String, String> eroriLogice = new HashMap<>();
 
-        // 1. VALIDARE MOTIV (Gol -> Regex -> Lungime)
+        // ... VALIDĂRI EXISTENTE (MOTIV, SUMA, ETC.) - Păstrează codul tău de validare ...
         String motiv = req.motiv;
         if (motiv == null || motiv.trim().isEmpty()) {
-            eroriLogice.put("motiv", "Motivul amenzii este obligatoriu!");
-        } else if (!motiv.matches("^[a-zA-ZăâîșțĂÂÎȘȚ ]+$")) {
-            eroriLogice.put("motiv", "Motivul poate conține doar litere și spații.");
-        } else if (motiv.length() > 255) { // <--- ADAUGĂ ACEST BLOC
-            eroriLogice.put("motiv", "Motivul este prea lung (max 255 caractere).");
-        }
-
-        // 2. VALIDARE SUMA (Gol -> Pozitiv -> Max -> Multiplu)
-        BigDecimal suma = req.suma;
-        if (suma == null) {
-            eroriLogice.put("suma", "Suma este obligatorie!");
-        } else {
-            // Verificare Pozitiv
-            if (suma.compareTo(BigDecimal.ZERO) <= 0) {
-                eroriLogice.put("suma", "Suma trebuie să fie pozitivă!");
-            }
-            // Verificare Max (3000)
-            else if (suma.compareTo(new BigDecimal("3000")) > 0) {
-                eroriLogice.put("suma", "Suma maximă este 3000 RON.");
-            }
-            // Verificare Multiplu de 25
-            else if (suma.remainder(new BigDecimal("25")).compareTo(BigDecimal.ZERO) != 0) {
-                eroriLogice.put("suma", "Suma trebuie să fie un multiplu de 25!");
-            }
-        }
-
-        // 3. VALIDARE STARE PLATA
-        if (req.starePlata == null || req.starePlata.trim().isEmpty()) {
-            eroriLogice.put("starePlata", "Starea plății este obligatorie!");
-        }
-
-        // 4. VALIDARE DATA
-        LocalDateTime data = null;
-        try {
-            if (req.dataEmitere != null) {
-                data = LocalDateTime.parse(req.dataEmitere);
-                if (!isDataValida(data)) {
-                    eroriLogice.put("dataEmitere", "Dată invalidă (> 15 ani vechime sau viitor).");
-                }
-            } else {
-                data = LocalDateTime.now();
-            }
-        } catch (Exception e) {
-            eroriLogice.put("dataEmitere", "Format dată invalid!");
-        }
+            eroriLogice.put("motiv", "Motiv obligatoriu!");
+        } // ... restul validărilor
 
         if (!eroriLogice.isEmpty()) {
             return ResponseEntity.badRequest().body(eroriLogice);
         }
 
+        // Parse Data
+        LocalDateTime data = (req.dataEmitere != null) ? LocalDateTime.parse(req.dataEmitere) : LocalDateTime.now();
+
+        // 1. INSERT MANUAL (SQL PUR)
         amendaRepository.insertAmenda(
-                req.motiv,
-                suma,
-                req.starePlata,
-                data,
-                req.idPolitist,
-                req.idPersoana
+                req.motiv, req.suma, req.starePlata, data, req.idPolitist, req.idPersoana
         );
-        return ResponseEntity.ok("Amenda salvată cu succes!");
+
+        // 2. RECUPERARE ID
+        Integer newId = amendaRepository.getLastInsertedId();
+
+        // 3. RETURNARE RĂSPUNS CU ID
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Amenda salvată cu succes!");
+        response.put("idAmenda", newId); // <--- Cheia importantă pentru Frontend
+
+        return ResponseEntity.ok(response);
     }
 
-    // --- UPDATE SQL (VALIDARE MANUALA) ---
+    // --- UPDATE (MODIFICAT) ---
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAmenda(@PathVariable Integer id, @RequestBody AmendaRequest req) {
         amendaRepository.getAmendaByIdNative(id).orElseThrow(() -> new RuntimeException("Amenda nu exista!"));
 
         Map<String, String> eroriLogice = new HashMap<>();
+        // ... VALIDĂRI EXISTENTE ...
+        if (!eroriLogice.isEmpty()) return ResponseEntity.badRequest().body(eroriLogice);
 
-        // 1. VALIDARE MOTIV
-        String motiv = req.motiv;
-        if (motiv == null || motiv.trim().isEmpty()) {
-            eroriLogice.put("motiv", "Motivul amenzii este obligatoriu!");
-        } else if (!motiv.matches("^[a-zA-ZăâîșțĂÂÎȘȚ ]+$")) {
-            eroriLogice.put("motiv", "Motivul poate conține doar litere și spații.");
-        } else if (motiv.length() > 255) { // <--- ADAUGĂ ACEST BLOC
-            eroriLogice.put("motiv", "Motivul este prea lung (max 255 caractere).");
-        }
+        LocalDateTime data = (req.dataEmitere != null) ? LocalDateTime.parse(req.dataEmitere) : LocalDateTime.now();
 
-        // 2. VALIDARE SUMA
-        BigDecimal suma = req.suma;
-        if (suma == null) {
-            eroriLogice.put("suma", "Suma este obligatorie!");
-        } else {
-            if (suma.compareTo(BigDecimal.ZERO) <= 0) {
-                eroriLogice.put("suma", "Suma trebuie să fie pozitivă!");
-            } else if (suma.compareTo(new BigDecimal("3000")) > 0) {
-                eroriLogice.put("suma", "Suma maximă este 3000 RON.");
-            } else if (suma.remainder(new BigDecimal("25")).compareTo(BigDecimal.ZERO) != 0) {
-                eroriLogice.put("suma", "Suma trebuie să fie un multiplu de 25!");
-            }
-        }
-
-        // 3. VALIDARE STARE PLATA
-        if (req.starePlata == null || req.starePlata.trim().isEmpty()) {
-            eroriLogice.put("starePlata", "Starea plății este obligatorie!");
-        }
-
-        // 4. VALIDARE DATA
-        LocalDateTime data = null;
-        try {
-            if (req.dataEmitere != null) {
-                data = LocalDateTime.parse(req.dataEmitere);
-                if (!isDataValida(data)) {
-                    eroriLogice.put("dataEmitere", "Dată invalidă (> 15 ani vechime sau viitor).");
-                }
-            }
-        } catch (Exception e) {
-            eroriLogice.put("dataEmitere", "Format dată invalid!");
-        }
-
-        if (!eroriLogice.isEmpty()) {
-            return ResponseEntity.badRequest().body(eroriLogice);
-        }
-
+        // 1. UPDATE MANUAL
         amendaRepository.updateAmenda(
-                id,
-                req.motiv,
-                suma,
-                req.starePlata,
-                data,
-                req.idPolitist,
-                req.idPersoana
+                id, req.motiv, req.suma, req.starePlata, data, req.idPolitist, req.idPersoana
         );
-        return ResponseEntity.ok("Amenda modificată cu succes!");
+
+        // 2. RETURNARE OBIECT ACTUALIZAT
+        Amenda updated = amendaRepository.getAmendaByIdNative(id).orElse(null);
+        return ResponseEntity.ok(updated);
     }
 
     // --- DELETE ---

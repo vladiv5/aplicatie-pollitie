@@ -10,47 +10,48 @@ const AdresePage = () => {
     // --- STATE MODALE ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [locatariAdresaId, setLocatariAdresaId] = useState(null); // ID pt vizualizare locatari
+    const [locatariAdresaId, setLocatariAdresaId] = useState(null);
     const [editId, setEditId] = useState(null);
 
-    // --- REFRESH ---
+    // --- REFRESH & HIGHLIGHT ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [highlightId, setHighlightId] = useState(null); // <--- STATE NOU
 
-    const handleAddSuccess = () => {
+    const handleAddSuccess = (newId) => { // Primim ID
         setIsAddModalOpen(false);
+        setHighlightId(newId); // Setam Focus
         setRefreshTrigger(prev => prev + 1);
-
     };
 
-    const handleEditSuccess = () => {
+    const handleEditSuccess = (savedId) => { // Primim ID
         setIsEditModalOpen(false);
         setEditId(null);
+        setHighlightId(savedId); // Setam Focus
         setRefreshTrigger(prev => prev + 1);
     };
 
     return (
         <div>
-            {/* Lista inteligenta */}
             <AdreseList
                 refreshTrigger={refreshTrigger}
                 onAddClick={() => setIsAddModalOpen(true)}
                 onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
                 onViewLocatariClick={(id) => setLocatariAdresaId(id)}
+                // PROPS NOI
+                highlightId={highlightId}
+                onHighlightComplete={() => setHighlightId(null)}
             />
 
-            {/* MODAL ADD */}
-            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Adresă">
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Adresă">
                 <AddAdresa onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* MODAL EDIT */}
-            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editează Adresă">
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editați Adresă">
                 {editId && (
                     <EditAdresa id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />
                 )}
             </Modal>
 
-            {/* MODAL LOCATARI */}
             <Modal isOpen={!!locatariAdresaId} onClose={() => setLocatariAdresaId(null)} title="Locatari la această adresă">
                 {locatariAdresaId && (
                     <ViewLocatariAdresa

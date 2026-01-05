@@ -5,7 +5,6 @@ import EditPersoana from '../components/EditPersoana';
 import ViewIncidentePersoana from '../components/ViewIncidentePersoana';
 import ViewAdresePersoana from '../components/ViewAdresePersoana';
 import Modal from '../components/Modal';
-import toast from 'react-hot-toast';
 
 const PersoanePage = () => {
     // State Modale
@@ -15,17 +14,20 @@ const PersoanePage = () => {
     const [adreseId, setAdreseId] = useState(null);
     const [editId, setEditId] = useState(null);
 
-    // Refresh Trigger
+    // Refresh & Highlight
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [highlightId, setHighlightId] = useState(null); // <--- STATE NOU
 
-    const handleAddSuccess = () => {
+    const handleAddSuccess = (newId) => {
         setIsAddModalOpen(false);
+        setHighlightId(newId); // Setam ID
         setRefreshTrigger(prev => prev + 1);
     };
 
-    const handleEditSuccess = () => {
+    const handleEditSuccess = (savedId) => {
         setIsEditModalOpen(false);
         setEditId(null);
+        setHighlightId(savedId); // Setam ID
         setRefreshTrigger(prev => prev + 1);
     };
 
@@ -38,18 +40,21 @@ const PersoanePage = () => {
                 onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
                 onViewHistoryClick={(id) => setHistoryId(id)}
                 onViewAdreseClick={(id) => setAdreseId(id)}
+                // Props noi
+                highlightId={highlightId}
+                onHighlightComplete={() => setHighlightId(null)}
             />
 
             {/* MODALE */}
-            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adaugă Persoană">
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Persoană">
                 <AddPersoana onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editează Persoană">
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editați Persoană">
                 {editId && <EditPersoana id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />}
             </Modal>
 
-            <Modal isOpen={!!historyId} onClose={() => setHistoryId(null)} title="Istoric Incidente">
+            <Modal isOpen={!!historyId} onClose={() => setHistoryId(null)} title="Istoric Incidente" maxWidth="800px">
                 {historyId && <ViewIncidentePersoana persoanaId={historyId} onClose={() => setHistoryId(null)} />}
             </Modal>
 

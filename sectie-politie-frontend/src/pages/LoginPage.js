@@ -1,28 +1,40 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import '../components/styles/Login.css'; // Asigura-te ca calea e corecta
+import toast from 'react-hot-toast';
+import '../components/styles/Login.css';
 
 const LoginPage = () => {
     const [nume, setNume] = useState('');
     const [parola, setParola] = useState('');
-    const [error, setError] = useState('');
+    const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [showPass, setShowPass] = useState(false);
 
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        setErrors({});
         setLoading(true);
 
         try {
             await login(nume, parola);
-            // Redirectionare reusita
-            navigate('/politisti');
+            toast.success("Te-ai autentificat cu succes!");
+            navigate('/acasa');
         } catch (err) {
-            setError('Credențiale invalide sau eroare de sistem.');
+            toast.error("Autentificare eșuată. Verifică datele.");
+
+            if (err.response && err.response.data) {
+                if (typeof err.response.data === 'object') {
+                    setErrors(err.response.data);
+                } else {
+                    setErrors({ global: err.response.data });
+                }
+            } else {
+                setErrors({ global: 'Eroare de conexiune la server.' });
+            }
         } finally {
             setLoading(false);
         }
@@ -42,24 +54,40 @@ const LoginPage = () => {
                         <label>Utilizator</label>
                         <input
                             type="text"
-                            className="login-input"
-                            placeholder="Introduceți numele..."
+                            className={`login-input ${errors.nume ? 'input-error' : ''}`}
+                            placeholder="Introduceți numele de utilizator..."
                             value={nume}
-                            onChange={(e) => setNume(e.target.value)}
-                            required
+                            onChange={(e) => {
+                                setNume(e.target.value);
+                                if(errors.nume) setErrors({...errors, nume: ''});
+                            }}
                         />
+                        {errors.nume && <span className="field-error">{errors.nume}</span>}
                     </div>
 
                     <div className="form-group">
-                        <label>Parolă</label>
+                        <div className="form-label-group">
+                            <label>Parolă</label>
+                            {/* BUTON STILIZAT */}
+                            <button
+                                type="button"
+                                className="btn-toggle-pass"
+                                onClick={() => setShowPass(!showPass)}
+                            >
+                                {showPass ? "Ascunde" : "Arată"}
+                            </button>
+                        </div>
                         <input
-                            type="password"
-                            className="login-input"
+                            type={showPass ? "text" : "password"}
+                            className={`login-input ${errors.parola ? 'input-error' : ''}`}
                             placeholder="••••••••"
                             value={parola}
-                            onChange={(e) => setParola(e.target.value)}
-                            required
+                            onChange={(e) => {
+                                setParola(e.target.value);
+                                if(errors.parola) setErrors({...errors, parola: ''});
+                            }}
                         />
+                        {errors.parola && <span className="field-error">{errors.parola}</span>}
                     </div>
 
                     <button type="submit" className="login-btn" disabled={loading}>
@@ -67,7 +95,14 @@ const LoginPage = () => {
                     </button>
                 </form>
 
-                {error && <div className="error-msg">⚠️ {error}</div>}
+                {errors.global && <div className="error-msg" style={{marginTop:'10px'}}>⚠️ {errors.global}</div>}
+
+                <div style={{textAlign: 'center', marginTop: '15px', fontSize: '14px'}}>
+                    <p style={{color: '#666', marginBottom: '5px'}}>Ești polițist nou?</p>
+                    <span onClick={() => navigate('/register')} style={{cursor: 'pointer', color: '#0056b3', fontWeight: 'bold'}}>
+                        Activează-ți contul aici
+                    </span>
+                </div>
 
                 <div className="login-footer">
                     &copy; 2025 Ministerul Afacerilor Interne. Toate drepturile rezervate.

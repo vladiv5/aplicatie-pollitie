@@ -25,7 +25,6 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
 
     return (
         <div style={{ padding: '10px' }}>
-            <h3>Adrese Asociate</h3>
 
             {loading ? <p>Se încarcă...</p> : (
                 <table className="styled-table" style={{ marginTop: '15px' }}>
@@ -72,7 +71,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
 
             <div className="modal-footer" style={{ marginTop: '20px' }}>
                 <button className="action-btn" onClick={onClose} style={{ background: '#6c757d', color: 'white' }}>
-                    Închide
+                    Închideți
                 </button>
             </div>
         </div>

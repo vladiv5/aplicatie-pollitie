@@ -27,7 +27,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         } else {
             // Daca a scris prostii, resetam la pagina curenta
             setInputPage(currentPage + 1);
-            toast.error(`Te rog introdu o pagină validă (1 - ${totalPages})`);
+            toast.error(`Vă rog introduceți o pagină validă (1 - ${totalPages})`);
         }
     };
 

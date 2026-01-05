@@ -432,7 +432,7 @@ const StatisticiPage = () => {
                     <div className="search-wrapper">
                         <div style={{flex:1}}>
                             <LiveSearchInput
-                                label="Caută Polițist"
+                                label="Căutați Polițist"
                                 placeholder="Nume, Prenume..."
                                 apiUrl="http://localhost:8080/api/politisti/cauta"
                                 displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad} - ${p.functie})`}
@@ -482,7 +482,7 @@ const StatisticiPage = () => {
                     <div className="search-wrapper">
                         <div style={{flex:1}}>
                             <LiveSearchInput
-                                label="Caută Cetățean"
+                                label="Căutați Cetățean"
                                 placeholder="Nume sau CNP..."
                                 apiUrl="http://localhost:8080/api/persoane/cauta"
                                 displayKey={(p) => `${p.nume} ${p.prenume} (CNP: ${p.cnp})`}

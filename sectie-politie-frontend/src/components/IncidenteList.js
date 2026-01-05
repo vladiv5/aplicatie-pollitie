@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
-import toast from 'react-hot-toast'; // <--- IMPORT
+import toast from 'react-hot-toast';
 
 const IncidenteList = ({
-                           refreshTrigger, onAddClick, onEditClick, onViewClick, onManageParticipantsClick
+                           refreshTrigger, onAddClick, onEditClick, onViewClick, onManageParticipantsClick,
+                           highlightId, onHighlightComplete // <--- PROPS
                        }) => {
     const [incidente, setIncidente] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
+
+    const rowRefs = useRef({}); // <--- REF
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
@@ -22,7 +25,7 @@ const IncidenteList = ({
         let url = `http://localhost:8080/api/incidente/lista-paginata?page=${page}&size=10`;
         if (term) url = `http://localhost:8080/api/incidente/cauta?termen=${term}`;
 
-        axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
+        return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
                     setIncidente(res.data);
@@ -32,16 +35,69 @@ const IncidenteList = ({
                     setTotalPages(res.data.totalPages);
                 }
                 setCurrentPage(page);
+                return res.data; // Returnam datele
             })
             .catch(err => console.error(err));
     };
 
-    useEffect(() => { loadIncidente(currentPage, searchTerm); }, [refreshTrigger]);
+    // --- REFRESH & AUTO JUMP ---
+    useEffect(() => {
+        loadIncidente(currentPage, searchTerm).then((responseData) => {
+            if (highlightId) {
+                const currentList = responseData.content || responseData;
+                const existsOnPage = currentList.some(inc => inc.idIncident === highlightId);
+
+                if (!existsOnPage) {
+                    findPageForId(highlightId);
+                }
+            }
+        });
+    }, [refreshTrigger]);
+
+    // --- LOGICA FIND PAGE ---
+    const findPageForId = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`http://localhost:8080/api/incidente`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const allData = res.data;
+
+            // ATENTIE: Backendul returneaza implicit sortat dupa Data DESC
+            // Trebuie sa sortam la fel aici ca sa gasim indexul corect
+            allData.sort((a, b) => new Date(b.dataEmitere) - new Date(a.dataEmitere));
+
+            const index = allData.findIndex(inc => inc.idIncident === id);
+
+            if (index !== -1) {
+                const targetPage = Math.floor(index / 10);
+                if (targetPage !== currentPage) {
+                    loadIncidente(targetPage, searchTerm);
+                } else {
+                    loadIncidente(currentPage, searchTerm);
+                }
+            }
+        } catch (err) {
+            console.error("Nu am putut calcula pagina automata:", err);
+        }
+    };
+
+    // --- SCROLL & FLASH ---
+    useEffect(() => {
+        if (highlightId && rowRefs.current[highlightId]) {
+            rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const timer = setTimeout(() => {
+                if (onHighlightComplete) onHighlightComplete();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [incidente, highlightId]);
 
     const handlePageChange = (newPage) => loadIncidente(newPage, searchTerm);
     const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadIncidente(0, e.target.value); };
 
-    // --- LOGICA DELETE SMART ---
+    // --- DELETE ---
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/incidente/verifica-stergere/${id}`, {
@@ -53,14 +109,12 @@ const IncidenteList = ({
                 setIsDeleteModalOpen(true);
             })
             .catch(err => {
-                console.error(err);
-                toast.error("Eroare la verificarea incidentului."); // <--- TOAST
+                toast.error("Eroare la verificarea incidentului.");
             });
     };
 
     const handleConfirmDelete = () => {
         const token = localStorage.getItem('token');
-
         axios.delete(`http://localhost:8080/api/incidente/${deleteId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -69,9 +123,9 @@ const IncidenteList = ({
                 setIsDeleteModalOpen(false);
                 setDeleteData(null);
                 setDeleteId(null);
-                toast.success("Incidentul a fost șters!"); // <--- TOAST
+                toast.success("Incidentul a fost șters!");
             })
-            .catch(err => toast.error("Eroare la ștergere!")); // <--- TOAST
+            .catch(err => toast.error("Eroare la ștergere!"));
     };
 
     const getStatusStyle = (status) => {
@@ -87,8 +141,8 @@ const IncidenteList = ({
         <div className="page-container">
             <h2 className="page-title">Registru Incidente</h2>
             <div className="controls-container">
-                <input type="text" className="search-input" placeholder="Caută..." value={searchTerm} onChange={handleSearchChange} />
-                <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adaugă Incident</button>
+                <input type="text" className="search-input" placeholder="Căutați..." value={searchTerm} onChange={handleSearchChange} />
+                <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Incident</button>
             </div>
 
             <table className="styled-table">
@@ -106,7 +160,12 @@ const IncidenteList = ({
                 <tbody>
                 {incidente && incidente.length > 0 ? (
                     incidente.map((inc) => (
-                        <tr key={inc.idIncident}>
+                        <tr
+                            key={inc.idIncident}
+                            // REF & CLASS
+                            ref={(el) => (rowRefs.current[inc.idIncident] = el)}
+                            className={highlightId === inc.idIncident ? 'flash-row' : ''}
+                        >
                             <td>{inc.tipIncident}</td>
                             <td><span style={getStatusStyle(inc.status)}>{inc.status || 'Activ'}</span></td>
                             <td>{inc.dataEmitere ? new Date(inc.dataEmitere).toLocaleString('ro-RO').substring(0, 17) : ''}</td>
@@ -115,9 +174,9 @@ const IncidenteList = ({
                             <td>{inc.politistResponsabil ? `${inc.politistResponsabil.nume} ${inc.politistResponsabil.prenume}` : ''}</td>
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button className="action-btn" style={{ backgroundColor: '#17a2b8', color: 'white' }} onClick={() => onViewClick(inc)}>Vezi</button>
-                                    <button className="action-btn edit-btn" onClick={() => onEditClick(inc.idIncident)}>Edit</button>
-                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(inc.idIncident)}>Șterge</button>
+                                    <button className="action-btn" style={{ backgroundColor: '#17a2b8', color: 'white' }} onClick={() => onViewClick(inc)}>Vizualizați</button>
+                                    <button className="action-btn edit-btn" onClick={() => onEditClick(inc.idIncident)}>Editați</button>
+                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(inc.idIncident)}>Ștergeți</button>
                                     <button className="action-btn" style={{ backgroundColor: '#6f42c1', color: 'white', marginLeft: '5px' }} onClick={() => onManageParticipantsClick(inc.idIncident)}><i className="fa fa-users"></i> Pers</button>
                                 </div>
                             </td>

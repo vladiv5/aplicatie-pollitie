@@ -63,34 +63,30 @@ public class PersoanaController {
     // INSERT (VALIDARE MANUALA)
     @PostMapping
     public ResponseEntity<?> addPersoana(@RequestBody Persoana p) {
-        // 1. Curatare date
         curataDatePersoana(p);
-
-        // 2. Validare Format (Regex, Lungime, etc.)
         Map<String, String> errors = valideazaPersoana(p);
 
-        // 3. Validare Unicitate (Doar daca formatul e OK)
-        if (!errors.containsKey("cnp")) {
-            if (persoanaRepository.verificaCnpUnic(p.getCnp(), null) > 0) {
-                errors.put("cnp", "Acest CNP există deja în baza de date!");
-            }
+        // Validări unicitate
+        if (!errors.containsKey("cnp") && persoanaRepository.verificaCnpUnic(p.getCnp(), null) > 0) {
+            errors.put("cnp", "Acest CNP există deja!");
+        }
+        if (p.getTelefon() != null && !errors.containsKey("telefon") && persoanaRepository.verificaTelefonUnic(p.getTelefon(), null) > 0) {
+            errors.put("telefon", "Telefon deja existent!");
         }
 
-        if (p.getTelefon() != null && !errors.containsKey("telefon")) {
-            if (persoanaRepository.verificaTelefonUnic(p.getTelefon(), null) > 0) {
-                errors.put("telefon", "Acest telefon este deja asociat unei persoane!");
-            }
-        }
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // 4. Salvare efectiva
+        // 1. INSERT MANUAL (SQL PUR)
         persoanaRepository.insertPersoana(
                 p.getNume(), p.getPrenume(), p.getCnp(), p.getDataNasterii(), p.getTelefon()
         );
-        return ResponseEntity.ok("Persoana adăugată cu succes!");
+
+        // 2. RECUPERARE ID (SQL PUR)
+        Integer newId = persoanaRepository.getLastInsertedId();
+        p.setIdPersoana(newId);
+
+        // 3. RETURNARE OBIECT
+        return ResponseEntity.ok(p);
     }
 
     // UPDATE (VALIDARE MANUALA)
@@ -99,34 +95,26 @@ public class PersoanaController {
         persoanaRepository.getPersoanaByIdNative(id)
                 .orElseThrow(() -> new RuntimeException("Persoana nu exista!"));
 
-        // 1. Curatare
         curataDatePersoana(p);
-
-        // 2. Validare Format
         Map<String, String> errors = valideazaPersoana(p);
 
-        // 3. Validare Unicitate
-        if (!errors.containsKey("cnp")) {
-            if (persoanaRepository.verificaCnpUnic(p.getCnp(), id) > 0) {
-                errors.put("cnp", "Acest CNP există deja la altcineva!");
-            }
+        if (!errors.containsKey("cnp") && persoanaRepository.verificaCnpUnic(p.getCnp(), id) > 0) {
+            errors.put("cnp", "CNP deja existent!");
+        }
+        if (p.getTelefon() != null && !errors.containsKey("telefon") && persoanaRepository.verificaTelefonUnic(p.getTelefon(), id) > 0) {
+            errors.put("telefon", "Telefon deja existent!");
         }
 
-        if (p.getTelefon() != null && !errors.containsKey("telefon")) {
-            if (persoanaRepository.verificaTelefonUnic(p.getTelefon(), id) > 0) {
-                errors.put("telefon", "Acest telefon este deja asociat altei persoane!");
-            }
-        }
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // 4. Update
+        // 1. UPDATE MANUAL
         persoanaRepository.updatePersoana(
                 id, p.getNume(), p.getPrenume(), p.getCnp(), p.getDataNasterii(), p.getTelefon()
         );
-        return ResponseEntity.ok("Persoana modificată cu succes!");
+
+        // 2. RETURNARE OBIECT ACTUALIZAT
+        Persoana updated = persoanaRepository.getPersoanaByIdNative(id).orElse(p);
+        return ResponseEntity.ok(updated);
     }
 
     // --- HELPER: Curatare ---
@@ -231,9 +219,9 @@ public class PersoanaController {
             else if ("Închis".equalsIgnoreCase(status)) hasOrange = true;
         }
 
-        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată - Elemente Active", "Persoana are incidente ACTIVE sau amenzi NEPLĂTITE.", listaTotala);
-        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere cu Istoric", "Persoana are istoric.", listaTotala);
-        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Nu există date asociate.", listaTotala);
+        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată - Elemente Active", "Persoana are incidente active sau amenzi neplătite. Ștergerea acesteia nu este posibilă până la rezolvarea lor.", listaTotala);
+        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere cu Istoric", "Persoana are istoric. Ștergerea acesteia va duce la ștergerea din baza de date a următoarelor incidente și amenzi: ", listaTotala);
+        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Nu există date asociate acestei persoane. Ștergerea sa se poate face fără probleme!", listaTotala);
     }
 
     // --- DELETE CASCADE ---

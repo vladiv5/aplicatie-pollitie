@@ -40,11 +40,14 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
         axios.post('http://localhost:8080/api/amenzi', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
-                setErrors({});
-                toast.success("Amendă emisă cu succes!"); // <--- TOAST
-                onSaveSuccess();
-            })
+            .then((response) => {
+            // MODIFICARE AICI:
+            const newId = response.data ? response.data.idAmenda : null;
+
+            setErrors({});
+            toast.success("Amendă emisă cu succes!");
+            onSaveSuccess(newId); // Trimitem ID-ul
+        })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
@@ -99,7 +102,7 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
 
                 <LiveSearchInput
                     label="Agent Constatator"
-                    placeholder="Caută polițist..."
+                    placeholder="Căutați polițist..."
                     apiUrl="http://localhost:8080/api/politisti/cauta"
                     displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
                     onSelect={(item) => setFormData({...formData, politistId: item?.idPolitist})}
@@ -107,14 +110,14 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
 
                 <LiveSearchInput
                     label="Persoana Amendată"
-                    placeholder="Caută cetățean..."
+                    placeholder="Căutați cetățean..."
                     apiUrl="http://localhost:8080/api/persoane/cauta"
                     displayKey={(p) => `${p.nume} ${p.prenume} (CNP: ${p.cnp})`}
                     onSelect={(item) => setFormData({...formData, persoanaId: item?.idPersoana})}
                 />
             </div>
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvează Amenda</button>
+                <button className="save-btn" onClick={handleSave}>Salvați Amenda</button>
             </div>
         </div>
     );

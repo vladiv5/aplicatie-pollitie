@@ -65,7 +65,7 @@ const ViewIncident = ({ incident, onClose }) => {
             </div>
 
             <div className="modal-footer">
-                <button className="action-btn delete-btn" onClick={onClose} style={{background: '#6c757d'}}>Închide</button>
+                <button className="action-btn delete-btn" onClick={onClose} style={{background: '#6c757d'}}>Închideți</button>
             </div>
         </div>
     );

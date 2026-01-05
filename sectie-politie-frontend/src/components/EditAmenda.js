@@ -57,10 +57,13 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
         axios.put(`http://localhost:8080/api/amenzi/${id}`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
+            .then((response) => {
+                // MODIFICARE AICI:
+                const updatedId = response.data ? response.data.idAmenda : id;
+
                 setErrors({});
-                toast.success("Amendă actualizată!"); // <--- TOAST
-                onSaveSuccess();
+                toast.success("Amendă actualizată!");
+                onSaveSuccess(updatedId); // Trimitem ID-ul
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
@@ -127,7 +130,7 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                 />
             </div>
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvează Modificări</button>
+                <button className="save-btn" onClick={handleSave}>Salvați Modificări</button>
             </div>
         </div>
     );

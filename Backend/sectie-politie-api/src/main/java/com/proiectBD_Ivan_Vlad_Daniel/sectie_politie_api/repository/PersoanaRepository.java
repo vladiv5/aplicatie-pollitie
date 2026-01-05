@@ -28,6 +28,10 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
     @Query(value = "SELECT * FROM Persoane WHERE id_persoana = :id", nativeQuery = true)
     Optional<Persoana> getPersoanaByIdNative(@Param("id") Integer id);
 
+    // --- ADĂUGAREA NOUĂ AICI ---
+    @Query(value = "SELECT MAX(id_persoana) FROM Persoane", nativeQuery = true)
+    Integer getLastInsertedId();
+
     @Modifying
     @Transactional
     @Query(value = "INSERT INTO Persoane (nume, prenume, cnp, data_nasterii, telefon) VALUES (:nume, :prenume, :cnp, :dataNasterii, :telefon)", nativeQuery = true)

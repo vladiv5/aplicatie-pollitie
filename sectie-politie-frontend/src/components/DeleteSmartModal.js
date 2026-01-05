@@ -106,7 +106,7 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                         onClick={onClose}
                         style={{ backgroundColor: '#6c757d', color: 'white' }}
                     >
-                        {data.severitate === 'BLOCKED' ? 'Am înțeles' : 'Anulează'}
+                        {data.severitate === 'BLOCKED' ? 'Am înțeles' : 'Anulați'}
                     </button>
 
                     {data.severitate !== 'BLOCKED' && (
@@ -115,7 +115,7 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                             style={{ backgroundColor: '#dc3545' }}
                             onClick={onConfirm}
                         >
-                            Șterge Definitiv
+                            Ștergeți Definitiv
                         </button>
                     )}
                 </div>

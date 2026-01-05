@@ -98,4 +98,7 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
     @Transactional
     @Query(value = "DELETE FROM Amenzi WHERE id_persoana = :id", nativeQuery = true)
     void deleteByPersoanaId(@Param("id") Integer id);
+
+    @Query(value = "SELECT MAX(id_amenda) FROM Amenzi", nativeQuery = true)
+    Integer getLastInsertedId();
 }

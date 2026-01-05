@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
 import './styles/TableStyles.css';
-import toast from 'react-hot-toast'; // <--- IMPORT
+import toast from 'react-hot-toast';
 
 const PersoaneList = ({
                           refreshTrigger,
                           onAddClick,
                           onEditClick,
                           onViewHistoryClick,
-                          onViewAdreseClick
+                          onViewAdreseClick,
+                          highlightId,
+                          onHighlightComplete
                       }) => {
     // --- STATE INTERN ---
     const [persoane, setPersoane] = useState([]);
@@ -20,13 +22,15 @@ const PersoaneList = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy] = useState('nume');
 
+    // Ref pentru randuri
+    const rowRefs = useRef({});
+
     // --- STATE DELETE SMART ---
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
     const location = useLocation();
-    const navigate = useNavigate();
 
     // --- FETCH DATA ---
     const loadPersoane = (page, term = '') => {
@@ -34,7 +38,7 @@ const PersoaneList = ({
         let url = `http://localhost:8080/api/persoane/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
         if (term) url = `http://localhost:8080/api/persoane/cauta?termen=${term}`;
 
-        axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
+        return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
                     setPersoane(res.data);
@@ -44,39 +48,82 @@ const PersoaneList = ({
                     setTotalPages(res.data.totalPages);
                 }
                 setCurrentPage(page);
+                // Returnam datele brute pentru verificare
+                return res.data;
             })
             .catch(err => console.error("Eroare incarcare persoane:", err));
     };
 
+    // --- REFRESH & AUTO JUMP ---
     useEffect(() => {
-        loadPersoane(currentPage, searchTerm);
+        loadPersoane(currentPage, searchTerm).then((responseData) => {
+            if (highlightId) {
+                // --- FIX EDITARE ---
+                // Verificăm dacă ID-ul există în DATELE primite, nu în DOM (refs)
+                // responseData poate fi array simplu (la search) sau obiect { content: [...] } (la paginare)
+                const currentList = responseData.content || responseData;
+
+                // Căutăm ID-ul în lista curentă de date
+                const existsOnPage = currentList.some(p => p.idPersoana === highlightId);
+
+                // Dacă NU e în datele paginii curente, înseamnă că s-a mutat -> Căutăm pagina
+                if (!existsOnPage) {
+                    findPageForId(highlightId);
+                }
+                // Dacă E în date, useEffect-ul de scroll de mai jos își va face treaba
+            }
+        });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
-    // =========================================================
-    // LOGICA BUMERANG
-    // =========================================================
-    useEffect(() => {
-        if (location.state && location.state.triggerAction === 'reOpenDelete') {
-            const idToReCheck = location.state.triggerId;
-            window.history.replaceState({}, document.title);
-            if(idToReCheck) {
-                setTimeout(() => {
-                    handleRequestDelete(idToReCheck);
-                }, 100);
-            }
-        }
-    }, [location]);
+    // --- LOGICA DE CAUTARE PAGINA ---
+    const findPageForId = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`http://localhost:8080/api/persoane`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const allData = res.data;
 
-    const handlePageChange = (newPage) => loadPersoane(newPage, searchTerm);
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        loadPersoane(0, e.target.value);
+            // Sortam by Nume (default) pentru a găsi indexul corect
+            allData.sort((a, b) => a.nume.localeCompare(b.nume));
+
+            const index = allData.findIndex(p => p.idPersoana === id);
+
+            if (index !== -1) {
+                const targetPage = Math.floor(index / 10);
+                // Încărcăm pagina nouă doar dacă e diferită
+                if (targetPage !== currentPage) {
+                    loadPersoane(targetPage, searchTerm);
+                } else {
+                    // Dacă prin absurd e aceeași pagină (dar nu apăruse în datele vechi), reîncărcăm
+                    loadPersoane(currentPage, searchTerm);
+                }
+            }
+        } catch (err) {
+            console.error("Nu am putut calcula pagina automata:", err);
+        }
     };
 
-    // --- LOGICA DELETE SMART ---
+    // --- SCROLL & FLASH ---
+    useEffect(() => {
+        // Acest effect rulează CÂND se actualizează lista 'persoane'
+        if (highlightId && rowRefs.current[highlightId]) {
+            // Dacă elementul a apărut în DOM, facem scroll la el
+            rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // 1. Verificare
+            const timer = setTimeout(() => {
+                if (onHighlightComplete) onHighlightComplete();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [persoane, highlightId]); // Dependența 'persoane' e cheia
+
+    // --- Handlere Standard ---
+    const handlePageChange = (newPage) => loadPersoane(newPage, searchTerm);
+    const handleSearchChange = (e) => { setSearchTerm(e.target.value); loadPersoane(0, e.target.value); };
+
+    // --- Delete Logic ---
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/persoane/verifica-stergere/${id}`, {
@@ -89,11 +136,10 @@ const PersoaneList = ({
             })
             .catch(err => {
                 console.error(err);
-                toast.error("Eroare la verificarea persoanei."); // <--- TOAST
+                toast.error("Eroare la verificarea persoanei.");
             });
     };
 
-    // 2. Confirmare
     const handleConfirmDelete = () => {
         const token = localStorage.getItem('token');
         axios.delete(`http://localhost:8080/api/persoane/${deleteId}`, {
@@ -104,9 +150,9 @@ const PersoaneList = ({
                 setIsDeleteModalOpen(false);
                 setDeleteId(null);
                 setDeleteData(null);
-                toast.success("Persoană ștearsă cu succes!"); // <--- TOAST
+                toast.success("Persoană ștearsă cu succes!");
             })
-            .catch(err => toast.error("Eroare la ștergerea persoanei!")); // <--- TOAST
+            .catch(err => toast.error("Eroare la ștergerea persoanei!"));
     };
 
     const formatDataNasterii = (dateString) => {
@@ -126,12 +172,12 @@ const PersoaneList = ({
                 <input
                     type="text"
                     className="search-input"
-                    placeholder="Caută după nume, prenume sau CNP..."
+                    placeholder="Căutați după nume, prenume sau CNP..."
                     value={searchTerm}
                     onChange={handleSearchChange}
                 />
                 <button className="add-btn-primary" onClick={onAddClick}>
-                    <span>+</span> Adaugă Persoană
+                    <span>+</span> Adăugați Persoană
                 </button>
             </div>
 
@@ -149,7 +195,12 @@ const PersoaneList = ({
                 <tbody>
                 {persoane && persoane.length > 0 ? (
                     persoane.map((p) => (
-                        <tr key={p.idPersoana}>
+                        <tr
+                            key={p.idPersoana}
+                            // AICI LEGĂM REF-UL PENTRU SCROLL
+                            ref={(el) => (rowRefs.current[p.idPersoana] = el)}
+                            className={highlightId === p.idPersoana ? 'flash-row' : ''}
+                        >
                             <td>{p.nume}</td>
                             <td>{p.prenume}</td>
                             <td>{p.cnp}</td>
@@ -157,14 +208,14 @@ const PersoaneList = ({
                             <td>{p.telefon}</td>
                             <td>
                                 <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button className="action-btn edit-btn" onClick={() => onEditClick(p.idPersoana)}>Edit</button>
+                                    <button className="action-btn edit-btn" onClick={() => onEditClick(p.idPersoana)}>Editați</button>
 
-                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(p.idPersoana)}>Șterge</button>
+                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(p.idPersoana)}>Ștergeți</button>
 
                                     <button className="action-btn"
                                             style={{ backgroundColor: '#17a2b8', color: 'white', marginRight: '5px' }}
                                             onClick={() => onViewHistoryClick(p.idPersoana)}
-                                            title="Vezi Istoric"
+                                            title="Vizualizați Istoric"
                                     >
                                         <i className="fa fa-history"></i> Istoric
                                     </button>
@@ -172,7 +223,7 @@ const PersoaneList = ({
                                     <button className="action-btn"
                                             style={{ backgroundColor: '#28a745', color: 'white', marginRight: '5px' }}
                                             onClick={() => onViewAdreseClick(p.idPersoana)}
-                                            title="Vezi Adrese"
+                                            title="Vizualizați Adrese"
                                     >
                                         <i className="fa fa-home"></i> Adrese
                                     </button>

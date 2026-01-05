@@ -43,10 +43,13 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
         axios.post('http://localhost:8080/api/incidente', payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then(() => {
+            .then((response) => {
+                // MODIFICARE AICI:
+                const newId = response.data ? response.data.idIncident : null;
+
                 setErrors({});
-                toast.success("Incident înregistrat cu succes!"); // <--- TOAST
-                onSaveSuccess();
+                toast.success("Incident înregistrat cu succes!");
+                onSaveSuccess(newId); // Trimitem ID-ul
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
@@ -97,7 +100,7 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
 
                 <LiveSearchInput
                     label="Polițist Responsabil"
-                    placeholder="Caută polițist..."
+                    placeholder="Căutați polițist..."
                     apiUrl="http://localhost:8080/api/politisti/cauta"
                     displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
                     onSelect={(item) => setFormData({...formData, politistId: item ? item.idPolitist : null})}
@@ -105,7 +108,7 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
 
                 <LiveSearchInput
                     label="Adresa Incidentului"
-                    placeholder="Caută stradă..."
+                    placeholder="Căutați stradă..."
                     apiUrl="http://localhost:8080/api/adrese/cauta"
                     displayKey={(a) => `${a.strada} Nr. ${a.numar}, ${a.localitate}`}
                     onSelect={(item) => setFormData({...formData, adresaId: item ? item.idAdresa : null})}
@@ -132,7 +135,7 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvează Incident</button>
+                <button className="save-btn" onClick={handleSave}>Salvați Incident</button>
             </div>
         </div>
     );

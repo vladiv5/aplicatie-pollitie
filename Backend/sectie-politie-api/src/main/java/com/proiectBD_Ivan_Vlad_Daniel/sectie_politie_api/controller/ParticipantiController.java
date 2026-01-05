@@ -25,7 +25,7 @@ public class ParticipantiController {
         return repo.findByIncident_IdIncident(idIncident);
     }
 
-    // 2. Adaugă un participant la un incident
+    // 2. Adăugați un participant la un incident
     @PostMapping
     public PersoanaIncident addParticipant(@RequestBody ParticipantRequest req) {
         Incident incident = incidentRepo.findById(req.incidentId).orElseThrow();

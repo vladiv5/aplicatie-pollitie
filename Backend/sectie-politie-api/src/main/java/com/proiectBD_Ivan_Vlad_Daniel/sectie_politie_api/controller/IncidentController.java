@@ -51,68 +51,54 @@ public class IncidentController {
     // --- INSERT (VALIDARE MANUALA) ---
     @PostMapping
     public ResponseEntity<?> createIncident(@RequestBody IncidentRequest req) {
-        // Validam datele folosind helper-ul
         Map<String, String> errors = valideazaIncident(req);
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // --- STOP DACA AVEM ERORI ---
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // 5. CURATARE DATA (Empty -> Null)
         String locFinal = (req.descriereLocatie != null && req.descriereLocatie.trim().isEmpty()) ? null : req.descriereLocatie;
         String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
 
-        // Data curenta daca lipseste
-        LocalDateTime dataFinala = null;
-        if (req.dataEmitere != null) {
-            dataFinala = LocalDateTime.parse(req.dataEmitere);
-        } else {
-            dataFinala = LocalDateTime.now();
-        }
+        LocalDateTime dataFinala = (req.dataEmitere != null) ? LocalDateTime.parse(req.dataEmitere) : LocalDateTime.now();
 
-        // 6. SQL INSERT
+        // 1. INSERT MANUAL
         incidentRepository.insertIncident(
-                req.tipIncident,
-                dataFinala,
-                locFinal,
-                req.descriereIncident,
-                req.idPolitist,
-                req.idAdresa,
-                statusDeSalvat
+                req.tipIncident, dataFinala, locFinal, req.descriereIncident,
+                req.idPolitist, req.idAdresa, statusDeSalvat
         );
-        return ResponseEntity.ok("Incident creat cu succes!");
+
+        // 2. RECUPERARE ID
+        Integer newId = incidentRepository.getLastInsertedId();
+
+        // 3. CONSTRUIRE OBIECT DE RETUR (Sau fetch din DB)
+        // E mai simplu să returnăm un map cu ID-ul pentru frontend
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Incident creat cu succes!");
+        response.put("idIncident", newId);
+
+        return ResponseEntity.ok(response);
     }
 
-    // --- UPDATE (VALIDARE MANUALA) ---
+    // --- UPDATE (MODIFICAT) ---
     @PutMapping("/{id}")
     public ResponseEntity<?> updateIncident(@PathVariable Integer id, @RequestBody IncidentRequest req) {
         incidentRepository.getIncidentByIdNative(id)
                 .orElseThrow(() -> new RuntimeException("Incidentul nu exista!"));
 
         Map<String, String> errors = valideazaIncident(req);
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // 5. CURATARE
         String locFinal = (req.descriereLocatie != null && req.descriereLocatie.trim().isEmpty()) ? null : req.descriereLocatie;
         String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
         LocalDateTime dataFinala = LocalDateTime.parse(req.dataEmitere);
 
-        // 6. UPDATE
+        // 1. UPDATE MANUAL
         incidentRepository.updateIncident(
-                id,
-                req.tipIncident,
-                dataFinala,
-                locFinal,
-                req.descriereIncident,
-                req.idPolitist,
-                req.idAdresa,
-                statusDeSalvat
+                id, req.tipIncident, dataFinala, locFinal, req.descriereIncident,
+                req.idPolitist, req.idAdresa, statusDeSalvat
         );
-        return ResponseEntity.ok("Incident modificat cu succes!");
+
+        // 2. RETURNARE OBIECT ACTUALIZAT
+        Incident updated = incidentRepository.getIncidentByIdNative(id).orElse(null);
+        return ResponseEntity.ok(updated);
     }
 
     // --- HELPER VALIDARE ---

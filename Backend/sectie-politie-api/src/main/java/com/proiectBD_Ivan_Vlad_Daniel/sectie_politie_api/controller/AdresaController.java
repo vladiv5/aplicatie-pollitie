@@ -53,39 +53,46 @@ public class AdresaController {
     @PostMapping
     public ResponseEntity<?> addAdresa(@RequestBody AdresaRequest req) {
         Map<String, String> errors = valideazaAdresa(req);
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // Conversii finale
         String blocFinal = (req.bloc != null && req.bloc.trim().isEmpty()) ? null : req.bloc;
         Integer apInt = (req.apartament != null && !req.apartament.trim().isEmpty()) ? Integer.parseInt(req.apartament) : null;
 
+        // 1. INSERT MANUAL
         adresaRepository.insertAdresa(
                 req.judetSauSector, req.localitate, req.strada, req.numar, blocFinal, apInt
         );
-        return ResponseEntity.ok("Adresa salvată cu succes!");
+
+        // 2. RECUPERARE ID
+        Integer newId = adresaRepository.getLastInsertedId();
+
+        // 3. RETURNARE RĂSPUNS
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Adresa salvată cu succes!");
+        response.put("idAdresa", newId); // <--- Cheia pentru Frontend
+
+        return ResponseEntity.ok(response);
     }
 
-    // --- UPDATE (VALIDARE MANUALA) ---
+    // --- UPDATE (MODIFICAT) ---
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAdresa(@PathVariable Integer id, @RequestBody AdresaRequest req) {
         adresaRepository.getAdresaByIdNative(id).orElseThrow(() -> new RuntimeException("Adresa nu exista!"));
 
         Map<String, String> errors = valideazaAdresa(req);
-
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
         String blocFinal = (req.bloc != null && req.bloc.trim().isEmpty()) ? null : req.bloc;
         Integer apInt = (req.apartament != null && !req.apartament.trim().isEmpty()) ? Integer.parseInt(req.apartament) : null;
 
+        // 1. UPDATE MANUAL
         adresaRepository.updateAdresa(
                 id, req.judetSauSector, req.localitate, req.strada, req.numar, blocFinal, apInt
         );
-        return ResponseEntity.ok("Adresa actualizată cu succes!");
+
+        // 2. RETURNARE OBIECT
+        Adresa updated = adresaRepository.getAdresaByIdNative(id).orElse(null);
+        return ResponseEntity.ok(updated);
     }
 
     // --- LOGICA DE VALIDARE COMUNA ---
@@ -178,9 +185,9 @@ public class AdresaController {
             if ("Activ".equalsIgnoreCase(status)) hasRed = true;
             else if ("Închis".equalsIgnoreCase(status)) hasOrange = true;
         }
-        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Incidente ACTIVE prezente.", listaTotala);
-        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere Cascadă", "Incidente ÎNCHISE prezente.", listaTotala);
-        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Se poate șterge.", listaTotala);
+        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Această adresă are incidente active asociate! Ștergerea ei nu este posibila!", listaTotala);
+        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Ștergere riscantă", "Această adresă are incidente inchise asociate. Ștergerea ei duce la ștergerea acestor incidente din baza de date: ", listaTotala);
+        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Această adresă nu este asociată niciunui incident și nu are niciun locatar. Se poate șterge fără probleme!", listaTotala);
     }
 
     // === CLASA DTO (FARA ADNOTARI - ACUM ESTE "POJO") ===

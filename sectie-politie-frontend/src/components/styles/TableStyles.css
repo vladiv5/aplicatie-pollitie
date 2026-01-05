@@ -275,3 +275,14 @@ action-buttons-container {
     justify-content: flex-end;
     gap: 10px;
 }
+
+/* Animație Flash pentru rând nou/editat */
+@keyframes flash-highlight {
+    0% { background-color: #ffeeba; } /* Un galben pal la început */
+    50% { background-color: #b8daff; } /* Trece în albastru */
+    100% { background-color: transparent; } /* Revine la normal */
+}
+
+.flash-row {
+    animation: flash-highlight 3s ease-out;
+}

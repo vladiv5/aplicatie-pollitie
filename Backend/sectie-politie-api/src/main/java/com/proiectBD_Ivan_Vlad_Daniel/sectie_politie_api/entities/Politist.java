@@ -25,6 +25,12 @@ public class Politist {
     @Column(name = "telefon_serviciu")
     private String telefon_serviciu;
 
+    @Column(name = "username")
+    private String username;
+
+    @Column(name = "password")
+    private String password;
+
     // --- GETTERS & SETTERS STANDARD ---
 
     public Integer getIdPolitist() { return idPolitist; }
@@ -44,4 +50,10 @@ public class Politist {
 
     public String getTelefon_serviciu() { return telefon_serviciu; }
     public void setTelefon_serviciu(String telefon_serviciu) { this.telefon_serviciu = telefon_serviciu; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }
