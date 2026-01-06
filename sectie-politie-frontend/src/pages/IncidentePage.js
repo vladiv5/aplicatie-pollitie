@@ -32,11 +32,22 @@ const IncidentePage = () => {
         }
     }, [location]);
 
-    // 2. CLOSE HANDLER
+    // --- MODIFICARE AICI: Logica Bumerang pe X / Anuleaza ---
     const handleCloseOrFinish = () => {
+        // 1. Verificam Bumerangul
+        const boomerang = sessionStorage.getItem('boomerang_pending');
+        if (boomerang) {
+            const data = JSON.parse(boomerang);
+            if (data.returnRoute) {
+                // Ne intoarcem la PolitistiPage (acolo se va face highlight)
+                navigate(data.returnRoute);
+                return; // STOP AICI
+            }
+        }
+
+        // 2. Comportament Normal (daca nu e Bumerang)
         setIsEditModalOpen(false);
         setEditId(null);
-        // Curățăm state-ul din history ca să nu se redeschidă la refresh
         window.history.replaceState({}, document.title);
     };
 
@@ -46,18 +57,15 @@ const IncidentePage = () => {
         setRefreshTrigger(prev => prev + 1);
     };
 
-    // --- MODIFICARE CRITICĂ AICI ---
+    // --- MODIFICARE AICI: Logica Bumerang pe SAVE ---
     const handleEditSuccess = (savedId) => {
-        // Verificăm dacă avem bilet de întoarcere (Bumerang)
         const boomerang = sessionStorage.getItem('boomerang_pending');
 
         if (boomerang) {
             const data = JSON.parse(boomerang);
-            // Dacă există, NU mai facem refresh aici, ci plecăm direct înapoi
-            // Pagina destinație (PolitistiPage) va ști ce să facă (highlight la triggerId)
-            navigate(data.returnRoute);
+            navigate(data.returnRoute); // Plecam inapoi
         } else {
-            // Comportament normal (Rămânem aici, facem highlight la incident)
+            // Ramanem aici
             setRefreshTrigger(prev => prev + 1);
             setHighlightId(savedId);
             handleCloseOrFinish();
@@ -81,6 +89,7 @@ const IncidentePage = () => {
                 <AddIncident onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
+            {/* AICI FOLOSIM handleCloseOrFinish LA AMBELE EVENT-URI */}
             <Modal isOpen={isEditModalOpen} onClose={handleCloseOrFinish} title="Editați Incident">
                 {editId && <EditIncident id={editId} onSaveSuccess={handleEditSuccess} onCancel={handleCloseOrFinish} />}
             </Modal>

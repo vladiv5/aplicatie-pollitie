@@ -5,12 +5,12 @@ import EditPolitist from "../components/EditPolitist";
 import Modal from "../components/Modal";
 
 const PolitistiPage = () => {
-    //State Modale
+    // State Modale
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editId, setEditId] = useState(null);
 
-    //State Focus & Refresh
+    // State Focus & Refresh
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
@@ -46,8 +46,19 @@ const PolitistiPage = () => {
                 <AddPolitist onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditId(null); }} title="Editați Polițist">
-                {editId && <EditPolitist id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />}
+            {/* MODIFICAT: Am scos handleCloseEdit si am pus logica simpla de inchidere */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => { setIsEditModalOpen(false); setEditId(null); }}
+                title="Editați Polițist"
+            >
+                {editId && (
+                    <EditPolitist
+                        id={editId}
+                        onSaveSuccess={handleEditSuccess}
+                        onCancel={() => { setIsEditModalOpen(false); setEditId(null); }}
+                    />
+                )}
             </Modal>
         </div>
     );

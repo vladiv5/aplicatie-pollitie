@@ -9,7 +9,6 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
     useEffect(() => {
         if (adresaId) {
             const token = localStorage.getItem('token');
-            // Apelăm endpoint-ul nou
             axios.get(`http://localhost:8080/api/adrese-persoane/adresa/${adresaId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -29,7 +28,8 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
             <h3>Locatari (Persoane Asociate)</h3>
 
             {loading ? <p>Se încarcă...</p> : (
-                <table className="styled-table" style={{ marginTop: '15px' }}>
+                /* MODIFICARE: Am adaugat clasa 'compact-table' */
+                <table className="styled-table compact-table" style={{ marginTop: '15px' }}>
                     <thead>
                     <tr>
                         <th>Nume</th>
@@ -41,7 +41,6 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
                     <tbody>
                     {locatari.map((item, index) => (
                         <tr key={index}>
-                            {/* Accesăm datele din obiectul 'persoana' */}
                             <td>{item.persoana.nume}</td>
                             <td>{item.persoana.prenume}</td>
                             <td>{item.persoana.cnp}</td>

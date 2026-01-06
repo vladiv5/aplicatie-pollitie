@@ -35,30 +35,24 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
             {loading ? (
                 <p style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Se încarcă datele...</p>
             ) : (
-                /* WRAPPER CORECTAT:
-                   1. Am scos 'overflow: hidden' ca să nu mai taie umbra.
-                   2. Am adăugat 'boxShadow' aici explicit ca să arate ca un card.
-                   3. Am scos border-ul manual gri, lăsând umbra să definească conturul.
-                */
                 <div style={{
                     borderRadius: '10px',
                     width: '100%',
                     marginTop: '10px',
                     backgroundColor: 'white',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)' /* Umbra vizibilă */
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
                 }}>
-                    <table className="styled-table" style={{
+                    {/* MODIFICARE: Am adaugat clasa 'compact-table' */}
+                    <table className="styled-table compact-table" style={{
                         width: '100%',
                         margin: 0,
-                        /* Important: Lăsăm tabelul să aibă colțurile rotunjite sus */
                         borderTopLeftRadius: '10px',
                         borderTopRightRadius: '10px',
-                        borderCollapse: 'separate', /* Necesar pentru border-radius pe tabel */
+                        borderCollapse: 'separate',
                         borderSpacing: 0
                     }}>
                         <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                         <tr>
-                            {/* Adăugăm rotunjire manuală la header pentru a se potrivi cu containerul */}
                             <th style={{ borderTopLeftRadius: '10px' }}>Tip Incident</th>
                             <th style={{ textAlign: 'center' }}>Data</th>
                             <th style={{ textAlign: 'center' }}>Locație</th>

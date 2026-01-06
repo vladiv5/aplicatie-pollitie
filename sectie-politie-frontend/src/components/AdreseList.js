@@ -20,6 +20,9 @@ const AdreseList = ({
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // --- LOADING STATE ---
+    const [isLoading, setIsLoading] = useState(true);
+
     const rowRefs = useRef({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -30,6 +33,8 @@ const AdreseList = ({
     const navigate = useNavigate();
 
     const loadAdrese = (page, term = '') => {
+        setIsLoading(true);
+
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/adrese/lista-paginata?page=${page}&size=10`;
         if (term) url = `http://localhost:8080/api/adrese/cauta?termen=${term}`;
@@ -46,7 +51,10 @@ const AdreseList = ({
                 setCurrentPage(page);
                 return res.data;
             })
-            .catch(err => console.error("Eroare incarcare adrese:", err));
+            .catch(err => console.error("Eroare incarcare adrese:", err))
+            .finally(() => {
+                setTimeout(() => setIsLoading(false), 200);
+            });
     };
 
     useEffect(() => {
@@ -114,25 +122,23 @@ const AdreseList = ({
     };
 
     useEffect(() => {
-        if (highlightId && rowRefs.current[highlightId]) {
+        if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
             const timer = setTimeout(() => {
                 if (onHighlightComplete) onHighlightComplete();
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [adrese, highlightId]);
+    }, [isLoading, adrese, highlightId]);
 
     const handlePageChange = (newPage) => loadAdrese(newPage, searchTerm);
 
-    // --- MODIFICARE 1: Cand se schimba search-ul, trimitem valoarea la loadAdrese
     const handleSearchChange = (e) => {
         const val = e.target.value;
         setSearchTerm(val);
         loadAdrese(0, val);
     };
 
-    // --- MODIFICARE 2: Functia de Clear Search
     const handleClearSearch = () => {
         setSearchTerm('');
         loadAdrese(0, '');
@@ -172,12 +178,11 @@ const AdreseList = ({
         <div className="page-container">
             <h2 className="page-title">Registru Adrese</h2>
             <div className="controls-container">
-                {/* --- MODIFICARE 3: Wrapper pentru Search + X --- */}
                 <div className="search-wrapper">
                     <input
                         type="text"
                         className="search-input"
-                        placeholder="Căutați..."
+                        placeholder="Căutați după județ/sector, localitate sau stradă..."
                         value={searchTerm}
                         onChange={handleSearchChange}
                     />
@@ -185,49 +190,66 @@ const AdreseList = ({
                         <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
                     )}
                 </div>
-                {/* ----------------------------------------------- */}
 
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Adresă</button>
             </div>
 
-            <table className="styled-table">
-                <thead>
-                <tr>
-                    <th>Județ / Sector</th>
-                    <th>Localitate</th>
-                    <th>Stradă</th>
-                    <th>Nr.</th>
-                    <th>Bloc</th>
-                    <th>Ap.</th>
-                    <th style={{textAlign:'center'}}>Acțiuni</th>
-                </tr>
-                </thead>
-                <tbody>
-                {adrese && adrese.length > 0 ? (
-                    adrese.map((adresa) => (
-                        <tr
-                            key={adresa.idAdresa}
-                            ref={(el) => (rowRefs.current[adresa.idAdresa] = el)}
-                            className={highlightId === adresa.idAdresa ? 'flash-row' : ''}
-                        >
-                            <td>{adresa.judetSauSector}</td>
-                            <td>{adresa.localitate}</td>
-                            <td>{adresa.strada}</td>
-                            <td>{adresa.numar ? adresa.numar : ''}</td>
-                            <td>{adresa.bloc ? adresa.bloc : ''}</td>
-                            <td>{adresa.apartament ? adresa.apartament : ''}</td>
-                            <td>
-                                <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button className="action-btn edit-btn" onClick={() => onEditClick(adresa.idAdresa)}>Editați</button>
-                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(adresa.idAdresa)}>Ștergeți</button>
-                                    <button className="action-btn" style={{ backgroundColor: '#fd7e14', color: 'white', marginRight: '5px' }} onClick={() => onViewLocatariClick(adresa.idAdresa)} title="Vizualizați Locatari"><i className="fa fa-users"></i> Locatari</button>
+            <div className="table-responsive">
+                <table className="styled-table">
+                    <thead>
+                    <tr>
+                        <th>Județ / Sector</th>
+                        <th>Localitate</th>
+                        <th>Stradă</th>
+                        <th>Nr.</th>
+                        <th>Bloc</th>
+                        <th>Ap.</th>
+                        <th style={{textAlign:'center'}}>Acțiuni</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    {/* LOGICA LOADING */}
+                    {isLoading ? (
+                        <tr>
+                            <td colSpan="7">
+                                <div className="loading-container">
+                                    <div className="spinner"></div>
+                                    <span>Se încarcă datele...</span>
                                 </div>
                             </td>
                         </tr>
-                    ))) : (<tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>)}
-                </tbody>
-            </table>
-            {!searchTerm && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
+                    ) : (
+                        adrese && adrese.length > 0 ? (
+                            adrese.map((adresa) => (
+                                <tr
+                                    key={adresa.idAdresa}
+                                    ref={(el) => (rowRefs.current[adresa.idAdresa] = el)}
+                                    className={highlightId === adresa.idAdresa ? 'flash-row' : ''}
+                                >
+                                    <td>{adresa.judetSauSector}</td>
+                                    <td>{adresa.localitate}</td>
+                                    <td>{adresa.strada}</td>
+                                    <td>{adresa.numar ? adresa.numar : ''}</td>
+                                    <td>{adresa.bloc ? adresa.bloc : ''}</td>
+                                    <td>{adresa.apartament ? adresa.apartament : ''}</td>
+                                    <td>
+                                        <div className="action-buttons-container" style={{justifyContent:'center'}}>
+                                            <button className="action-btn edit-btn" onClick={() => onEditClick(adresa.idAdresa)}>Editați</button>
+                                            <button className="action-btn delete-btn" onClick={() => handleRequestDelete(adresa.idAdresa)}>Ștergeți</button>
+                                            <button className="action-btn" style={{ backgroundColor: '#fd7e14', color: 'white', marginRight: '5px' }} onClick={() => onViewLocatariClick(adresa.idAdresa)} title="Vizualizați Locatari"><i className="fa fa-users"></i> Locatari</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
+                        )
+                    )}
+                    </tbody>
+                </table>
+            </div>
+            {!searchTerm && !isLoading && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
             <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} currentPolitistId={deleteId} returnRoute="/adrese" />
         </div>
     );

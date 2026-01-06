@@ -22,6 +22,9 @@ const PersoaneList = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy] = useState('nume');
 
+    // --- LOADING STATE ---
+    const [isLoading, setIsLoading] = useState(true);
+
     const rowRefs = useRef({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -29,6 +32,8 @@ const PersoaneList = ({
     const [deleteId, setDeleteId] = useState(null);
 
     const loadPersoane = (page, term = '') => {
+        setIsLoading(true); // Start spinner
+
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/persoane/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
         if (term) url = `http://localhost:8080/api/persoane/cauta?termen=${term}`;
@@ -45,7 +50,11 @@ const PersoaneList = ({
                 setCurrentPage(page);
                 return res.data;
             })
-            .catch(err => console.error("Eroare incarcare persoane:", err));
+            .catch(err => console.error("Eroare incarcare persoane:", err))
+            .finally(() => {
+                // Stop spinner cu mic delay
+                setTimeout(() => setIsLoading(false), 200);
+            });
     };
 
     useEffect(() => {
@@ -108,25 +117,23 @@ const PersoaneList = ({
     };
 
     useEffect(() => {
-        if (highlightId && rowRefs.current[highlightId]) {
+        if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
             const timer = setTimeout(() => {
                 if (onHighlightComplete) onHighlightComplete();
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [persoane, highlightId]);
+    }, [isLoading, persoane, highlightId]);
 
     const handlePageChange = (newPage) => loadPersoane(newPage, searchTerm);
 
-    // --- MODIFICARE 1: Search ---
     const handleSearchChange = (e) => {
         const val = e.target.value;
         setSearchTerm(val);
         loadPersoane(0, val);
     };
 
-    // --- MODIFICARE 2: Clear ---
     const handleClearSearch = () => {
         setSearchTerm('');
         loadPersoane(0, '');
@@ -162,6 +169,12 @@ const PersoaneList = ({
             .catch(err => toast.error("Eroare la ștergerea persoanei!"));
     };
 
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setDeleteData(null);
+        setDeleteId(null);
+    };
+
     const formatDataNasterii = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -173,7 +186,6 @@ const PersoaneList = ({
             <h2 className="page-title">Registru Persoane</h2>
 
             <div className="controls-container">
-                {/* --- MODIFICARE 3: Wrapper --- */}
                 <div className="search-wrapper">
                     <input
                         type="text"
@@ -186,7 +198,6 @@ const PersoaneList = ({
                         <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
                     )}
                 </div>
-                {/* ----------------------------- */}
 
                 <button className="add-btn-primary" onClick={onAddClick}>
                     <span>+</span> Adăugați Persoană
@@ -205,59 +216,73 @@ const PersoaneList = ({
                 </tr>
                 </thead>
                 <tbody>
-                {persoane && persoane.length > 0 ? (
-                    persoane.map((p) => (
-                        <tr
-                            key={p.idPersoana}
-                            ref={(el) => (rowRefs.current[p.idPersoana] = el)}
-                            className={highlightId === p.idPersoana ? 'flash-row' : ''}
-                        >
-                            <td>{p.nume}</td>
-                            <td>{p.prenume}</td>
-                            <td>{p.cnp}</td>
-                            <td style={{ textAlign: 'center' }}>{formatDataNasterii(p.dataNasterii)}</td>
-                            <td>{p.telefon}</td>
-                            <td>
-                                <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button className="action-btn edit-btn" onClick={() => onEditClick(p.idPersoana)}>Editați</button>
 
-                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(p.idPersoana)}>Ștergeți</button>
+                {/* LOGICA DE AFISARE CU LOADING */}
+                {isLoading ? (
+                    <tr>
+                        <td colSpan="6">
+                            <div className="loading-container">
+                                <div className="spinner"></div>
+                                <span>Se încarcă datele...</span>
+                            </div>
+                        </td>
+                    </tr>
+                ) : (
+                    persoane && persoane.length > 0 ? (
+                        persoane.map((p) => (
+                            <tr
+                                key={p.idPersoana}
+                                ref={(el) => (rowRefs.current[p.idPersoana] = el)}
+                                className={highlightId === p.idPersoana ? 'flash-row' : ''}
+                            >
+                                <td>{p.nume}</td>
+                                <td>{p.prenume}</td>
+                                <td>{p.cnp}</td>
+                                <td style={{ textAlign: 'center' }}>{formatDataNasterii(p.dataNasterii)}</td>
+                                <td>{p.telefon}</td>
+                                <td>
+                                    <div className="action-buttons-container">
+                                        <button className="action-btn edit-btn" onClick={() => onEditClick(p.idPersoana)}>Editați</button>
 
-                                    <button className="action-btn"
-                                            style={{ backgroundColor: '#17a2b8', color: 'white', marginRight: '5px' }}
-                                            onClick={() => onViewHistoryClick(p.idPersoana)}
-                                            title="Vizualizați Istoric"
-                                    >
-                                        <i className="fa fa-history"></i> Istoric
-                                    </button>
+                                        <button className="action-btn delete-btn" onClick={() => handleRequestDelete(p.idPersoana)}>Ștergeți</button>
 
-                                    <button className="action-btn"
-                                            style={{ backgroundColor: '#28a745', color: 'white', marginRight: '5px' }}
-                                            onClick={() => onViewAdreseClick(p.idPersoana)}
-                                            title="Vizualizați Adrese"
-                                    >
-                                        <i className="fa fa-home"></i> Adrese
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))) : (
-                    <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
+                                        <button className="action-btn"
+                                                style={{ backgroundColor: '#17a2b8', color: 'white', marginRight: '5px' }}
+                                                onClick={() => onViewHistoryClick(p.idPersoana)}
+                                                title="Vizualizați Istoric"
+                                        >
+                                            <i className="fa fa-history"></i> Istoric
+                                        </button>
+
+                                        <button className="action-btn"
+                                                style={{ backgroundColor: '#28a745', color: 'white', marginRight: '5px' }}
+                                                onClick={() => onViewAdreseClick(p.idPersoana)}
+                                                title="Vizualizați Adrese"
+                                        >
+                                            <i className="fa fa-home"></i> Adrese
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
+                    )
                 )}
                 </tbody>
             </table>
 
-            {!searchTerm && totalPages > 1 && (
+            {!searchTerm && !isLoading && totalPages > 1 && (
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
             )}
 
             <DeleteSmartModal
                 isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
+                onClose={handleCloseDeleteModal}
                 onConfirm={handleConfirmDelete}
                 data={deleteData}
                 currentPolitistId={deleteId}
-                returnRoute="/persoane" // RUTA CORECTĂ
+                returnRoute="/persoane"
             />
         </div>
     );

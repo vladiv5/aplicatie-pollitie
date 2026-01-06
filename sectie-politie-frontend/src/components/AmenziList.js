@@ -14,6 +14,9 @@ const AmenziList = ({
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // --- LOADING STATE ---
+    const [isLoading, setIsLoading] = useState(true);
+
     const rowRefs = useRef({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -21,6 +24,8 @@ const AmenziList = ({
     const [deleteId, setDeleteId] = useState(null);
 
     const loadAmenzi = (page, term = '') => {
+        setIsLoading(true);
+
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/amenzi/lista-paginata?page=${page}&size=10`;
         if (term) url = `http://localhost:8080/api/amenzi/cauta?termen=${term}`;
@@ -37,7 +42,10 @@ const AmenziList = ({
                 setCurrentPage(page);
                 return res.data;
             })
-            .catch(err => console.error("Eroare incarcare amenzi:", err));
+            .catch(err => console.error("Eroare incarcare amenzi:", err))
+            .finally(() => {
+                setTimeout(() => setIsLoading(false), 200);
+            });
     };
 
     useEffect(() => {
@@ -79,7 +87,7 @@ const AmenziList = ({
     };
 
     useEffect(() => {
-        if (highlightId && rowRefs.current[highlightId]) {
+        if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             const timer = setTimeout(() => {
@@ -87,18 +95,16 @@ const AmenziList = ({
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [amenzi, highlightId]);
+    }, [isLoading, amenzi, highlightId]);
 
     const handlePageChange = (newPage) => loadAmenzi(newPage, searchTerm);
 
-    // --- MODIFICARE 1: Search ---
     const handleSearchChange = (e) => {
         const val = e.target.value;
         setSearchTerm(val);
         loadAmenzi(0, val);
     };
 
-    // --- MODIFICARE 2: Clear ---
     const handleClearSearch = () => {
         setSearchTerm('');
         loadAmenzi(0, '');
@@ -150,12 +156,11 @@ const AmenziList = ({
         <div className="page-container">
             <h2 className="page-title">Registru Amenzi</h2>
             <div className="controls-container">
-                {/* --- MODIFICARE 3: Wrapper --- */}
                 <div className="search-wrapper">
                     <input
                         type="text"
                         className="search-input"
-                        placeholder="Căutați..."
+                        placeholder="Căutați după motiv, persoană sau agent..."
                         value={searchTerm}
                         onChange={handleSearchChange}
                     />
@@ -163,55 +168,72 @@ const AmenziList = ({
                         <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
                     )}
                 </div>
-                {/* ----------------------------- */}
 
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Amendă</button>
             </div>
 
-            <table className="styled-table">
-                <thead>
-                <tr>
-                    <th>Motiv</th>
-                    <th>Suma (RON)</th>
-                    <th>Stare</th>
-                    <th>Data & Ora</th>
-                    <th>Persoana</th>
-                    <th>Agent</th>
-                    <th style={{textAlign:'center'}}>Acțiuni</th>
-                </tr>
-                </thead>
-                <tbody>
-                {amenzi && amenzi.length > 0 ? (
-                    amenzi.map((amenda) => (
-                        <tr
-                            key={amenda.idAmenda}
-                            ref={(el) => (rowRefs.current[amenda.idAmenda] = el)}
-                            className={highlightId === amenda.idAmenda ? 'flash-row' : ''}
-                        >
-                            <td>{amenda.motiv}</td>
-                            <td style={{fontWeight: 'bold'}}>{amenda.suma}</td>
-                            <td>
-                                <span style={{
-                                    color: amenda.starePlata === 'Platita' ? 'green' : amenda.starePlata === 'Anulata' ? 'orange' : 'red',
-                                    fontWeight: 'bold'
-                                }}>
-                                    {amenda.starePlata}
-                                </span>
-                            </td>
-                            <td>{formatDataFrumos(amenda.dataEmitere)}</td>
-                            <td>{amenda.persoana ? `${amenda.persoana.nume} ${amenda.persoana.prenume}` : 'Nespecificat'}</td>
-                            <td>{amenda.politist ? `${amenda.politist.nume} ${amenda.politist.prenume}` : 'Nespecificat'}</td>
-                            <td>
-                                <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                    <button className="action-btn edit-btn" onClick={() => onEditClick(amenda.idAmenda)}>Editați</button>
-                                    <button className="action-btn delete-btn" onClick={() => handleRequestDelete(amenda.idAmenda)}>Ștergeți</button>
+            <div className="table-responsive">
+                <table className="styled-table">
+                    <thead>
+                    <tr>
+                        <th>Motiv</th>
+                        <th>Suma (RON)</th>
+                        <th>Stare</th>
+                        <th>Data & Ora</th>
+                        <th>Persoana</th>
+                        <th>Agent</th>
+                        <th style={{textAlign:'center'}}>Acțiuni</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    {/* LOGICA LOADING */}
+                    {isLoading ? (
+                        <tr>
+                            <td colSpan="7">
+                                <div className="loading-container">
+                                    <div className="spinner"></div>
+                                    <span>Se încarcă datele...</span>
                                 </div>
                             </td>
                         </tr>
-                    ))) : (<tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>)}
-                </tbody>
-            </table>
-            {!searchTerm && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
+                    ) : (
+                        amenzi && amenzi.length > 0 ? (
+                            amenzi.map((amenda) => (
+                                <tr
+                                    key={amenda.idAmenda}
+                                    ref={(el) => (rowRefs.current[amenda.idAmenda] = el)}
+                                    className={highlightId === amenda.idAmenda ? 'flash-row' : ''}
+                                >
+                                    <td>{amenda.motiv}</td>
+                                    <td style={{fontWeight: 'bold'}}>{amenda.suma}</td>
+                                    <td>
+                                        <span style={{
+                                            color: amenda.starePlata === 'Platita' ? 'green' : amenda.starePlata === 'Anulata' ? 'orange' : 'red',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            {amenda.starePlata}
+                                        </span>
+                                    </td>
+                                    <td>{formatDataFrumos(amenda.dataEmitere)}</td>
+                                    <td>{amenda.persoana ? `${amenda.persoana.nume} ${amenda.persoana.prenume}` : 'Nespecificat'}</td>
+                                    <td>{amenda.politist ? `${amenda.politist.nume} ${amenda.politist.prenume}` : 'Nespecificat'}</td>
+                                    <td>
+                                        <div className="action-buttons-container" style={{justifyContent:'center'}}>
+                                            <button className="action-btn edit-btn" onClick={() => onEditClick(amenda.idAmenda)}>Editați</button>
+                                            <button className="action-btn delete-btn" onClick={() => handleRequestDelete(amenda.idAmenda)}>Ștergeți</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
+                        )
+                    )}
+                    </tbody>
+                </table>
+            </div>
+            {!searchTerm && !isLoading && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
             <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
         </div>
     );

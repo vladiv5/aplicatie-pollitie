@@ -9,14 +9,23 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
     const [persoanaSelectata, setPersoanaSelectata] = useState(null);
     const [calitate, setCalitate] = useState('Martor');
 
+    // --- LOADING STATE (Anti-Flicărit) ---
+    const [isLoading, setIsLoading] = useState(true);
+
     // Încarcă lista existentă
     const loadParticipanti = () => {
+        setIsLoading(true); // Pornim încărcarea
         const token = localStorage.getItem('token');
+
         axios.get(`http://localhost:8080/api/participanti/incident/${incidentId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => setParticipanti(res.data))
-            .catch(err => console.error(err));
+            .catch(err => console.error(err))
+            .finally(() => {
+                // Oprim încărcarea cu un mic delay pentru fluiditate
+                setTimeout(() => setIsLoading(false), 200);
+            });
     };
 
     useEffect(() => {
@@ -102,9 +111,12 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                 width: '100%',
                 marginTop: '10px',
                 backgroundColor: 'white',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)' /* UMBRA AICI */
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
             }}>
-                <table className="styled-table" style={{
+                {/* MODIFICARE AICI: Am adăugat clasa 'compact-table'
+                    Aceasta va activa regula CSS pe care ai adăugat-o pentru a micșora coloana de acțiuni.
+                */}
+                <table className="styled-table compact-table" style={{
                     width: '100%',
                     margin: 0,
                     boxShadow: 'none',
@@ -121,26 +133,39 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                     </tr>
                     </thead>
                     <tbody>
-                    {participanti.length > 0 ? participanti.map((p, index) => (
-                        <tr key={p.id.idPersoana} style={{ borderBottom: index === participanti.length - 1 ? 'none' : '1px solid #eee' }}>
-                            <td style={{ padding: '12px 15px' }}>{p.persoana.nume} {p.persoana.prenume}</td>
-                            <td>
-                                <span style={{
-                                    fontWeight: 'bold',
-                                    color: (p.calitate === 'Suspect' || p.calitate === 'Faptas') ? '#dc3545' :
-                                        (p.calitate === 'Victima' ? '#fd7e14' : '#28a745')
-                                }}>
-                                    {p.calitate}
-                                </span>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                                <button className="action-btn delete-btn" onClick={() => handleDelete(p.id.idPersoana)} title="Eliminați participantul">
-                                    Eliminați
-                                </button>
+
+                    {/* LOGICA DE LOADING APLICATĂ */}
+                    {isLoading ? (
+                        <tr>
+                            <td colSpan="3">
+                                <div className="loading-container">
+                                    <div className="spinner"></div>
+                                    <span>Se încarcă lista...</span>
+                                </div>
                             </td>
                         </tr>
-                    )) : (
-                        <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Niciun participant adăugat.</td></tr>
+                    ) : (
+                        participanti.length > 0 ? participanti.map((p, index) => (
+                            <tr key={p.id.idPersoana} style={{ borderBottom: index === participanti.length - 1 ? 'none' : '1px solid #eee' }}>
+                                <td style={{ padding: '12px 15px' }}>{p.persoana.nume} {p.persoana.prenume}</td>
+                                <td>
+                                    <span style={{
+                                        fontWeight: 'bold',
+                                        color: (p.calitate === 'Suspect' || p.calitate === 'Faptas') ? '#dc3545' :
+                                            (p.calitate === 'Victima' ? '#fd7e14' : '#28a745')
+                                    }}>
+                                        {p.calitate}
+                                    </span>
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                    <button className="action-btn delete-btn" onClick={() => handleDelete(p.id.idPersoana)} title="Eliminați participantul">
+                                        Eliminați
+                                    </button>
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Niciun participant adăugat.</td></tr>
+                        )
                     )}
                     </tbody>
                 </table>

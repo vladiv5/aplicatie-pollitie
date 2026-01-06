@@ -25,8 +25,20 @@ const AmenziPage = () => {
         }
     }, [location]);
 
-    // 2. CLOSE HANDLER
+    // --- MODIFICARE AICI: Logica Bumerang pe X / Anuleaza ---
     const handleCloseOrFinish = () => {
+        // 1. Verificam Bumerangul
+        const boomerang = sessionStorage.getItem('boomerang_pending');
+        if (boomerang) {
+            const data = JSON.parse(boomerang);
+            if (data.returnRoute) {
+                // Ne intoarcem la PolitistiPage
+                navigate(data.returnRoute);
+                return; // STOP AICI
+            }
+        }
+
+        // 2. Comportament Normal
         setIsEditModalOpen(false);
         setEditId(null);
         window.history.replaceState({}, document.title);
@@ -38,17 +50,15 @@ const AmenziPage = () => {
         setRefreshTrigger(prev => prev + 1);
     };
 
-    // --- MODIFICARE CRITICĂ AICI ---
+    // --- MODIFICARE AICI: Logica Bumerang pe SAVE ---
     const handleEditSuccess = (savedId) => {
-        // Verificăm dacă avem bilet de întoarcere
         const boomerang = sessionStorage.getItem('boomerang_pending');
 
         if (boomerang) {
             const data = JSON.parse(boomerang);
-            // Dacă există, plecăm înapoi la sursă (ex: /politisti)
-            navigate(data.returnRoute);
+            navigate(data.returnRoute); // Plecam inapoi
         } else {
-            // Comportament normal
+            // Ramanem aici
             setRefreshTrigger(prev => prev + 1);
             setHighlightId(savedId);
             handleCloseOrFinish();
@@ -70,6 +80,7 @@ const AmenziPage = () => {
                 <AddAmenda onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
+            {/* AICI FOLOSIM handleCloseOrFinish LA AMBELE EVENT-URI */}
             <Modal isOpen={isEditModalOpen} onClose={handleCloseOrFinish} title="Editați Amendă">
                 {editId && <EditAmenda id={editId} onSaveSuccess={handleEditSuccess} onCancel={handleCloseOrFinish} />}
             </Modal>

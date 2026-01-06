@@ -38,7 +38,7 @@ const Menu = () => {
                                 </div>
                             </div>
 
-                            <Link to="/statistici" className="nav-link">📊 Statistici</Link>
+                            <Link to="/statistici" className="nav-link">Statistici</Link>
                         </div>
 
                         <button className="logout-btn" onClick={handleLogout}>

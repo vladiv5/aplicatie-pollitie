@@ -32,7 +32,7 @@ const PersoanePage = () => {
     };
 
     return (
-        <div>
+        <div className="page-wrapper">
             {/* Lista inteligenta */}
             <PersoaneList
                 refreshTrigger={refreshTrigger}
@@ -53,8 +53,19 @@ const PersoanePage = () => {
                 <AddPersoana onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editați Persoană">
-                {editId && <EditPersoana id={editId} onSaveSuccess={handleEditSuccess} onCancel={() => setIsEditModalOpen(false)} />}
+            {/* onClose simplu: doar inchide fereastra */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => { setIsEditModalOpen(false); setEditId(null); }}
+                title="Editați Persoană"
+            >
+                {editId && (
+                    <EditPersoana
+                        id={editId}
+                        onSaveSuccess={handleEditSuccess}
+                        onCancel={() => { setIsEditModalOpen(false); setEditId(null); }}
+                    />
+                )}
             </Modal>
 
             <Modal isOpen={!!historyId} onClose={() => setHistoryId(null)} title="Istoric Incidente" maxWidth="800px">

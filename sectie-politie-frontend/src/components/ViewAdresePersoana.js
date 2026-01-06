@@ -27,7 +27,8 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
         <div style={{ padding: '10px' }}>
 
             {loading ? <p>Se încarcă...</p> : (
-                <table className="styled-table" style={{ marginTop: '15px' }}>
+                /* MODIFICARE: Am adaugat clasa 'compact-table' */
+                <table className="styled-table compact-table" style={{ marginTop: '15px' }}>
                     <thead>
                     <tr>
                         <th>Județ</th>
@@ -39,7 +40,6 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
                     <tbody>
                     {listaAdrese.map((item, index) => (
                         <tr key={index}>
-                            {/* Accesăm datele din obiectul 'adresa' */}
                             <td>{item.adresa.judetSauSector}</td>
                             <td>{item.adresa.localitate}</td>
                             <td>

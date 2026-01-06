@@ -4,8 +4,13 @@
 .page-container {
     padding: 30px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f9f9f9; /* Un fundal ușor gri pentru contrast */
+    background-color: #f9f9f9;
     min-height: 100vh;
+
+    /* MODIFICARE CRITICĂ PENTRU SIMETRIE: */
+    max-width: 1400px; /* Sau 1200px dacă vrei mai îngust */
+    margin: 0 auto;    /* Centrează containerul pe mijlocul ecranului */
+    box-sizing: border-box; /* Asigură că padding-ul nu strică lățimea */
 }
 
 /* Titlul paginii */
@@ -23,6 +28,7 @@
     margin: 25px 0;
     font-size: 0.9em;
     min-width: 100%;
+    width: 100%;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15); /* Umbră fină */
     background-color: white;
     border-radius: 5px 5px 0 0;
@@ -46,6 +52,16 @@
     vertical-align: middle;
 }
 
+.styled-table th:last-child,
+.styled-table td:last-child {
+    width: 280px;      /* Ajustează valoarea asta (ex: 250px sau 300px) în funcție de câte butoane ai */
+    min-width: 280px;  /* Nu permite să fie strivită */
+    max-width: 280px;  /* Nu permite să se lățească */
+
+    padding: 12px 15px; /* Păstrăm padding-ul standard */
+    box-sizing: border-box;
+}
+
 /* Efect zebra (rânduri alternative) */
 .styled-table tbody tr:nth-of-type(even) {
     background-color: #f3f3f3;
@@ -65,12 +81,16 @@
 /* Butoanele de acțiune (Edit/Delete) */
 .action-btn {
     padding: 6px 12px;
-    margin-right: 5px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    transition: background 0.3s;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px; /* Lățime minimă pentru uniformitate */
+    margin: 0 !important; /* Eliminăm marginile vechi care pot strica flex-ul */
 }
 
 .edit-btn {
@@ -85,13 +105,14 @@
 }
 .delete-btn:hover { background-color: #c82333; }
 
-action-buttons-container {
+.action-buttons-container {
     display: flex;
-    justify-content: center; /* Le aliniază orizontal la centru */
+    justify-content: center; /* Centrează butoanele pe orizontală în celulă */
     align-items: center;     /* Le aliniază vertical */
-    gap: 10px;               /* Pune spațiu egal între butoane automat */
+    gap: 8px;                /* Spațiu consistent între butoane */
+    width: 100%;             /* Ocupă toată lățimea celulei */
+    flex-wrap: wrap;         /* Permite trecerea pe rând nou pe ecrane mici */
 }
-
 .controls-container {
     display: flex;
     justify-content: space-between;
@@ -139,32 +160,24 @@ action-buttons-container {
 
 .search-clear-btn {
     position: absolute;
-    right: 12px; /* Distanța față de margine */
+    /* Îl mutăm mai la dreapta (era probabil 12px sau mai mult, îl punem la 5px sau 8px) */
+    right: -60px !important;
     top: 50%;
     transform: translateY(-50%);
 
-    /* Dimensiuni cerculeț */
     width: 26px;
     height: 26px;
-
-    /* Stil Cerc */
     border-radius: 50%;
-    background-color: #e9ecef; /* Gri deschis inițial */
+    background-color: #e9ecef;
     border: none;
-
-    /* Iconița X */
     color: #555;
     font-size: 16px;
-    line-height: 1;
     font-weight: bold;
-
-    /* Poziționare centrată a X-ului */
     display: flex;
     align-items: center;
     justify-content: center;
-
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efect elastic */
+    transition: all 0.2s;
     z-index: 5;
 }
 
@@ -364,4 +377,39 @@ action-buttons-container {
 
 .flash-row {
     animation: flash-highlight 3s ease-out;
+}
+
+/* --- LOADING SPINNER --- */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    color: #0056b3;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3; /* Gri deschis */
+    border-top: 4px solid #0056b3; /* Albastru */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- FIX PENTRU TABELE DIN MODALE (Compacte) --- */
+/* Această clasă va anula lățimea fixă de 280px a ultimei coloane */
+.styled-table.compact-table th:last-child,
+.styled-table.compact-table td:last-child {
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
+    white-space: nowrap; /* Ține textul pe un rând dacă e scurt */
 }
