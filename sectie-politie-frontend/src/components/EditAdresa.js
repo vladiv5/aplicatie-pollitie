@@ -5,118 +5,75 @@ import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
-        strada: '',
-        numar: '',
-        bloc: '',
-        apartament: '',
-        localitate: '',
-        judetSauSector: ''
+        strada: '', numar: '', bloc: '', apartament: '', localitate: '', judetSauSector: ''
     });
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (id) {
-            const token = localStorage.getItem('token');
-            axios.get(`http://localhost:8080/api/adrese/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-                .then(res => {
-                    const data = res.data;
-                    setFormData({
-                        strada: data.strada || '',
-                        numar: data.numar || '',
-                        bloc: data.bloc || '',
-                        apartament: data.apartament || '',
-                        localitate: data.localitate || '',
-                        judetSauSector: data.judetSauSector || ''
-                    });
-                })
-                .catch(err => toast.error("Eroare încărcare date!"));
+            axios.get(`http://localhost:8080/api/adrese/${id}`)
+                .then(res => setFormData(res.data))
+                .catch(() => toast.error("Eroare încărcare date!"));
         }
     }, [id]);
 
-    const handleClear = (fieldName) => {
-        setFormData({ ...formData, [fieldName]: '' });
-    };
-
     const handleChange = (e) => {
-        setFormData({...formData, [e.target.name]: e.target.value});
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: null });
-        }
+        const { name, value } = e.target;
+        setFormData({...formData, [name]: value});
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSave = () => {
-        const token = localStorage.getItem('token');
         setErrors({});
-
-        const payload = {
-            ...formData,
-            apartament: formData.apartament ? formData.apartament : null
-        };
-
-        axios.put(`http://localhost:8080/api/adrese/${id}`, payload, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        axios.put(`http://localhost:8080/api/adrese/${id}`, formData)
             .then((response) => {
-                const updatedId = response.data ? response.data.idAdresa : id;
-                setErrors({});
                 toast.success("Adresă actualizată!");
-                onSaveSuccess(updatedId);
+                onSaveSuccess(id);
             })
             .catch(err => {
-                if (err.response && err.response.status === 400) {
-                    setErrors(err.response.data);
-                } else {
-                    toast.error("Eroare la modificare!");
-                }
+                if (err.response?.status === 400) setErrors(err.response.data);
+                toast.error("Eroare la modificare!");
             });
     };
 
-    // Helper actualizat (suportă stil container)
-    const renderInput = (label, name, containerStyle = {}) => (
-        <div style={{ ...containerStyle, position: 'relative' }}>
-            <label className="form-label">{label}</label>
-            <div style={{ position: 'relative' }}>
+    const renderInput = (label, name, icon, containerStyle = {}) => (
+        <div className="form-group-item" style={containerStyle}>
+            <label className="form-label"><i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>{label}</label>
+            <div className="input-wrapper">
                 <input
                     name={name}
                     className={`modal-input ${errors[name] ? 'input-error' : ''}`}
                     value={formData[name] || ''}
                     onChange={handleChange}
                 />
-
                 {formData[name] && (
-                    <span
-                        className="clear-icon"
-                        onClick={() => handleClear(name)}
-                        title="Șterge"
-                    >
-                        &times;
-                    </span>
+                    <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
+                        <i className="fa-solid fa-circle-xmark"></i>
+                    </button>
                 )}
             </div>
-            {errors[name] && (
-                <span className="error-text">{errors[name]}</span>
-            )}
+            {errors[name] && <span className="error-text">{errors[name]}</span>}
         </div>
     );
 
     return (
-        <div>
-            <div className="form-group">
-                {renderInput("Județ / Sector", "judetSauSector")}
-                {renderInput("Localitate", "localitate")}
-                {renderInput("Stradă", "strada")}
+        <div className="modal-body-scroll">
+            <div className="form-grid-stack">
+                {renderInput("Județ / Sector", "judetSauSector", "fa-map")}
+                {renderInput("Localitate", "localitate", "fa-city")}
+                {renderInput("Stradă", "strada", "fa-road")}
 
                 <div style={{display:'flex', gap:'10px'}}>
-                    {renderInput("Nr.", "numar", { width: '30%' })}
-                    {renderInput("Bloc", "bloc", { width: '30%' })}
-                    {renderInput("Ap.", "apartament", { width: '30%' })}
+                    {renderInput("Nr.", "numar", "fa-house-chimney", { width: '33%' })}
+                    {renderInput("Bloc", "bloc", "fa-building", { width: '33%' })}
+                    {renderInput("Ap.", "apartament", "fa-door-open", { width: '33%' })}
                 </div>
             </div>
-
-            <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>SALVAȚI MODIFICĂRI</button>
+            <div className="modal-footer" style={{marginTop: '30px'}}>
+                <button className="save-btn" onClick={handleSave}>
+                    <i className="fa-solid fa-pen-to-square" style={{marginRight: '8px'}}></i>
+                    SALVAȚI MODIFICĂRI
+                </button>
             </div>
         </div>
     );

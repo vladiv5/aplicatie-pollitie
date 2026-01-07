@@ -28,7 +28,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
             {loading ? (
                 <div className="loading-container">
                     <div className="spinner"></div>
-                    <p>Se încarcă adresele...</p>
+                    <p style={{color:'#d4af37'}}>Se încarcă adresele...</p>
                 </div>
             ) : (
                 <div className="table-responsive">
@@ -44,8 +44,8 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
                         {listaAdrese.map((item, index) => (
                             <tr key={index}>
                                 <td>
-                                    <div style={{fontWeight: '500'}}>{item.adresa.localitate}</div>
-                                    <div style={{fontSize: '0.8rem', color: '#64748b'}}>{item.adresa.judetSauSector}</div>
+                                    <div style={{fontWeight: '700', color: '#ffffff'}}>{item.adresa.localitate}</div>
+                                    <div style={{fontSize: '0.8rem', color: '#d4af37'}}>{item.adresa.judetSauSector}</div>
                                 </td>
                                 <td>
                                     {item.adresa.strada}
@@ -56,8 +56,10 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
                                 <td style={{textAlign: 'center'}}>
                                      <span className={`badge-status`}
                                            style={{
-                                               background: item.tipAdresa === 'Domiciliu' ? '#e0e7ff' : '#dcfce7',
-                                               color: item.tipAdresa === 'Domiciliu' ? '#3730a3' : '#166534'
+                                               // Culori adaptate pentru Dark Mode (Mov neon vs Verde neon)
+                                               background: item.tipAdresa === 'Domiciliu' ? 'rgba(124, 58, 237, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                                               color: item.tipAdresa === 'Domiciliu' ? '#c4b5fd' : '#6ee7b7',
+                                               border: item.tipAdresa === 'Domiciliu' ? '1px solid #8b5cf6' : '1px solid #10b981'
                                            }}>
                                         {item.tipAdresa}
                                     </span>
@@ -66,7 +68,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
                         ))}
                         {listaAdrese.length === 0 && (
                             <tr>
-                                <td colSpan="3" style={{textAlign: 'center', padding: '20px', color: '#64748b'}}>
+                                <td colSpan="3" style={{textAlign: 'center', padding: '20px', color: '#94a3b8', fontStyle: 'italic'}}>
                                     Această persoană nu are adrese asociate.
                                 </td>
                             </tr>

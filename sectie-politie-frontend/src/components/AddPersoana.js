@@ -5,95 +5,73 @@ import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const AddPersoana = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
-        nume: '',
-        prenume: '',
-        cnp: '',
-        dataNasterii: '',
-        telefon: ''
+        nume: '', prenume: '', cnp: '', dataNasterii: '', telefon: ''
     });
     const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: null });
-        }
-    };
-
-    const handleClear = (fieldName) => {
-        setFormData({ ...formData, [fieldName]: '' });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSave = () => {
-        const token = localStorage.getItem('token');
         setErrors({});
-
-        axios.post('http://localhost:8080/api/persoane', formData, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        axios.post('http://localhost:8080/api/persoane', formData)
             .then((response) => {
-                const newId = response.data ? response.data.idPersoana : null;
-                setErrors({});
                 toast.success("Persoană adăugată cu succes!");
-                onSaveSuccess(newId);
+                onSaveSuccess(response.data.idPersoana);
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
-                    console.error(error);
                     toast.error("Eroare la salvare!");
                 }
             });
     };
 
-    // Helper actualizat cu clasele din Forms.css
-    const renderInput = (name, label, placeholder, type = 'text', maxLength = null) => (
-        <div style={{ position: 'relative' }}>
-            <label className="form-label">{label}</label>
-            <div style={{ position: 'relative' }}>
-                <input
-                    type={type}
-                    name={name}
-                    placeholder={placeholder}
-                    maxLength={maxLength}
-                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
-                    value={formData[name]}
-                    onChange={handleChange}
-                />
-
-                {/* Buton X - folosim clasa .clear-icon */}
-                {formData[name] && type !== 'date' && (
-                    <span
-                        className="clear-icon"
-                        onClick={() => handleClear(name)}
-                        title="Șterge"
-                    >
-                        &times;
-                    </span>
-                )}
+    const renderInput = (name, label, placeholder, icon, type = 'text') => {
+        const hasError = errors[name];
+        return (
+            <div className="form-group-item">
+                <label className="form-label">
+                    <i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>
+                    {label}
+                </label>
+                <div className="input-wrapper">
+                    <input
+                        type={type}
+                        name={name}
+                        placeholder={placeholder}
+                        className={`modal-input ${hasError ? 'input-error' : ''}`}
+                        value={formData[name]}
+                        onChange={handleChange}
+                    />
+                    {formData[name] && type !== 'date' && (
+                        <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
+                            <i className="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    )}
+                </div>
+                {hasError && <span className="error-text">{errors[name]}</span>}
             </div>
-
-            {/* Mesaj Eroare - folosim clasa .error-text */}
-            {errors[name] && (
-                <span className="error-text">{errors[name]}</span>
-            )}
-        </div>
-    );
+        );
+    };
 
     return (
-        <div>
-            <div className="form-group">
-                {renderInput("nume", "Nume", "ex: Ionescu")}
-                {renderInput("prenume", "Prenume", "ex: Maria")}
-                {renderInput("cnp", "CNP", "13 cifre", "text", 13)}
-                {renderInput("dataNasterii", "Data Nașterii", "", "date")}
-                {renderInput("telefon", "Telefon", "ex: 07xx xxx xxx")}
+        <div className="modal-body-scroll">
+            <div className="form-grid-stack">
+                {renderInput("nume", "Nume", "ex: Popescu", "fa-user-tie")}
+                {renderInput("prenume", "Prenume", "ex: Andrei", "fa-user")}
+                {renderInput("cnp", "CNP", "13 cifre", "fa-id-card")}
+                {renderInput("dataNasterii", "Data Nașterii", "", "fa-calendar-days", "date")}
+                {renderInput("telefon", "Telefon", "07xxxxxxxx", "fa-phone")}
             </div>
-
-            <div className="modal-footer">
+            <div className="modal-footer" style={{marginTop: '30px'}}>
                 <button className="save-btn" onClick={handleSave}>
+                    <i className="fa-solid fa-floppy-disk" style={{marginRight: '8px'}}></i>
                     SALVAȚI PERSOANA
                 </button>
             </div>

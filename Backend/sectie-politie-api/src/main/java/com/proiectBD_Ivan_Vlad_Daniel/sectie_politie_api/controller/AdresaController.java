@@ -98,53 +98,55 @@ public class AdresaController {
     // --- LOGICA DE VALIDARE COMUNA ---
     private Map<String, String> valideazaAdresa(AdresaRequest req) {
         Map<String, String> errors = new HashMap<>();
+        String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
+        String litereCifreRegex = "^[a-zA-Z0-9\\s\\-]+$";
 
-        // 1. Strada (Obligatoriu -> Regex -> Max 100)
-        if (req.strada == null || req.strada.trim().isEmpty()) {
-            errors.put("strada", "Strada este obligatorie!");
-        } else if (!req.strada.matches("^[a-zA-ZăâîșțĂÂÎȘȚ ]+$")) {
-            errors.put("strada", "Strada poate conține doar litere și spații.");
-        } else if (req.strada.length() > 100) {
-            errors.put("strada", "Strada este prea lungă (max 100 caractere).");
+        // --- 1. JUDEȚ / SECTOR (Obligatoriu, Litere/Cifre, Max 50) ---
+        if (req.judetSauSector == null || req.judetSauSector.trim().isEmpty()) {
+            errors.put("judetSauSector", "Județul/Sectorul este obligatoriu!");
+        } else if (!req.judetSauSector.matches(litereCifreRegex)) {
+            errors.put("judetSauSector", "Câmpul poate conține doar litere, cifre și spații.");
+        } else if (req.judetSauSector.length() > 50) {
+            errors.put("judetSauSector", "Maxim 50 de caractere!");
         }
 
-        // 2. Numar (Obligatoriu -> Regex -> Max 10)
+        // --- 2. LOCALITATE (Obligatoriu, Litere, Max 50) ---
+        if (req.localitate == null || req.localitate.trim().isEmpty()) {
+            errors.put("localitate", "Localitatea este obligatorie!");
+        } else if (!req.localitate.matches(doarLitereRegex)) {
+            errors.put("localitate", "Localitatea poate conține doar litere!");
+        } else if (req.localitate.length() > 50) {
+            errors.put("localitate", "Maxim 50 de caractere!");
+        }
+
+        // --- 3. STRADA (Obligatoriu, Litere, Max 100) ---
+        if (req.strada == null || req.strada.trim().isEmpty()) {
+            errors.put("strada", "Strada este obligatorie!");
+        } else if (!req.strada.matches(doarLitereRegex)) {
+            errors.put("strada", "Strada poate conține doar litere!");
+        } else if (req.strada.length() > 100) {
+            errors.put("strada", "Maxim 100 de caractere!");
+        }
+
+        // --- 4. NUMĂR (Obligatoriu, Litere/Cifre, Max 10) ---
         if (req.numar == null || req.numar.trim().isEmpty()) {
             errors.put("numar", "Numărul este obligatoriu!");
         } else if (!req.numar.matches("^[a-zA-Z0-9]+$")) {
             errors.put("numar", "Nr. poate conține doar litere și cifre.");
         } else if (req.numar.length() > 10) {
-            errors.put("numar", "Numărul este prea lung (max 10 caractere).");
+            errors.put("numar", "Maxim 10 caractere!");
         }
 
-        // 3. Localitate (Obligatoriu -> Regex -> Max 50)
-        if (req.localitate == null || req.localitate.trim().isEmpty()) {
-            errors.put("localitate", "Localitatea este obligatorie!");
-        } else if (!req.localitate.matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
-            errors.put("localitate", "Localitatea poate conține doar litere, spații sau cratimă.");
-        } else if (req.localitate.length() > 50) {
-            errors.put("localitate", "Localitatea este prea lungă (max 50 caractere).");
-        }
-
-        // 4. Judet (Obligatoriu -> Regex -> Max 50)
-        if (req.judetSauSector == null || req.judetSauSector.trim().isEmpty()) {
-            errors.put("judetSauSector", "Județul/Sectorul este obligatoriu!");
-        } else if (!req.judetSauSector.matches("^[a-zA-ZăâîșțĂÂÎȘȚ0-9 ]+$")) {
-            errors.put("judetSauSector", "Câmpul poate conține doar litere, cifre și spații.");
-        } else if (req.judetSauSector.length() > 50) {
-            errors.put("judetSauSector", "Județul/Sectorul este prea lung (max 50 caractere).");
-        }
-
-        // 5. Bloc (OPTIONAL -> Regex -> Max 10)
+        // --- 5. BLOC (Opțional, Litere/Cifre, Max 10) ---
         if (req.bloc != null && !req.bloc.trim().isEmpty()) {
-            if (!req.bloc.matches("^[a-zA-Z0-9 ]+$")) {
-                errors.put("bloc", "Blocul poate conține doar litere, cifre și spații.");
+            if (!req.bloc.matches("^[a-zA-Z0-9\\s]+$")) {
+                errors.put("bloc", "Blocul poate conține doar litere și cifre.");
             } else if (req.bloc.length() > 10) {
-                errors.put("bloc", "Blocul este prea lung (max 10 caractere).");
+                errors.put("bloc", "Maxim 10 caractere!");
             }
         }
 
-        // 6. Apartament (OPTIONAL -> Regex)
+        // --- 6. APARTAMENT (Opțional, Cifre) ---
         if (req.apartament != null && !req.apartament.trim().isEmpty()) {
             if (!req.apartament.matches("^\\d+$")) {
                 errors.put("apartament", "Apartamentul poate conține doar cifre.");

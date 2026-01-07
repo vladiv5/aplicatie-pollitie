@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import '../components/styles/Home.css';
-import '../index.css'
 import Modal from '../components/Modal';
 import MyActivityModal from '../components/MyActivityModal';
 
@@ -16,12 +15,12 @@ const HomePage = () => {
         return () => clearInterval(timer);
     }, []);
 
-    if (!user) return <div>Se încarcă...</div>;
+    if (!user) return <div className="loading-container"><div className="spinner"></div></div>;
 
     return (
         <div className="home-container">
 
-            {/* 1. Header Compact */}
+            {/* 1. Header Compact & Premium */}
             <div className="welcome-banner">
                 <div className="welcome-text">
                     <h1>Panou Operativ</h1>
@@ -35,7 +34,7 @@ const HomePage = () => {
 
             <div className="dashboard-grid">
 
-                {/* 2. Coloana Stânga: ID Badge */}
+                {/* 2. Coloana Stânga: ID Badge Premium */}
                 <div className="left-column">
                     <div className="id-card-wrapper">
                         <div className="id-card-header">
@@ -61,7 +60,6 @@ const HomePage = () => {
                             </div>
                         </div>
 
-                        {/* Status mutat jos, integrat */}
                         <div className="system-status-mini">
                             <div className="status-dot"></div> Conexiune Securizată
                         </div>
@@ -121,11 +119,11 @@ const HomePage = () => {
                             </div>
                         </Link>
 
-                        {/* Card Dosar Personal - evidențiat subtil */}
+                        {/* Card Dosar Personal */}
                         <div
                             className="shortcut-card"
                             onClick={() => setIsActivityOpen(true)}
-                            style={{ cursor: 'pointer' }} /* Am scos border: '1px dashed...' pentru a lăsa border-ul de 2px auriu să se vadă */
+                            style={{ cursor: 'pointer' }}
                         >
                             <i className="shortcut-icon fa-solid fa-folder-open"></i>
                             <div className="shortcut-content">

@@ -104,32 +104,32 @@ public class IncidentController {
     // --- HELPER VALIDARE ---
     private Map<String, String> valideazaIncident(IncidentRequest req) {
         Map<String, String> errors = new HashMap<>();
+        String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
 
-        // 1. TIP INCIDENT (Obligatoriu -> Regex -> Max 100)
-        String tip = req.tipIncident;
-        if (tip == null || tip.trim().isEmpty()) {
+        // --- 1. TIP INCIDENT (Obligatoriu, Litere, Max 100) ---
+        if (req.tipIncident == null || req.tipIncident.trim().isEmpty()) {
             errors.put("tipIncident", "Tipul incidentului este obligatoriu!");
-        } else {
-            if (!tip.matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
-                errors.put("tipIncident", "Tipul incidentului poate conține doar litere, spații sau cratimă.");
-            } else if (tip.length() > 100) {
-                errors.put("tipIncident", "Tipul incidentului este prea lung (max 100 caractere).");
-            }
+        } else if (!req.tipIncident.matches(doarLitereRegex)) {
+            errors.put("tipIncident", "Tipul incidentului poate conține doar litere!");
+        } else if (req.tipIncident.length() > 100) {
+            errors.put("tipIncident", "Maxim 100 de caractere!");
         }
 
-        // 2. DESCRIERE INCIDENT (Obligatoriu)
+        // --- 2. DESCRIERE INCIDENT (Obligatoriu) ---
         if (req.descriereIncident == null || req.descriereIncident.trim().isEmpty()) {
             errors.put("descriereIncident", "Descrierea incidentului este obligatorie!");
         }
 
-        // 3. DESCRIERE LOCATIE (Optional -> Max 255)
+        // --- 3. DESCRIERE LOCAȚIE (Opțional, Max 255) ---
         if (req.descriereLocatie != null && req.descriereLocatie.length() > 255) {
-            errors.put("descriereLocatie", "Descrierea locației e prea lungă (max 255 caractere).");
+            errors.put("descriereLocatie", "Maxim 255 de caractere!");
         }
 
-        // 4. DATA (Format + Logica 15 ani)
+        // --- 4. DATA ȘI ORA (Format + Logica 15 ani) ---
         try {
-            if (req.dataEmitere != null) {
+            if (req.dataEmitere == null || req.dataEmitere.trim().isEmpty()) {
+                errors.put("dataEmitere", "Data și ora sunt obligatorii!");
+            } else {
                 LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
                 if (!isDataValida(data)) {
                     errors.put("dataEmitere", "Incidentul este mai vechi de 15 ani sau din viitor!");

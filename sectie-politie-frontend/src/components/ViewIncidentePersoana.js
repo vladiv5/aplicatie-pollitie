@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './styles/Forms.css'; // Importăm stilurile
+import './styles/Forms.css'; // Asigură-te că stilurile globale sunt încărcate
 
 const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
     const [istoric, setIstoric] = useState([]);
@@ -29,13 +29,14 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
         return d.toLocaleDateString('ro-RO') + ' ' + d.toLocaleTimeString('ro-RO', {hour: '2-digit', minute:'2-digit'});
     };
 
-    // Funcție helper pentru culoarea calității
+    // Funcție helper pentru culori pe fundal Dark Navy
     const getCalitateStyle = (calitate) => {
         switch(calitate) {
-            case 'Suspect': case 'Faptas': return { bg: '#fee2e2', col: '#991b1b' }; // Roșu
-            case 'Victima': return { bg: '#fef3c7', col: '#92400e' }; // Portocaliu
-            case 'Martor': return { bg: '#dcfce7', col: '#166534' }; // Verde
-            default: return { bg: '#f1f5f9', col: '#475569' }; // Gri
+            // Folosim culori mai luminoase pentru text și fundaluri semi-transparente
+            case 'Suspect': case 'Faptas': return { bg: 'rgba(239, 68, 68, 0.2)', col: '#fca5a5' }; // Roșu deschis
+            case 'Victima': return { bg: 'rgba(245, 158, 11, 0.2)', col: '#fcd34d' }; // Galben/Portocaliu
+            case 'Martor': return { bg: 'rgba(16, 185, 129, 0.2)', col: '#6ee7b7' }; // Verde Mentă
+            default: return { bg: 'rgba(148, 163, 184, 0.2)', col: '#cbd5e1' }; // Gri albăstrui
         }
     };
 
@@ -44,7 +45,7 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
             {loading ? (
                 <div className="loading-container">
                     <div className="spinner"></div>
-                    <p>Se încarcă istoricul...</p>
+                    <p style={{color:'#d4af37'}}>Se încarcă istoricul...</p>
                 </div>
             ) : (
                 <div className="table-responsive">
@@ -62,11 +63,11 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
                             const style = getCalitateStyle(item.calitate);
                             return (
                                 <tr key={index}>
-                                    <td style={{fontWeight: '500'}}>{item.incident.tipIncident}</td>
+                                    <td style={{fontWeight: '700', color: '#ffffff'}}>{item.incident.tipIncident}</td>
                                     <td>{formatDate(item.incident.dataEmitere)}</td>
                                     <td>{item.incident.descriereLocatie}</td>
                                     <td style={{ textAlign: 'center' }}>
-                                        <span className="badge-status" style={{ backgroundColor: style.bg, color: style.col }}>
+                                        <span className="badge-status" style={{ backgroundColor: style.bg, color: style.col, border: `1px solid ${style.col}` }}>
                                             {item.calitate}
                                         </span>
                                     </td>
@@ -74,7 +75,7 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
                             );
                         }) : (
                             <tr>
-                                <td colSpan="4" style={{textAlign: 'center', padding: '30px', color: '#64748b'}}>
+                                <td colSpan="4" style={{textAlign: 'center', padding: '30px', color: '#94a3b8', fontStyle: 'italic'}}>
                                     Această persoană nu figurează în niciun incident.
                                 </td>
                             </tr>

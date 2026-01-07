@@ -21,19 +21,14 @@ const LoginPage = () => {
 
         try {
             await login(nume, parola);
-            toast.success("Te-ai autentificat cu succes!");
+            toast.success("Acces permis. Bun venit!");
             navigate('/acasa');
         } catch (err) {
-            toast.error("Autentificare eșuată. Verifică datele.");
-
+            // Eu preiau aici harta de erori trimisa de AuthController.java
             if (err.response && err.response.data) {
-                if (typeof err.response.data === 'object') {
-                    setErrors(err.response.data);
-                } else {
-                    setErrors({ global: err.response.data });
-                }
+                setErrors(err.response.data);
             } else {
-                setErrors({ global: 'Eroare de conexiune la server.' });
+                setErrors({ global: "Server indisponibil." });
             }
         } finally {
             setLoading(false);
@@ -44,68 +39,66 @@ const LoginPage = () => {
         <div className="login-container">
             <div className="login-card">
                 <div className="login-header">
-                    <span className="police-badge">🛡️</span>
+                    <i className="fa-solid fa-shield-halved logo-icon"></i>
                     <h2>Sistem Gestiune</h2>
                     <p>Secția de Poliție - Acces Restricționat</p>
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label>Utilizator</label>
-                        <input
-                            type="text"
-                            className={`login-input ${errors.nume ? 'input-error' : ''}`}
-                            placeholder="Introduceți numele de utilizator..."
-                            value={nume}
-                            onChange={(e) => {
-                                setNume(e.target.value);
-                                if(errors.nume) setErrors({...errors, nume: ''});
-                            }}
-                        />
+                        <label><i className="fa-solid fa-user"></i> Utilizator</label>
+                        <div className="input-wrapper">
+                            <input
+                                type="text"
+                                className={`login-input ${errors.nume ? 'input-error' : ''}`}
+                                placeholder="Nume utilizator..."
+                                value={nume}
+                                onChange={(e) => setNume(e.target.value)}
+                            />
+                            {nume && (
+                                <button type="button" className="search-clear-btn-gold" onClick={() => setNume('')}>
+                                    <i className="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            )}
+                        </div>
                         {errors.nume && <span className="field-error">{errors.nume}</span>}
                     </div>
 
                     <div className="form-group">
                         <div className="form-label-group">
-                            <label>Parolă</label>
-                            {/* BUTON STILIZAT */}
-                            <button
-                                type="button"
-                                className="btn-toggle-pass"
-                                onClick={() => setShowPass(!showPass)}
-                            >
-                                {showPass ? "Ascunde" : "Arată"}
+                            <label><i className="fa-solid fa-lock"></i> Parolă</label>
+                            <button type="button" className="btn-toggle-pass" onClick={() => setShowPass(!showPass)}>
+                                <i className={`fa-solid ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                             </button>
                         </div>
-                        <input
-                            type={showPass ? "text" : "password"}
-                            className={`login-input ${errors.parola ? 'input-error' : ''}`}
-                            placeholder="••••••••"
-                            value={parola}
-                            onChange={(e) => {
-                                setParola(e.target.value);
-                                if(errors.parola) setErrors({...errors, parola: ''});
-                            }}
-                        />
+                        <div className="input-wrapper">
+                            <input
+                                type={showPass ? "text" : "password"}
+                                className={`login-input ${errors.parola ? 'input-error' : ''}`}
+                                placeholder="••••••••"
+                                value={parola}
+                                onChange={(e) => setParola(e.target.value)}
+                            />
+                            {parola && (
+                                <button type="button" className="search-clear-btn-gold" onClick={() => setParola('')}>
+                                    <i className="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            )}
+                        </div>
                         {errors.parola && <span className="field-error">{errors.parola}</span>}
                     </div>
 
                     <button type="submit" className="login-btn" disabled={loading}>
-                        {loading ? 'Se autentifică...' : 'AUTENTIFICARE'}
+                        {loading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'AUTENTIFICARE'}
                     </button>
                 </form>
 
-                {errors.global && <div className="error-msg" style={{marginTop:'10px'}}>⚠️ {errors.global}</div>}
+                {errors.global && <div className="error-msg" style={{marginTop:'15px'}}>⚠️ {errors.global}</div>}
 
-                <div style={{textAlign: 'center', marginTop: '15px', fontSize: '14px'}}>
-                    <p style={{color: '#666', marginBottom: '5px'}}>Ești polițist nou?</p>
-                    <span onClick={() => navigate('/register')} style={{cursor: 'pointer', color: '#0056b3', fontWeight: 'bold'}}>
-                        Activează-ți contul aici
+                <div style={{textAlign: 'center', marginTop: '20px'}}>
+                    <span onClick={() => navigate('/register')} className="auth-link">
+                        <i className="fa-solid fa-user-plus"></i> Activează-ți contul aici
                     </span>
-                </div>
-
-                <div className="login-footer">
-                    &copy; 2025 Ministerul Afacerilor Interne. Toate drepturile rezervate.
                 </div>
             </div>
         </div>

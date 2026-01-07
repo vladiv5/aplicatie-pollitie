@@ -1,20 +1,16 @@
-/* src/components/styles/Menu.css */
+/* =========================================
+   MENU NAVIGATION - PREMIUM NAVY & GOLD
+   ========================================= */
 
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    /* Fundalul cel mai inchis din paletă (#0A2647) */
     background-color: var(--royal-navy-dark);
-
     padding: 0 40px;
     height: 75px;
-
-    /* Umbră și o linie aurie fină jos */
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     border-bottom: 2px solid var(--gold-border);
-
     font-family: 'Montserrat', sans-serif;
     position: sticky;
     top: 0;
@@ -36,14 +32,13 @@
 
 .logo-icon {
     font-size: 1.4em;
-    /* Gradient auriu pe iconița scut */
     background: var(--gold-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.4));
 }
 
-/* --- MENIU --- */
+/* --- MENIU ITEMS --- */
 .menu-items {
     display: flex;
     align-items: center;
@@ -51,113 +46,87 @@
     height: 100%;
 }
 
-/* Link-uri standard */
-.nav-link {
+/* Stil comun pentru Link-uri și Butonul Dropdown */
+.nav-link, .dropbtn {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
+    background: none; /* I removed the default button background */
+    border: none;     /* I removed the default button border */
+    font-family: 'Montserrat', sans-serif;
     font-weight: 500;
     padding: 10px 18px;
     border-radius: 8px;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     font-size: 15px;
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
 }
 
-/* HOVER: Fundal mai deschis (#205295) + Text Auriu */
-.nav-link:hover, .dropbtn:hover {
-    background-color: var(--royal-navy-light); /* Culoarea 3 */
+/* HOVER pe butoanele principale (Acasă, Gestiune, Statistici) */
+.nav-link:hover, .dropbtn:hover, .dropdown:hover .dropbtn {
+    background-color: var(--royal-navy-light);
     color: var(--gold-text);
     transform: translateY(-2px);
 }
 
-.nav-link i {
-    font-size: 1.1em;
-}
-
-/* --- DROPDOWN --- */
+/* --- DROPDOWN LOGIC & DESIGN --- */
 .dropdown {
-    position: relative;
+    position: relative; /* I added this so dropdown-content stays under the button */
+    display: flex;
+    align-items: center;
     height: 100%;
-    display: flex;
-    align-items: center;
 }
 
-.dropbtn {
-    background: none;
-    color: rgba(255, 255, 255, 0.8);
-    padding: 10px 18px;
-    font-size: 15px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Montserrat', sans-serif;
-}
-
-/* Continut Dropdown - ACUM DARK (#144272) */
 .dropdown-content {
     display: none;
     position: absolute;
-    top: 70px;
-    left: 0;
-
-    /* Fundal Albastru Mediu (#144272) */
+    top: 65px; /* I adjusted the height so it sits perfectly under the nav bar */
+    left: 0;   /* Now it's relative to the .dropdown container */
     background-color: var(--royal-navy-medium);
     border: 1px solid var(--gold-border);
-
     min-width: 220px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     border-radius: 8px;
     overflow: hidden;
     z-index: 100;
-
     animation: fadeIn 0.2s ease forwards;
 }
 
 .dropdown-content a {
-    color: white; /* Text Alb */
+    color: rgba(255, 255, 255, 0.9);
     padding: 14px 20px;
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     font-size: 14px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: all 0.2s;
+    transition: all 0.3s ease;
 }
 
-.dropdown-content a i {
-    width: 20px;
-    text-align: center;
-    color: var(--gold-text); /* Iconitele din dropdown sunt aurii */
-}
-
-/* Hover pe element din lista: Se face si mai deschis (#2C74B3) */
+/* --- NAVY & GOLD HOVER EFFECT --- */
 .dropdown-content a:hover {
-    background-color: var(--royal-blue-accent); /* Culoarea 4 */
-    padding-left: 25px; /* Efect glisare */
-    color: white;
+    /* I set the background to Navy Dark and text to Gold on hover */
+    background-color: var(--royal-navy-dark) !important;
+    color: var(--gold-text) !important;
+    padding-left: 28px; /* Slide effect */
+    box-shadow: inset 4px 0 0 var(--gold-border); /* Tactical indicator */
+}
+
+.dropdown-content a:hover i {
+    color: #ffd700 !important;
 }
 
 .dropdown:hover .dropdown-content {
     display: block;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* --- LOGOUT BUTTON (GHOST STYLE) --- */
+/* --- LOGOUT BUTTON --- */
 .logout-btn {
     background-color: transparent;
-    color: #ff6b6b; /* Un roșu deschis care se vede bine pe dark */
+    color: #ff6b6b;
     border: 1px solid #ff6b6b;
     padding: 8px 20px;
     font-size: 14px;
@@ -175,4 +144,9 @@
     background-color: #ff6b6b;
     color: white;
     box-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

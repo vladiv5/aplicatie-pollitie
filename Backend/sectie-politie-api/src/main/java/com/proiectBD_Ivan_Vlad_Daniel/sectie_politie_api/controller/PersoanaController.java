@@ -127,53 +127,46 @@ public class PersoanaController {
     // --- HELPER: Validare "Babeasca" ---
     private Map<String, String> valideazaPersoana(Persoana p) {
         Map<String, String> errors = new HashMap<>();
+        String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
 
-        // 1. NUME (Obligatoriu -> Regex -> Max 50)
+        // --- 1. NUME (Obligatoriu, Litere, Max 50) ---
         if (p.getNume() == null || p.getNume().trim().isEmpty()) {
             errors.put("nume", "Numele este obligatoriu!");
-        } else {
-            if (!p.getNume().matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
-                errors.put("nume", "Numele poate conține doar litere, spații sau cratimă.");
-            } else if (p.getNume().length() > 50) {
-                errors.put("nume", "Numele este prea lung (max 50 caractere).");
-            }
+        } else if (!p.getNume().matches(doarLitereRegex)) {
+            errors.put("nume", "Numele poate conține doar litere!");
+        } else if (p.getNume().length() > 50) {
+            errors.put("nume", "Maxim 50 de caractere!");
         }
 
-        // 2. PRENUME (Obligatoriu -> Regex -> Max 50)
+        // --- 2. PRENUME (Obligatoriu, Litere, Max 50) ---
         if (p.getPrenume() == null || p.getPrenume().trim().isEmpty()) {
             errors.put("prenume", "Prenumele este obligatoriu!");
-        } else {
-            if (!p.getPrenume().matches("^[a-zA-ZăâîșțĂÂÎȘȚ -]+$")) {
-                errors.put("prenume", "Prenumele poate conține doar litere, spații sau cratimă.");
-            } else if (p.getPrenume().length() > 50) {
-                errors.put("prenume", "Prenumele este prea lung (max 50 caractere).");
-            }
+        } else if (!p.getPrenume().matches(doarLitereRegex)) {
+            errors.put("prenume", "Prenumele poate conține doar litere!");
+        } else if (p.getPrenume().length() > 50) {
+            errors.put("prenume", "Maxim 50 de caractere!");
         }
 
-        // 3. CNP (Obligatoriu -> Format 13 cifre -> Algoritm Control)
+        // --- 3. CNP (Obligatoriu, 13 Cifre, Validare Matematică) ---
         if (p.getCnp() == null || p.getCnp().trim().isEmpty()) {
             errors.put("cnp", "CNP-ul este obligatoriu!");
-        } else {
-            if (!p.getCnp().matches("^\\d{13}$")) {
-                errors.put("cnp", "CNP-ul trebuie să aibă exact 13 cifre!");
-            } else if (!isCnpValidMatematic(p.getCnp())) {
-                errors.put("cnp", "CNP invalid");
-            }
+        } else if (!p.getCnp().matches("^\\d{13}$")) {
+            errors.put("cnp", "CNP-ul trebuie să aibă exact 13 cifre!");
+        } else if (!isCnpValidMatematic(p.getCnp())) {
+            errors.put("cnp", "CNP invalid (eroare control matematic)!");
         }
 
-        // 4. DATA NASTERII (Obligatorie -> Logica Varsta)
+        // --- 4. DATA NAȘTERII (Obligatorie, Varstă Reală) ---
         if (p.getDataNasterii() == null) {
             errors.put("dataNasterii", "Data nașterii este obligatorie!");
-        } else {
-            if (!isVarstaValida(p.getDataNasterii())) {
-                errors.put("dataNasterii", "Data nașterii invalidă (persoana > 120 ani sau din viitor).");
-            }
+        } else if (!isVarstaValida(p.getDataNasterii())) {
+            errors.put("dataNasterii", "Data invalidă (max 120 ani sau din viitor)!");
         }
 
-        // 5. TELEFON (Optional -> Format)
-        if (p.getTelefon() != null) {
+        // --- 5. TELEFON (Opțional, Format 07xxxxxxxx) ---
+        if (p.getTelefon() != null && !p.getTelefon().trim().isEmpty()) {
             if (!p.getTelefon().matches("^07\\d{8}$")) {
-                errors.put("telefon", "Telefonul trebuie să înceapă cu '07' și să aibă 10 cifre.");
+                errors.put("telefon", "Format telefon invalid (07xxxxxxxx)!");
             }
         }
 

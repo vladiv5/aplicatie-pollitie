@@ -1,139 +1,186 @@
-/* src/components/styles/Login.css */
+/* =========================================
+   PREMIUM LOGIN & REGISTER STYLES
+   ========================================= */
 
 .login-container {
-    /* Folosesc min-height in loc de height pentru a permite fundalului să crească */
     min-height: 100vh;
     width: 100%;
-
-    /* Imaginea de fundal (pastreaza ce aveai tu, aici e un exemplu generic) */
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed; /* Asta ține fundalul fix când dai scroll */
-
     display: flex;
     justify-content: center;
-    /* Am scos 'align-items: center' pentru ca bloca scroll-ul in sus la ecrane mici */
-    align-items: flex-start;
-
-    /* Adaug spațiu sus ca să nu intre sub meniu (Navbar) */
-    padding-top: 60px;
-    padding-bottom: 50px;
+    align-items: center;
+    padding: 40px 20px;
+    box-sizing: border-box;
+    /* Am scos background-ul de aici pentru că se ocupă index.css de el */
 }
 
+/* CARDUL PRINCIPAL - DARK NAVY */
 .login-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    /* I set the card to match our Dark Navy theme */
+    background: linear-gradient(180deg, #0f2444 0%, #05101e 100%);
+    padding: 3rem;
+    border-radius: 12px;
+    border: 1px solid #bfa05d; /* Contur Auriu */
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     width: 100%;
-    max-width: 400px;
-    /* Asigură că cardul nu se lipește de margini pe mobil */
-    margin: 0 20px;
+    max-width: 450px;
     animation: fadeIn 0.5s ease-in-out;
+    color: #ffffff;
 }
 
 .login-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .police-badge {
-    font-size: 3rem;
+    font-size: 3.5rem;
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
 }
 
 .login-header h2 {
-    color: #1a3c6e;
+    color: #d4af37; /* Titlu Auriu */
     margin: 0;
-    font-size: 24px;
+    font-size: 26px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    font-weight: 800;
 }
 
 .login-header p {
-    color: #666;
+    color: #94a3b8;
     font-size: 14px;
-    margin-top: 5px;
+    margin-top: 8px;
+    font-weight: 500;
 }
 
+/* FORMULARE */
 .form-group {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-group label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
+    display: block;
+    color: #d4af37; /* Etichete Aurii */
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
 }
 
+/* INPUT-URI DARK */
 .login-input {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 14px;
+    /* I used a dark semi-transparent blue for inputs */
+    background-color: rgba(10, 25, 48, 0.8);
+    border: 1px solid #2a4a7c;
+    color: white;
+    border-radius: 6px;
     font-size: 16px;
-    transition: border-color 0.3s;
-    /* Box-sizing e crucial ca padding-ul sa nu strice latimea */
+    transition: all 0.3s;
     box-sizing: border-box;
 }
 
 .login-input:focus {
-    border-color: #0056b3;
+    border-color: #d4af37;
     outline: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
 }
 
+.login-input::placeholder {
+    color: #475569;
+}
+
+/* BUTOANE */
 .login-btn {
     width: 100%;
-    padding: 12px;
-    background-color: #0056b3; /* Albastru Politie */
-    color: white;
+    padding: 14px;
+    background: linear-gradient(135deg, #d4af37 0%, #bfa05d 100%);
+    color: #05101e;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 800;
     cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 10px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 15px;
 }
 
 .login-btn:hover {
-    background-color: #004494;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
 }
 
 .login-btn:disabled {
-    background-color: #ccc;
+    background: #475569;
     cursor: not-allowed;
+    transform: none;
 }
 
-/* --- BUTON NOU PENTRU PAROLA (SHOW/HIDE) --- */
+/* BUTON SHOW/HIDE PAROLA */
 .btn-toggle-pass {
-    background-color: #0056b3; /* Acelasi albastru ca butonul mare */
-    color: white;
-    border: none;
+    background: transparent;
+    color: #d4af37;
+    border: 1px solid #d4af37;
     border-radius: 4px;
-    padding: 4px 10px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
     cursor: pointer;
     text-transform: uppercase;
     transition: all 0.2s;
 }
 
 .btn-toggle-pass:hover {
-    background-color: #003d82;
-    transform: translateY(-1px);
+    background: #d4af37;
+    color: #05101e;
 }
 
+/* ERORI */
+.field-error {
+    color: #f87171;
+    font-size: 12px;
+    margin-top: 6px;
+    display: block;
+    font-weight: 600;
+}
+
+.error-msg {
+    color: #ffffff;
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid #dc3545;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* FOOTER CARD */
 .login-footer {
     text-align: center;
     margin-top: 2rem;
-    color: #666;
-    font-size: 0.8rem;
-    border-top: 1px solid #eee;
-    padding-top: 1rem;
+    color: #64748b;
+    font-size: 11px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+}
+
+/* LINK-URI */
+.auth-link {
+    cursor: pointer;
+    color: #d4af37;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.auth-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
 }
 
 @keyframes fadeIn {
@@ -141,56 +188,106 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-.error-msg {
-    color: #dc3545;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 14px;
-    margin-top: 15px;
-}
-
-/* Footer mic jos */
-.login-footer {
-    margin-top: 20px;
+/* Register specific: Secțiuni Pasul 1 / Pasul 2 */
+.register-step-title {
     font-size: 12px;
-    color: #888;
+    color: #d4af37;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    padding-bottom: 5px;
 }
 
-.field-error {
-    color: #dc3545;
-    font-size: 12px;
-    margin-top: 4px;
-    display: block;
+/* Centrare logo-icon in header */
+/* Mărim iconița centrală și intensificăm strălucirea */
+.login-header .logo-icon {
+    display: block !important;
+    margin: 0 auto 20px auto !important; /* Spațiu mai mare jos */
+    text-align: center;
+    font-size: 4.5rem !important; /* Am mărit de la 3.5 la 4.5 */
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* Un glow mai smecher */
+    filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.6));
 }
 
-/* ... stilurile existente ... */
-
-.password-toggle-text {
-    font-size: 12px;
-    color: #007bff;
-    cursor: pointer;
-    font-weight: 500;
-    user-select: none;
-}
-
-.password-toggle-text:hover {
-    text-decoration: underline;
-    color: #0056b3;
-}
-
+/* Alinierea butonului de parolă pe același rând cu textul */
 .form-label-group {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Împinge textul la stânga și butonul la dreapta */
     align-items: center;
-    margin-bottom: 5px;
+    width: 100%;
+    margin-bottom: 8px;
 }
 
-.field-error {
-    color: #dc3545;
-    font-size: 12px;
-    margin-top: 4px;
-    display: block;
-    font-weight: 500;
+.form-label-group label {
+    margin-bottom: 0 !important; /* Scoatem marginea de jos ca să fie centrat cu butonul */
+}
+
+/* Stil buton ochi mai discret dar auriu */
+.btn-toggle-pass {
+    background: transparent;
+    color: #d4af37;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem; /* Iconița de ochi un pic mai mare */
+    padding: 0;
+    transition: transform 0.2s;
+}
+
+.btn-toggle-pass:hover {
+    color: #ffffff;
+    transform: scale(1.2);
+}
+
+/* Wrapper-ul care tine input-ul si X-ul aurit */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.search-clear-btn-gold {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #d4af37;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    transition: all 0.2s;
+    z-index: 5;
+}
+
+.search-clear-btn-gold:hover {
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+/* Evităm suprapunerea textului cu butonul X */
+.login-input {
+    padding-right: 40px !important;
+}
+
+/* Stil pentru etichetele pasilor de la Register */
+.register-step-title {
+    color: #d4af37;
+    font-weight: 800;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }

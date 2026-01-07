@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
+import './styles/Forms.css';
 
 const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -17,36 +17,37 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
         }
     }, [id]);
 
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    // --- FUNCȚIE ȘTERGERE CÂMP ---
-    const handleClear = (fieldName) => {
-        setFormData({ ...formData, [fieldName]: '' });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        // I clear the error as soon as the user interacts
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSubmit = () => {
+        setErrors({});
         axios.put(`http://localhost:8080/api/politisti/${id}`, formData)
             .then((response) => {
-                toast.success("Polițist actualizat!");
-                const savedId = response.data ? response.data.idPolitist : id;
-                onSaveSuccess(savedId);
+                toast.success("Modificări salvate!");
+                onSaveSuccess(id);
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
                     setErrors(error.response.data);
-                    toast.error("Verifică câmpurile invalide!");
+                    toast.error("Date invalide!");
                 } else {
-                    console.error("Eroare:", error);
-                    toast.error("A apărut o eroare la salvare!");
+                    toast.error("Eroare la actualizare!");
                 }
             });
     };
 
-    // --- HELPER ACTUALIZAT (Tactical Style) ---
-    const renderInput = (label, name) => (
-        <div style={{ position: 'relative' }}>
-            <label className="form-label">{label}</label>
-            <div style={{ position: 'relative' }}>
+    const renderInput = (label, name, icon) => (
+        <div className="form-group-item">
+            <label className="form-label">
+                <i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>
+                {label}
+            </label>
+            <div className="input-wrapper">
                 <input
                     type="text"
                     name={name}
@@ -54,35 +55,30 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
                     value={formData[name] || ''}
                     onChange={handleChange}
                 />
-
                 {formData[name] && (
-                    <span
-                        className="clear-icon"
-                        onClick={() => handleClear(name)}
-                        title="Șterge"
-                    >
-                        &times;
-                    </span>
+                    <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
+                        <i className="fa-solid fa-circle-xmark"></i>
+                    </button>
                 )}
             </div>
-
-            {errors[name] && (
-                <span className="error-text">{errors[name]}</span>
-            )}
+            {errors[name] && <span className="error-text">{errors[name]}</span>}
         </div>
     );
 
     return (
-        <div>
-            <div className="form-group">
-                {renderInput("Nume", "nume")}
-                {renderInput("Prenume", "prenume")}
-                {renderInput("Grad", "grad")}
-                {renderInput("Funcție", "functie")}
-                {renderInput("Telefon", "telefon_serviciu")}
+        <div className="modal-body-scroll">
+            <div className="form-grid-stack">
+                {renderInput("Nume", "nume", "fa-user-tie")}
+                {renderInput("Prenume", "prenume", "fa-user")}
+                {renderInput("Grad", "grad", "fa-medal")}
+                {renderInput("Funcție", "functie", "fa-briefcase")}
+                {renderInput("Telefon Serviciu", "telefon_serviciu", "fa-phone")}
             </div>
-            <div className="modal-footer">
-                <button className="save-btn" onClick={handleSubmit}>SALVAȚI MODIFICĂRI</button>
+            <div className="modal-footer" style={{marginTop: '30px'}}>
+                <button className="save-btn" onClick={handleSubmit}>
+                    <i className="fa-solid fa-pen-to-square" style={{marginRight: '8px'}}></i>
+                    SALVAȚI MODIFICĂRI
+                </button>
             </div>
         </div>
     );

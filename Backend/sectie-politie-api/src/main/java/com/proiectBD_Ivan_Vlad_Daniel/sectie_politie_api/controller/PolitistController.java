@@ -132,12 +132,52 @@ public class PolitistController {
 
     private Map<String, String> valideazaPolitist(Politist p) {
         Map<String, String> errors = new HashMap<>();
-        if (p.getNume() == null || p.getNume().trim().isEmpty()) errors.put("nume", "Numele este obligatoriu!");
-        if (p.getPrenume() == null || p.getPrenume().trim().isEmpty()) errors.put("prenume", "Prenumele este obligatoriu!");
+        // Regex pentru litere (include diacritice românești), spații și cratimă
+        String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
 
-        if (p.getTelefon_serviciu() != null && !p.getTelefon_serviciu().matches("^07\\d{8}$")) {
-            errors.put("telefon_serviciu", "Telefon invalid (07xxxxxxxx).");
+        // --- VALIDARE NUME (Obligatoriu, Litere, Max 50) ---
+        if (p.getNume() == null || p.getNume().trim().isEmpty()) {
+            errors.put("nume", "Numele este obligatoriu!");
+        } else if (!p.getNume().matches(doarLitereRegex)) {
+            errors.put("nume", "Numele poate conține doar litere!");
+        } else if (p.getNume().length() > 50) {
+            errors.put("nume", "Maxim 50 de caractere!");
         }
+
+        // --- VALIDARE PRENUME (Obligatoriu, Litere, Max 50) ---
+        if (p.getPrenume() == null || p.getPrenume().trim().isEmpty()) {
+            errors.put("prenume", "Prenumele este obligatoriu!");
+        } else if (!p.getPrenume().matches(doarLitereRegex)) {
+            errors.put("prenume", "Prenumele poate conține doar litere!");
+        } else if (p.getPrenume().length() > 50) {
+            errors.put("prenume", "Maxim 50 de caractere!");
+        }
+
+        // --- VALIDARE GRAD (Opțional, Litere, Max 50) ---
+        if (p.getGrad() != null && !p.getGrad().trim().isEmpty()) {
+            if (!p.getGrad().matches(doarLitereRegex)) {
+                errors.put("grad", "Gradul poate conține doar litere!");
+            } else if (p.getGrad().length() > 50) {
+                errors.put("grad", "Maxim 50 de caractere!");
+            }
+        }
+
+        // --- VALIDARE FUNCȚIE (Opțional, Litere, Max 100) ---
+        if (p.getFunctie() != null && !p.getFunctie().trim().isEmpty()) {
+            if (!p.getFunctie().matches(doarLitereRegex)) {
+                errors.put("functie", "Funcția poate conține doar litere!");
+            } else if (p.getFunctie().length() > 100) {
+                errors.put("functie", "Maxim 100 de caractere!");
+            }
+        }
+
+        // --- VALIDARE TELEFON (Format fix) ---
+        if (p.getTelefon_serviciu() != null && !p.getTelefon_serviciu().trim().isEmpty()) {
+            if (!p.getTelefon_serviciu().matches("^07\\d{8}$")) {
+                errors.put("telefon_serviciu", "Format telefon invalid (07xxxxxxxx).");
+            }
+        }
+
         return errors;
     }
 

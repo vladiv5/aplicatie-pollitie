@@ -1,125 +1,108 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import './styles/TableStyles.css';
+import './styles/Forms.css'; // Asigură-te că importă stilurile noi
 
-const LiveSearchInput = ({ label, placeholder, apiUrl, onSelect, displayKey, defaultValue }) => {
+const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, icon, error }) => {
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const wrapperRef = useRef(null);
 
-    // Inițializare valoare (la Editare)
+    // Inițializare valoare (pentru Edit)
     useEffect(() => {
         if (defaultValue) {
             setQuery(defaultValue);
         }
     }, [defaultValue]);
 
-    // Logică căutare (Debounce)
+    // Închide lista când dai click în afară
     useEffect(() => {
-        const timer = setTimeout(() => {
+        function handleClickOutside(event) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [wrapperRef]);
+
+    // Logică căutare
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
             if (query.length > 0 && showSuggestions) {
                 const token = localStorage.getItem('token');
-                // Evităm request-ul dacă query-ul este exact valoarea inițială (pentru a nu deschide lista inutil la load)
-                if (query !== defaultValue) {
-                    axios.get(`${apiUrl}?termen=${query}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                        .then(res => setSuggestions(res.data))
-                        .catch(err => console.error("Eroare search:", err));
-                }
+                // Adăugăm query param pentru filtrare în backend
+                axios.get(`${apiUrl}?termen=${query}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                    .then(res => setSuggestions(res.data))
+                    .catch(err => console.error(err));
             } else {
                 setSuggestions([]);
             }
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [query, apiUrl, showSuggestions, defaultValue]);
+        }, 300); // Debounce
+        return () => clearTimeout(timeoutId);
+    }, [query, apiUrl, showSuggestions]);
 
     const handleSelect = (item) => {
-        let text = "";
-        if (typeof displayKey === 'function') {
-            text = displayKey(item);
-        } else {
-            text = item[displayKey];
-        }
-
-        setQuery(text);
+        setQuery(displayKey(item)); // Afișează textul frumos în input
         setSuggestions([]);
         setShowSuggestions(false);
-        onSelect(item);
+        if (onSelect) onSelect(item); // Trimite obiectul complet către părinte
     };
 
-    // --- FUNCȚIE NOUĂ: CLEAR (X) ---
     const handleClear = () => {
-        setQuery('');           // 1. Ștergem textul vizual
-        setSuggestions([]);     // 2. Ștergem sugestiile
-        setShowSuggestions(false);
-        onSelect(null);         // 3. IMPORTANT: Anunțăm părintele că nu mai e nimic selectat (id = null)
+        setQuery('');
+        setSuggestions([]);
+        if (onSelect) onSelect(null); // Trimite null către părinte (câmp opțional)
     };
 
     return (
-        <div className="form-group">
-            {label && <label style={{ marginBottom: '5px', fontWeight: 'bold' }}>{label}</label>}
+        <div className="form-group-item" ref={wrapperRef}>
+            <label className="form-label">
+                {icon && <i className={`fa-solid ${icon}`} style={{ marginRight: '8px', color: '#d4af37' }}></i>}
+                {label}
+            </label>
 
-            {/* Containerul trebuie să fie relative pentru a poziționa X-ul */}
-            <div className="live-search-container" style={{ position: 'relative' }}>
+            <div className="input-wrapper">
                 <input
                     type="text"
-                    className="modal-input"
-                    placeholder={placeholder}
+                    className={`modal-input ${error ? 'input-error' : ''}`}
+                    placeholder="Caută..."
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value);
                         setShowSuggestions(true);
-                        // Dacă utilizatorul șterge manual tot textul, resetăm ID-ul
-                        if (e.target.value === '') onSelect(null);
+                        // Dacă utilizatorul șterge tot textul manual, trimitem null
+                        if (e.target.value === '') {
+                            if (onSelect) onSelect(null);
+                        }
                     }}
-                    onFocus={() => {
-                        // Afișăm sugestii doar dacă avem text și nu e gol
-                        if(query) setShowSuggestions(true);
-                    }}
-                    // Adăugăm padding la dreapta ca textul să nu intre sub X
-                    style={{ width: '100%', paddingRight: '30px' }}
+                    onFocus={() => setShowSuggestions(true)}
+                    autoComplete="off"
                 />
 
-                {/* --- BUTONUL X --- */}
+                {/* BUTON X AURIU - Stil unificat */}
                 {query && (
-                    <span
-                        onClick={handleClear}
-                        style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            cursor: 'pointer',
-                            color: '#999',
-                            fontWeight: 'bold',
-                            fontSize: '18px',
-                            lineHeight: '1',
-                            userSelect: 'none',
-                            zIndex: 10
-                        }}
-                        title="Șterge selecția"
-                    >
-                        &times;
-                    </span>
+                    <button type="button" className="search-clear-btn-gold" onClick={handleClear}>
+                        <i className="fa-solid fa-circle-xmark"></i>
+                    </button>
                 )}
 
-                {/* Lista de Sugestii */}
+                {/* Lista Sugestii */}
                 {showSuggestions && suggestions.length > 0 && (
                     <ul className="suggestions-list">
                         {suggestions.map((item, index) => (
-                            <li
-                                key={index}
-                                className="suggestion-item"
-                                onClick={() => handleSelect(item)}
-                            >
-                                {typeof displayKey === 'function' ? displayKey(item) : item[displayKey]}
+                            <li key={index} onClick={() => handleSelect(item)} className="suggestion-item">
+                                {displayKey(item)}
                             </li>
                         ))}
                     </ul>
                 )}
             </div>
+
+            {/* MESAJ EROARE - Stil unificat */}
+            {error && <span className="error-text">{error}</span>}
         </div>
     );
 };

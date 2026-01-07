@@ -5,46 +5,25 @@ import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
-        strada: '',
-        numar: '',
-        bloc: '',
-        apartament: '',
-        localitate: '',
-        judetSauSector: ''
+        strada: '', numar: '', bloc: '', apartament: '', localitate: '', judetSauSector: ''
     });
     const [errors, setErrors] = useState({});
 
-    const handleClear = (fieldName) => {
-        setFormData({ ...formData, [fieldName]: '' });
-    };
-
     const handleChange = (e) => {
-        setFormData({...formData, [e.target.name]: e.target.value});
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: null });
-        }
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSave = () => {
-        const token = localStorage.getItem('token');
         setErrors({});
-
-        const payload = {
-            ...formData,
-            apartament: formData.apartament ? formData.apartament : null
-        };
-
-        axios.post('http://localhost:8080/api/adrese', payload, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        axios.post('http://localhost:8080/api/adrese', formData)
             .then((response) => {
-                const newId = response.data ? response.data.idAdresa : null;
-                setErrors({});
                 toast.success("Adresă înregistrată!");
-                onSaveSuccess(newId);
+                onSaveSuccess(response.data.idAdresa);
             })
             .catch(err => {
-                if (err.response && err.response.status === 400) {
+                if (err.response?.status === 400) {
                     setErrors(err.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
@@ -53,52 +32,51 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    // Helper actualizat (permite stiluri extra pentru containerul părint)
-    const renderInput = (name, label, placeholder, containerStyle = {}) => (
-        <div style={{ ...containerStyle, position: 'relative' }}>
-            <label className="form-label">{label}</label>
-            <div style={{ position: 'relative' }}>
-                <input
-                    name={name}
-                    placeholder={placeholder}
-                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
-                    value={formData[name]}
-                    onChange={handleChange}
-                />
-
-                {formData[name] && (
-                    <span
-                        className="clear-icon"
-                        onClick={() => handleClear(name)}
-                        title="Șterge"
-                    >
-                        &times;
-                    </span>
-                )}
+    const renderInput = (name, label, placeholder, icon, containerStyle = {}) => {
+        const hasError = errors[name];
+        return (
+            <div className="form-group-item" style={containerStyle}>
+                <label className="form-label">
+                    <i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>
+                    {label}
+                </label>
+                <div className="input-wrapper">
+                    <input
+                        name={name}
+                        placeholder={placeholder}
+                        className={`modal-input ${hasError ? 'input-error' : ''}`}
+                        value={formData[name]}
+                        onChange={handleChange}
+                    />
+                    {formData[name] && (
+                        <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
+                            <i className="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    )}
+                </div>
+                {hasError && <span className="error-text">{errors[name]}</span>}
             </div>
-            {errors[name] && (
-                <span className="error-text">{errors[name]}</span>
-            )}
-        </div>
-    );
+        );
+    };
 
     return (
-        <div>
-            <div className="form-group">
-                {renderInput("judetSauSector", "Județ / Sector", "ex: București / Sector 1")}
-                {renderInput("localitate", "Localitate", "ex: București")}
-                {renderInput("strada", "Stradă", "ex: Calea Victoriei")}
+        <div className="modal-body-scroll">
+            <div className="form-grid-stack">
+                {renderInput("judetSauSector", "Județ / Sector", "ex: București", "fa-map")}
+                {renderInput("localitate", "Localitate", "ex: București", "fa-city")}
+                {renderInput("strada", "Stradă", "ex: Calea Victoriei", "fa-road")}
 
-                {/* Grid pentru detalii număr */}
                 <div style={{display:'flex', gap:'10px'}}>
-                    {renderInput("numar", "Nr.", "ex: 12", { width: '30%' })}
-                    {renderInput("bloc", "Bloc", "ex: M3", { width: '30%' })}
-                    {renderInput("apartament", "Ap.", "ex: 5", { width: '30%' })}
+                    {renderInput("numar", "Nr.", "ex: 12", "fa-house-chimney", { width: '33%' })}
+                    {renderInput("bloc", "Bloc", "ex: M3", "fa-building", { width: '33%' })}
+                    {renderInput("apartament", "Ap.", "ex: 5", "fa-door-open", { width: '33%' })}
                 </div>
             </div>
-
-            <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>SALVAȚI ADRESA</button>
+            <div className="modal-footer" style={{marginTop: '30px'}}>
+                <button className="save-btn" onClick={handleSave}>
+                    <i className="fa-solid fa-floppy-disk" style={{marginRight: '8px'}}></i>
+                    SALVAȚI ADRESA
+                </button>
             </div>
         </div>
     );

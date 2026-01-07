@@ -5,50 +5,30 @@ import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
-        nume: '',
-        prenume: '',
-        cnp: '',
-        dataNasterii: '',
-        telefon: ''
+        nume: '', prenume: '', cnp: '', dataNasterii: '', telefon: ''
     });
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (id) {
-            const token = localStorage.getItem('token');
-            axios.get(`http://localhost:8080/api/persoane/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-                .then(response => {
-                    setFormData(response.data);
-                })
-                .catch(error => toast.error("Eroare la încărcare date persoană."));
+            axios.get(`http://localhost:8080/api/persoane/${id}`)
+                .then(response => setFormData(response.data))
+                .catch(() => toast.error("Eroare la încărcare date persoană."));
         }
     }, [id]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: null });
-        }
-    };
-
-    const handleClear = (fieldName) => {
-        setFormData({ ...formData, [fieldName]: '' });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSave = () => {
-        const token = localStorage.getItem('token');
         setErrors({});
-
-        axios.put(`http://localhost:8080/api/persoane/${id}`, formData, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        axios.put(`http://localhost:8080/api/persoane/${id}`, formData)
             .then((response) => {
-                const updatedId = response.data ? response.data.idPersoana : id;
-                setErrors({});
                 toast.success("Datele au fost actualizate!");
-                onSaveSuccess(updatedId);
+                onSaveSuccess(id);
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
@@ -60,48 +40,42 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
             });
     };
 
-    // Helper actualizat cu stilurile Tactical
-    const renderInput = (label, name, type = "text", maxLength = null) => (
-        <div style={{ position: 'relative' }}>
-            <label className="form-label">{label}</label>
-            <div style={{ position: 'relative' }}>
+    const renderInput = (label, name, icon, type = "text") => (
+        <div className="form-group-item">
+            <label className="form-label">
+                <i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>
+                {label}
+            </label>
+            <div className="input-wrapper">
                 <input
                     type={type}
                     name={name}
-                    maxLength={maxLength}
                     className={`modal-input ${errors[name] ? 'input-error' : ''}`}
                     value={formData[name] || ''}
                     onChange={handleChange}
                 />
-
                 {formData[name] && type !== 'date' && (
-                    <span
-                        className="clear-icon"
-                        onClick={() => handleClear(name)}
-                        title="Șterge"
-                    >
-                        &times;
-                    </span>
+                    <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
+                        <i className="fa-solid fa-circle-xmark"></i>
+                    </button>
                 )}
             </div>
-            {errors[name] && (
-                <span className="error-text">{errors[name]}</span>
-            )}
+            {errors[name] && <span className="error-text">{errors[name]}</span>}
         </div>
     );
 
     return (
-        <div>
-            <div className="form-group">
-                {renderInput("Nume", "nume")}
-                {renderInput("Prenume", "prenume")}
-                {renderInput("CNP", "cnp", "text", 13)}
-                {renderInput("Data Nașterii", "dataNasterii", "date")}
-                {renderInput("Telefon", "telefon")}
+        <div className="modal-body-scroll">
+            <div className="form-grid-stack">
+                {renderInput("Nume", "nume", "fa-user-tie")}
+                {renderInput("Prenume", "prenume", "fa-user")}
+                {renderInput("CNP", "cnp", "fa-id-card")}
+                {renderInput("Data Nașterii", "dataNasterii", "fa-calendar-days", "date")}
+                {renderInput("Telefon", "telefon", "fa-phone")}
             </div>
-
-            <div className="modal-footer">
+            <div className="modal-footer" style={{marginTop: '30px'}}>
                 <button className="save-btn" onClick={handleSave}>
+                    <i className="fa-solid fa-pen-to-square" style={{marginRight: '8px'}}></i>
                     SALVAȚI MODIFICĂRI
                 </button>
             </div>

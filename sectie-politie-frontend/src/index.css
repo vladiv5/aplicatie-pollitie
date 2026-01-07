@@ -28,26 +28,57 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background: transparent !important;
 }
+
+
+/* src/index.css */
+
+/* src/index.css */
+
+/* src/index.css */
+
+/* src/index.css */
+
+/* src/index.css */
 
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Roboto', sans-serif;
-    background-color: #F0F4F8;
-    background-image:
-            radial-gradient(circle at 0% 0%, #F0F4F8 0%, #F0F4F8 15%, transparent 15%),
-            radial-gradient(circle at 0% 0%, rgba(44, 116, 179, 0.1) 0%, rgba(44, 116, 179, 0.1) 25%, transparent 25%),
-            radial-gradient(circle at 0% 0%, transparent 40%, rgba(44, 116, 179, 0.1) 40%, rgba(44, 116, 179, 0.1) 60%, transparent 60%),
-            radial-gradient(circle at 100% 0%, transparent 30%, rgba(20, 66, 114, 0.08) 30%, rgba(20, 66, 114, 0.08) 50%, transparent 50%),
-            radial-gradient(circle at 100% 100%, transparent 20%, rgba(44, 116, 179, 0.1) 20%, rgba(44, 116, 179, 0.1) 40%, transparent 40%),
-            radial-gradient(circle at 0% 100%, transparent 50%, rgba(20, 66, 114, 0.08) 50%, rgba(20, 66, 114, 0.08) 70%, transparent 70%);
-
-    background-size: 100% 100%;
-    background-attachment: fixed;
     min-height: 100vh;
-    overflow-x: hidden;
+    width: 100%;
+
+    /* I set the winning hexagonal image as the global background */
+    background-image: url('../public/5297078.jpg');
+
+    /* I ensure it covers the entire screen and stays fixed during scroll */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    font-family: 'Montserrat', sans-serif;
+    color: #e2e8f0;
     -webkit-font-smoothing: antialiased;
+}
+
+/* I added a subtle dark overlay (15%) to make the Navy cards pop and the Gold text readable */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(2, 6, 10, 0.15);
+    z-index: -1;
+    pointer-events: none;
+}
+
+
+#root {
+    position: relative;
+    z-index: 10; /* Asigurăm că aplicația stă clar deasupra fundalului */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -188,26 +219,40 @@ select:focus {
     font-weight: 700;
     text-transform: uppercase;
 }
-.status-inchis { background: #e2e8f0; color: #475569; }
 
-/* Loading Spinner */
+
+/* --- LOADING SPINNER GOLD EDITION - CLEAN MINIMALIST --- */
 .loading-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     padding: 40px;
-    color: var(--royal-navy-medium);
+    /* I set the loading text color to a solid, elegant Gold */
+    color: #d4af37 !important;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.loading-container p {
+    margin-top: 20px;
 }
 
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--gold-border);
+    width: 45px;
+    height: 45px;
+    /* I used a very thin transparent border for the base ring */
+    border: 3px solid rgba(212, 175, 55, 0.1);
+    /* I created the spinning part as a solid Gold line */
+    border-top: 3px solid #d4af37;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 10px;
+
+    animation: spin 0.8s linear infinite;
+
+    /* I added a subtle glow to make the gold look "alive" against the navy background */
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
 }
 
 @keyframes spin {

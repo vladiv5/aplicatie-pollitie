@@ -15,67 +15,121 @@
 
 /* Titlul paginii */
 .page-title {
-    color: #333;
+    color: var(--gold-text);
     margin-bottom: 20px;
     border-bottom: 3px solid #0056b3; /* Linie albastră de poliție */
     display: inline-block;
     padding-bottom: 5px;
 }
 
-/* Tabelul propriu-zis */
+/* =========================================
+   TABLES - PREMIUM DARK NAVY & GOLD THEME
+   ========================================= */
+
+/* 1. CONTAINER TABEL */
 .styled-table {
-    border-collapse: collapse;
+    border-collapse: separate; /* Important pentru border-radius */
+    border-spacing: 0;
     margin: 25px 0;
-    font-size: 0.9em;
+    font-size: 0.95em;
     min-width: 100%;
     width: 100%;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15); /* Umbră fină */
-    background-color: white;
-    border-radius: 5px 5px 0 0;
-    overflow: hidden; /* Pentru colțuri rotunjite */
+
+    /* FUNDAL ÎNTUNECAT (Gradient Navy) */
+    background: linear-gradient(180deg, #0f2444 0%, #05101e 100%);
+
+    /* BORDER & SHADOW */
+    border: 1px solid #bfa05d; /* Contur Auriu */
+    border-radius: 8px; /* Colțuri rotunjite */
+    overflow: hidden;
 }
 
-/* Antetul tabelului (Header) */
+/* 2. ANTET (HEADER) - Auriu pe Navy Închis */
 .styled-table thead tr {
-    background-color: #0056b3; /* Albastru închis */
-    color: #ffffff;
+    background-color: #05101e !important; /* Cel mai închis navy */
+    color: #d4af37 !important; /* Text Auriu */
     text-align: center;
-    font-weight: bold;
+    font-weight: 800;
+    font-family: 'Montserrat', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-/* Celulele */
-.styled-table th,
+.styled-table th {
+    padding: 15px 15px;
+    border-bottom: 2px solid #bfa05d; /* Linie aurie sub header */
+}
+
+/* 3. RÂNDURI (BODY) - Dark Mode */
+.styled-table tbody tr {
+    background-color: rgba(10, 38, 71, 0.6); /* I made the background darker so gold pops out */
+    color: #d4af37 !important; /* I changed the text color to Gold */
+    transition: all 0.2s ease;
+}
+
 .styled-table td {
+    color: #d4af37 !important; /* I force the gold color on all cells */
     padding: 12px 15px;
-    border-bottom: 1px solid #dddddd;
-    text-align: center;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.2); /* I made the separator lines faint gold */
     vertical-align: middle;
+    text-align: center;
 }
 
+/* 4. EFECT ZEBRA (Rânduri pare) - Puțin mai închise */
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: rgba(5, 16, 30, 0.3); /* Alternanță subtilă */
+}
+
+/* 5. HOVER EFFECT (Luminare + Accent) */
+.styled-table tbody tr:hover {
+    /* Se luminează la hover (spre albastru operativ) */
+    background-color: rgba(20, 82, 149, 0.25) !important;
+
+    /* Indicator Auriu în stânga */
+    box-shadow: inset 4px 0 0 #ffd700;
+    cursor: default;
+    color: white; /* Textul devine alb pur */
+}
+
+/* Ultimul rând nu are border jos */
+.styled-table tbody tr:last-of-type td {
+    border-bottom: none;
+}
+
+/* 6. COLOANA ACȚIUNI (Butoane) */
 .styled-table th:last-child,
 .styled-table td:last-child {
-    width: 280px;      /* Ajustează valoarea asta (ex: 250px sau 300px) în funcție de câte butoane ai */
-    min-width: 280px;  /* Nu permite să fie strivită */
-    max-width: 280px;  /* Nu permite să se lățească */
-
-    padding: 12px 15px; /* Păstrăm padding-ul standard */
-    box-sizing: border-box;
+    /* Lățime dinamică pentru a nu strânge butoanele */
+    width: 1%;
+    white-space: nowrap;
 }
 
-/* Efect zebra (rânduri alternative) */
-.styled-table tbody tr:nth-of-type(even) {
-    background-color: #f3f3f3;
+/* 7. MESAJE DE EROARE / "NU EXISTĂ DATE" ÎN TABEL */
+.styled-table tbody tr td.text-center {
+    color: #94a3b8; /* Gri */
+    font-style: italic;
+    padding: 30px;
 }
 
-/* Efect la hover (când treci cu mouse-ul) */
-.styled-table tbody tr:hover {
-    background-color: #e6f7ff; /* Albastru foarte deschis */
-    cursor: default;
+/* --- Stil specific pentru Date/Sume (ca să iasă în evidență) --- */
+/* Dacă ai celule cu clase specifice, le poți colora */
+.styled-table td strong,
+.styled-table td b {
+    color: #ffd700 !important; /* I make bold text a brighter/lighter gold */
 }
 
-/* Ultimul rând să aibă o linie mai groasă */
-.styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #0056b3;
+/* --- INPUT-URI ÎN TABEL (Dacă ai editare inline) --- */
+/* Asigurăm că inputurile nu sunt albe pe fundal negru */
+.styled-table input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #475569;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+.styled-table input:focus {
+    border-color: #d4af37;
+    outline: none;
 }
 
 /* Butoanele de acțiune (Edit/Delete) */
@@ -413,3 +467,244 @@
     max-width: none !important;
     white-space: nowrap; /* Ține textul pe un rând dacă e scurt */
 }
+
+/* =========================================
+   DELETE SMART MODAL - PREMIUM STYLES
+   ========================================= */
+
+/* 1. Header Personalizat pentru Delete */
+.modal-header.delete-header {
+    background: linear-gradient(135deg, #0f2444 0%, #05101e 100%); /* Navy Gradient */
+    border-bottom: 2px solid #bfa05d; /* Linie Aurie */
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Titlul din header */
+.delete-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Iconița de stare (se va colora din JS prin style inline doar pentru culoare) */
+.delete-icon {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+}
+
+/* 2. Corpul Modalului */
+.delete-body {
+    padding: 25px;
+    background-color: #f8fafc; /* Gri foarte deschis, curat */
+}
+
+.delete-message {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #334155;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+/* 3. Containerul pentru Lista de Blocaje */
+.blocking-list-container {
+    background: white;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    overflow: hidden; /* Colțuri rotunjite pentru tabel */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.blocking-title {
+    background-color: #e2e8f0;
+    color: #475569;
+    padding: 10px 15px;
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+/* 4. Mini Tabel Tactic (Navy Style) */
+.mini-tactical-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mini-tactical-table thead th {
+    background-color: #0a2647; /* Navy Închis */
+    color: #d4af37; /* Text Auriu */
+    padding: 10px 15px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 2px solid #bfa05d;
+}
+
+.mini-tactical-table tbody tr {
+    border-bottom: 1px solid #e2e8f0;
+    transition: background-color 0.2s;
+}
+
+.mini-tactical-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.mini-tactical-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.mini-tactical-table td {
+    padding: 10px 15px;
+    font-size: 0.85rem;
+    color: #334155;
+    vertical-align: middle;
+}
+
+/* Status Text Colors */
+.text-danger-custom { color: #dc3545; font-weight: 600; }
+.text-warning-custom { color: #d97706; font-weight: 600; }
+.text-success-custom { color: #10b981; font-weight: 600; }
+
+/* 5. Butonul "Rezolvă" */
+.btn-resolve {
+    background: white;
+    border: 1px solid #0a2647;
+    color: #0a2647;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-resolve:hover {
+    background: #0a2647;
+    color: #d4af37; /* Text auriu la hover */
+    border-color: #d4af37;
+    box-shadow: 0 2px 5px rgba(10, 38, 71, 0.3);
+}
+
+/* 6. Footer (Butoane Jos) */
+.delete-footer {
+    padding: 20px 25px;
+    background-color: white;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+/* Buton Ștergere (Roșu Premium) */
+.btn-delete-confirm {
+    background: linear-gradient(135deg, #dc3545 0%, #991b1b 100%);
+    color: white;
+    border: 1px solid #7f1d1d;
+    padding: 10px 25px;
+    border-radius: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(220, 53, 69, 0.3);
+    transition: all 0.3s;
+}
+
+.btn-delete-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(220, 53, 69, 0.4);
+    border-color: #ff6b6b;
+}
+
+/* =========================================
+   FIX FINAL: Eliminare fundal container tabel din Modale
+   ========================================= */
+
+/* Această regulă se aplică tuturor modalelor (View, Edit, Delete) */
+
+
+/* =========================================
+   CONTAINER TABEL (Scoatere fundal alb)
+   ========================================= */
+
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+
+    /* MODIFICARE CHEIE: Transparent în loc de alb */
+    background: transparent !important;
+
+    /* Scoatem padding-ul care crea spațiul alb sus/jos */
+    padding: 0 !important;
+
+    /* Scoatem umbra containerului (tabelul are deja umbra lui) */
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0;
+
+    /* Asigurăm spațiere corectă față de elementele din jur */
+    margin-bottom: 20px;
+}
+
+/* Asigură-te că aceste stiluri există pentru erori și X-ul auriu */
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.search-clear-btn-gold {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: #d4af37;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.error-text {
+    color: #ff4d4d;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-error {
+    border: 1px solid #ff4d4d !important;
+    box-shadow: 0 0 5px rgba(255, 77, 77, 0.2) !important;
+}
+
+.form-group-item {
+    margin-bottom: 15px;
+}
+
+

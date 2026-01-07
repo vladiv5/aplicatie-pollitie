@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // <--- IMPORT THE NEW STYLES
+import './styles/Forms.css';
 
 const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -10,17 +10,18 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: null });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        // I clear the error for this field as soon as I start typing
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+        // Special case for phone mapping
+        if (name === 'telefon' && errors.telefon_serviciu) {
+            setErrors(prev => ({ ...prev, telefon_serviciu: null }));
         }
     };
 
-    const handleClear = (fieldName) => {
-        setFormData({ ...formData, [fieldName]: '' });
-    };
-
     const handleSave = () => {
+        // I clear previous errors before a new attempt
         setErrors({});
 
         axios.post('http://localhost:8080/api/politisti', {
@@ -31,68 +32,64 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
             telefon_serviciu: formData.telefon
         })
             .then((response) => {
-                const newId = response.data ? response.data.idPolitist : null;
-                setFormData({ nume: '', prenume: '', grad: '', functie: '', telefon: '' });
+                // Toasts remain unchanged as requested
                 toast.success("Polițist înregistrat în sistem!");
-                onSaveSuccess(newId);
+                onSaveSuccess(response.data.idPolitist);
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
+                    // I map the exact error map from the backend to my state
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
-                    console.error("Eroare:", error);
                     toast.error("Eroare la salvare!");
                 }
             });
     };
 
-    // Helper to render input with label, X button, and error
-    const renderInput = (name, label, placeholder) => (
-        <div style={{ position: 'relative' }}>
-            <label className="form-label">{label}</label>
-            <div style={{ position: 'relative' }}>
-                <input
-                    type="text"
-                    name={name}
-                    placeholder={placeholder}
-                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
-                    value={formData[name]}
-                    onChange={handleChange}
-                />
+    const renderInput = (name, label, placeholder, icon, backendKey = null) => {
+        const errorKey = backendKey || name;
+        const hasError = errors[errorKey];
 
-                {/* Clear Button (X) */}
-                {formData[name] && (
-                    <span
-                        className="clear-icon"
-                        onClick={() => handleClear(name)}
-                        title="Șterge"
-                    >
-                        &times;
-                    </span>
-                )}
+        return (
+            <div className="form-group-item">
+                <label className="form-label">
+                    <i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>
+                    {label}
+                </label>
+                <div className="input-wrapper">
+                    <input
+                        type="text"
+                        name={name}
+                        placeholder={placeholder}
+                        className={`modal-input ${hasError ? 'input-error' : ''}`}
+                        value={formData[name]}
+                        onChange={handleChange}
+                    />
+                    {formData[name] && (
+                        <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
+                            <i className="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    )}
+                </div>
+                {/* Fixed red error indication constant across the app */}
+                {hasError && <span className="error-text">{errors[errorKey]}</span>}
             </div>
-
-            {/* Error Message */}
-            {errors[name] && (
-                <span className="error-text">{errors[name]}</span>
-            )}
-        </div>
-    );
+        );
+    };
 
     return (
-        <div>
-            <div className="form-group">
-                {/* We arrange them in a grid or stack. Here is a stack. */}
-                {renderInput("nume", "Nume", "ex: Popescu")}
-                {renderInput("prenume", "Prenume", "ex: Andrei")}
-                {renderInput("grad", "Grad", "ex: Agent Șef")}
-                {renderInput("functie", "Funcție", "ex: Patrulare")}
-                {renderInput("telefon", "Telefon Serviciu", "ex: 07xx xxx xxx")}
+        <div className="modal-body-scroll">
+            <div className="form-grid-stack">
+                {renderInput("nume", "Nume", "ex: Popescu", "fa-user-tie")}
+                {renderInput("prenume", "Prenume", "ex: Andrei", "fa-user")}
+                {renderInput("grad", "Grad", "ex: Agent Șef", "fa-medal")}
+                {renderInput("functie", "Funcție", "ex: Patrulare", "fa-briefcase")}
+                {renderInput("telefon", "Telefon Serviciu", "07xxxxxxxx", "fa-phone", "telefon_serviciu")}
             </div>
-
-            <div className="modal-footer">
+            <div className="modal-footer" style={{marginTop: '30px'}}>
                 <button className="save-btn" onClick={handleSave}>
+                    <i className="fa-solid fa-floppy-disk" style={{marginRight: '8px'}}></i>
                     SALVAȚI POLIȚIST
                 </button>
             </div>
@@ -100,4 +97,4 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     );
 };
 
-export default AddPolitist;
+export default AddPolitist

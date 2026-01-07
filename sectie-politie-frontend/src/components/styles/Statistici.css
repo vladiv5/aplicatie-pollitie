@@ -1,18 +1,17 @@
 /* src/components/styles/Statistici.css */
 
 /* =========================================
-   1. LAYOUT & CONTAINER
+   1. LAYOUT GENERAL (Neschimbat)
    ========================================= */
 .st-stats-container {
-    padding: 20px 0; /* Padding doar sus/jos, lateral e gestionat de page-container */
+    padding: 10px 0 40px 0;
     font-family: 'Montserrat', sans-serif;
     color: #334155;
     background: transparent;
 }
 
-/* Titlul paginii */
 .st-page-title {
-    color: var(--royal-navy-dark, #0a2647);
+    color: var(--gold-text);
     font-weight: 800;
     font-size: 1.6rem;
     margin: 0 0 25px 0;
@@ -24,56 +23,79 @@
 }
 
 /* =========================================
-   2. COMMAND BAR (FILTRE)
+   2. COMMAND BAR (FILTRE) - FINAL PREMIUM LOOK
    ========================================= */
 .st-command-bar {
-    /* Acelasi stil ca controls-container */
-    background: linear-gradient(180deg, #0a2647 0%, #041225 100%);
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    border-bottom: 2px solid var(--gold-border, #bfa05d);
-    margin-bottom: 30px;
+    /* Același gradient ca la carduri pentru consistență */
+    background: linear-gradient(180deg, #0f2444 0%, #05101e 100%);
+    padding: 20px 30px;
+    border-radius: 12px;
+    /* Umbră mai pronunțată */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    /* Bordură aurie fină de jur împrejur */
+    border: 1px solid var(--gold-border, #bfa05d);
+    margin-bottom: 40px;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
+    justify-content: space-between; /* Input-uri stânga, Butoane dreapta */
+    align-items: flex-end; /* Aliniere jos pentru a se potrivi cu butoanele */
     gap: 20px;
-    color: white;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
 }
 
-/* Grupare inputuri data */
+/* Efect vizual: o mică bară aurie strălucitoare sus */
+.st-command-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ffd700, transparent);
+    opacity: 0.5;
+}
+
+/* Container Input-uri */
 .st-filter-container {
     display: flex;
-    align-items: center;
-    gap: 15px;
+    align-items: flex-end; /* Aliniem la baza */
+    gap: 25px;
     flex-wrap: wrap;
-    justify-content: center;
 }
 
 .st-filter-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
 }
 
 .st-filter-label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
-    color: #ffd700;
+    color: #d4af37; /* Auriu */
     font-weight: 700;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    margin-left: 2px;
 }
 
-/* Stil Input Data (Zi/Luna/An) */
+/* INPUT DATA - TRANSFORMARE DARK MODE */
 .st-date-group {
     display: flex;
     align-items: center;
-    background: #ffffff;
-    border: 1px solid #bfa05d;
-    border-radius: 4px;
-    padding: 0 5px;
-    height: 36px;
+    /* Fundal întunecat, nu alb */
+    background: rgba(10, 25, 48, 0.6);
+    border: 1px solid #2a4a7c; /* Bordură albastră subtilă */
+    border-radius: 6px;
+    padding: 0 10px;
+    height: 45px; /* Mai înalte pentru aspect modern */
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* La focus, inputul devine auriu */
+.st-date-group:focus-within {
+    border-color: #d4af37;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.2), inset 0 2px 5px rgba(0,0,0,0.4);
+    background: rgba(10, 25, 48, 0.9);
 }
 
 .st-date-part {
@@ -82,277 +104,453 @@
     text-align: center;
     font-family: 'Montserrat', sans-serif;
     font-weight: 600;
-    color: #0f172a;
+    color: #ffffff; /* Text ALB */
     background: transparent;
     padding: 0;
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
-.st-w-day, .st-w-month { width: 28px; }
-.st-w-year { width: 45px; }
+/* Placeholder-ul să fie gri deschis */
+.st-date-part::placeholder {
+    color: #475569;
+    font-weight: 500;
+}
+
+.st-w-day, .st-w-month { width: 35px; }
+.st-w-year { width: 60px; }
 
 .st-date-sep {
-    color: #94a3b8;
+    color: #d4af37; /* Separatoare aurii / */
     font-weight: bold;
-    margin: 0 2px;
+    margin: 0 4px;
+    font-size: 1.1rem;
+    opacity: 0.7;
 }
 
-/* Butoane Actiune Filtre */
+/* Săgeata dintre date */
+.st-arrow-separator {
+    color: #d4af37;
+    font-size: 1.2rem;
+    padding-bottom: 10px; /* Ajustare vizuală */
+    opacity: 0.8;
+}
+
+/* BUTOANE FILTRE (DESIGN NOU) */
 .st-action-buttons {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     align-items: flex-end;
-    height: 36px;
+    height: 45px; /* Aceeași înălțime cu inputurile */
 }
 
+/* BUTON APLICĂ - SOLID GOLD */
 .st-apply-btn {
-    background: linear-gradient(135deg, #144272, #0a2647);
-    color: white;
-    border: 1px solid #bfa05d;
-    padding: 0 20px;
+    background: #d4af37; /* Auriu Plin */
+    color: #0a2647; /* Text Navy Închis (contrast maxim) */
+    border: none;
+    padding: 0 30px;
     height: 100%;
-    border-radius: 4px;
-    font-weight: 700;
+    border-radius: 6px;
+    font-weight: 800;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .st-apply-btn:hover {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    border-color: #ffd700;
+    background: #ffd700; /* Auriu mai deschis la hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(212, 175, 55, 0.4);
 }
 
+.st-apply-btn:active {
+    transform: translateY(0);
+}
+
+/* BUTON RESET - GHOST STYLE */
 .st-reset-btn {
     background: transparent;
-    color: #cbd5e1;
+    color: #94a3b8; /* Gri albăstrui */
     border: 1px solid #475569;
-    padding: 0 15px;
+    padding: 0 20px;
     height: 100%;
-    border-radius: 4px;
+    border-radius: 6px;
     font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .st-reset-btn:hover {
-    border-color: white;
-    color: white;
+    border-color: #ef4444; /* Roșu la hover */
+    color: #ffffff;
+    background: #dc3545; /* Fundal roșu la hover */
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.4);
+}
+
+/* Responsivitate pentru bara de comenzi */
+@media (max-width: 900px) {
+    .st-command-bar {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    .st-filter-container {
+        justify-content: center;
+    }
+    .st-action-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    .st-apply-btn, .st-reset-btn {
+        flex: 1;
+        justify-content: center;
+    }
 }
 
 /* =========================================
-   3. CAROUSEL & CHART CONTAINERS
+   3. CAROUSEL & GRAFICE - DARK MODE REDESIGN
    ========================================= */
+
 .st-carousel-container {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    background: linear-gradient(180deg, #0f2444 0%, #05101e 100%);
+    border: 1px solid var(--gold-border, #bfa05d);
+    border-radius: 12px;
+    padding: 20px 20px 60px 20px; /* Padding mai mare jos pentru butoane */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
     margin-bottom: 40px;
     position: relative;
-    border-top: 4px solid #144272; /* Accent Navy */
-    min-height: 450px;
+    min-height: 480px;
 }
 
+/* Titlul slide-ului curent - AURIU și fără Emoji în text */
 .st-slide-title {
     text-align: center;
-    font-size: 1.1rem;
-    color: #0a2647;
+    font-size: 1.2rem;
+    color: #d4af37; /* MODIFICARE: Auriu */
     font-weight: 800;
     text-transform: uppercase;
     margin-bottom: 25px;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    padding-bottom: 15px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 }
 
-/* Săgeți Navigare Carousel */
-.st-nav-arrow {
-    background: #0a2647;
-    color: #ffd700;
-    border: 1px solid #bfa05d;
-    width: 35px; height: 35px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    position: absolute; top: 50%; transform: translateY(-50%);
+.st-slide-icon {
+    font-size: 1.4rem;
+}
+
+/* --- BUTOANE CAROUSEL (Navigare) --- */
+/* Le mutăm în stânga jos */
+.st-carousel-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 25px;
+    display: flex;
+    gap: 10px;
     z-index: 10;
-    transition: all 0.2s;
 }
-.st-nav-arrow:hover { transform: translateY(-50%) scale(1.1); filter: brightness(1.2); }
-.st-nav-prev { left: -15px; }
-.st-nav-next { right: -15px; }
 
-/* Buline slide */
+/* Stil Identic cu cel de la Carduri */
+.st-nav-arrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #0a2647; /* Navy */
+    border: 1px solid #d4af37; /* Auriu */
+    color: #d4af37;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.st-nav-arrow:hover {
+    background-color: #d4af37;
+    color: #0a2647;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+    transform: scale(1.1);
+}
+
+/* Buline slide (Indicatori) */
 .st-slide-indicator {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-top: 15px;
 }
+
 .st-dot {
     width: 10px; height: 10px;
-    background: #cbd5e1;
+    background: #334155;
     border-radius: 50%;
     cursor: pointer;
+    border: 1px solid transparent;
 }
+
 .st-dot.st-active {
-    background: #0a2647;
-    border: 2px solid #bfa05d;
+    background: #d4af37;
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
     transform: scale(1.2);
 }
 
-/* --- TOOLTIP TACTIC (HUD Style) --- */
+/* --- TOOLTIP GRAFIC (Recharts) - STILIZAT --- */
+/* Aceasta este clasa folosita în CustomChartTooltip */
 .st-custom-tooltip-box {
-    background: rgba(10, 38, 71, 0.95); /* Navy transparent */
-    color: #fff;
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #bfa05d; /* Bordură Aurie */
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    background: rgba(10, 38, 71, 0.98); /* Navy opac */
+    border: 1px solid #d4af37; /* Contur Auriu */
+    color: #ffffff;
+    padding: 12px 15px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
     font-size: 0.85rem;
-    min-width: 150px;
+    min-width: 200px;
+    font-family: 'Montserrat', sans-serif;
+    z-index: 9999; /* Foarte important ca să fie peste grafic */
+}
+
+.st-tooltip-header {
+    font-weight: 800;
+    color: #d4af37;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.st-tooltip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: #cbd5e1;
+}
+
+.st-tooltip-value, .st-tooltip-alert {
+    margin-top: 5px;
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.95rem;
 }
 
 /* =========================================
-   4. GRID CARDURI ANALIZĂ (REPARATE)
+   4. GRID CARDURI ANALIZĂ (Neschimbat)
    ========================================= */
+
 .st-analysis-grid {
     display: grid;
-    /* Grid responsive: se adaptează, dar nu devin prea înguste */
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    margin-bottom: 50px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 60px;
+    width: 100%;
 }
 
-/* CARDUL PROPRIU-ZIS */
+.st-card-fa-icon {
+    font-size: 1.8rem;
+    color: #d4af37;
+    filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.4));
+}
+
 .st-paginated-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    background: linear-gradient(180deg, #0f2444 0%, #05101e 100%);
+    border: 1px solid var(--gold-border, #bfa05d);
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
-    height: 420px; /* Înălțime fixă pentru uniformitate */
+    height: 600px;
     position: relative;
-    border-top: 5px solid #ccc; /* Fallback color */
-    overflow: hidden; /* Important pentru colțuri */
-    transition: transform 0.2s;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .st-paginated-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+    border-color: #ffd700;
 }
 
-/* Culori Bordură Sus */
-.st-card-green { border-top-color: #28a745; }  /* Zone Sigure */
-.st-card-orange { border-top-color: #f59f00; }  /* Agenti Severi */
-.st-card-red { border-top-color: #e03131; }     /* Recidivisti */
-.st-card-blue { border-top-color: #1c7ed6; }    /* Zile Critice */
-
-/* HEADER CARD */
 .st-card-header {
-    padding: 15px;
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 20px 20px 15px 20px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: transparent;
+}
+
+.st-icon-container {
+    height: 40px;
     display: flex;
     align-items: center;
-    gap: 10px;
 }
-.st-card-header span { font-size: 1.2rem; } /* Iconita */
+
 .st-card-header h3 {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     font-weight: 800;
-    color: #334155;
+    color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
-/* CORP CARD - TABEL INTERN */
+.st-card-header p {
+    font-size: 0.8rem;
+    color: #d4af37 !important;
+    margin: 5px 0 0 0;
+    font-weight: 500;
+    opacity: 1;
+}
+
 .st-card-content-relative {
-    flex: 1; /* Ocupă tot spațiul rămas până la footer */
-    overflow: hidden; /* Ascunde overflow */
-    padding: 0;
+    flex: 1;
+    padding: 0 15px;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Tabelul intern */
 .st-fixed-height-table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 10px;
 }
 
 .st-fixed-height-table tr {
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+    height: 75px;
+}
+
+.st-fixed-height-table tr:last-child {
+    border-bottom: none;
 }
 
 .st-fixed-height-table td {
-    padding: 12px 15px;
-    font-size: 0.85rem;
+    padding: 0 5px;
     vertical-align: middle;
 }
 
-/* Stilizare text în tabel */
 .st-main-text {
     display: block;
-    font-weight: 600;
-    color: #0f172a;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 160px; /* Limită lungime text */
+    max-width: 140px;
 }
 
 .st-sub-text {
     display: block;
     font-size: 0.75rem;
-    color: #64748b;
-    margin-top: 2px;
+    color: #d4af37;
+    margin-top: 4px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
 }
 
-/* FOOTER CARD (Paginarea mică) */
+.st-fixed-height-table td:last-child {
+    text-align: right;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: #e2e8f0;
+    font-size: 0.85rem;
+}
+
 .st-page-counter {
-    padding: 10px;
-    background: #f1f5f9;
-    border-top: 1px solid #e2e8f0;
+    height: 60px;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 20px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.st-page-text {
     font-size: 0.75rem;
-    color: #64748b;
+    color: #d4af37;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Butoane Paginare Card (Mici, rotunde) */
+.st-pagination-controls {
+    display: flex;
+    gap: 10px;
+}
+
 .st-card-nav-btn {
-    background: white;
-    border: 1px solid #cbd5e1;
-    width: 24px; height: 24px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    background-color: #0a2647;
+    border: 1px solid #d4af37;
+    color: #d4af37;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    font-size: 0.7rem;
-    color: #334155;
-    transition: all 0.2s;
-}
-.st-card-nav-btn:hover {
-    background: #0a2647;
-    color: white;
-    border-color: #0a2647;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    outline: none;
 }
 
-/* Tooltip la hover pe rând (opțional, stil simplu) */
-.st-tooltip-wrapper {
-    position: relative;
-    cursor: help;
+.st-card-nav-btn:hover {
+    background-color: #d4af37;
+    color: #0a2647;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+    transform: scale(1.1);
+}
+
+/* RESPONSIVITATE */
+@media (max-width: 1200px) {
+    .st-analysis-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .st-analysis-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* =========================================
-   5. ARHIVA (DOSARE)
+   5. ARHIVĂ (Restul CSS-ului existent...)
    ========================================= */
+/* Păstrează restul codului pentru Arhivă/Dosare exact cum era */
+
+/* =========================================
+   5. ARHIVĂ OPERATIVĂ (DOSARE) - FINAL FIX
+   ========================================= */
+
 .st-dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 40px;
+    margin-bottom: 50px;
 }
 
 .st-archive-column {
@@ -361,61 +559,121 @@
     gap: 20px;
 }
 
-/* Search Wrapper Dosar */
+/* --- ZONA DE CĂUTARE (MODIFICATĂ: Navy & Gold) --- */
+
 .st-search-wrapper {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    border: 1px solid #e2e8f0;
+    /* Schimbat din white în Navy Gradient */
+    background: linear-gradient(180deg, #0f2444 0%, #05101e 100%);
+    padding: 20px; /* Puțin mai mult spațiu */
+    border-radius: 12px;
+    /* Adăugat border auriu și umbră */
+    border: 1px solid #bfa05d;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+
+    /* Layout Flex: Elementele unul sub altul pentru a nu se înghesui */
     display: flex;
-    align-items: flex-end;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
 }
 
-.st-search-input-container { flex: 1; }
+/* Stilizare Label (Textul "Căutare Polițist") */
+.st-search-wrapper label {
+    color: #d4af37; /* Auriu */
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+}
 
+.st-search-input-container {
+    flex: 1;
+    width: 100%;
+}
+
+/* Stilizare Input (Câmpul de text) - Întunecat */
+/* Forțăm stilul pe inputurile din această zonă */
+.st-search-wrapper input[type="text"],
+.st-search-wrapper input {
+    width: 100%;
+    background: rgba(10, 25, 48, 0.6) !important; /* Fundal închis */
+    border: 1px solid #2a4a7c !important;
+    color: #ffffff !important; /* Text alb */
+    padding: 12px;
+    border-radius: 6px;
+    outline: none;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.st-search-wrapper input:focus {
+    border-color: #d4af37 !important; /* Border auriu la click */
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+/* Stilizare Buton (DOSAR) - Auriu Solid */
 .st-search-btn-modern {
     height: 42px;
-    padding: 0 20px;
-    background: #0a2647;
-    color: #ffd700;
-    border: 1px solid #bfa05d;
-    border-radius: 4px;
-    font-weight: 700;
+    padding: 0 25px;
+    background: #d4af37; /* Auriu */
+    color: #0a2647; /* Text Navy */
+    border: none;
+    border-radius: 6px;
+    font-weight: 800;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.3s;
+    /* Îl aliniem la dreapta sau pe toată lățimea, cum preferi. Aici e la dreapta */
+    align-self: flex-end;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
-.st-search-btn-modern:hover { background: #144272; }
 
-/* Dosar Fizic */
+.st-search-btn-modern:hover {
+    background: #ffd700;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(212, 175, 55, 0.4);
+}
+
+
+/* --- ZONA DOSAR REZULTAT (NESCHIMBAT - Copiat din codul tău original) --- */
+/* Aceasta rămâne exact ca o foaie de hârtie, nu o atingem */
+
 .st-dossier-card {
-    background-color: #fffbf0;
+    background-color: #fffbf0; /* Culoare hârtie */
     border: 1px solid #e3e0cf;
     padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
     position: relative;
     font-family: 'Courier New', Courier, monospace;
-    min-height: 300px;
+    animation: slideDown 0.4s ease-out;
+    margin-top: 10px; /* Puțin spațiu între search și dosar */
 }
 
-/* Tabul de sus */
 .st-dossier-top-bar {
-    position: absolute; top: -8px; left: 0; width: 100%; height: 8px;
-    background: repeating-linear-gradient(45deg, #dc3545, #dc3545 10px, #a71d2a 10px, #a71d2a 20px);
+    position: absolute; top: -8px; left: 0;
+    width: 100%; height: 8px;
+    background: repeating-linear-gradient(
+            45deg,
+            #dc3545,
+            #dc3545 10px,
+            #a71d2a 10px,
+            #a71d2a 20px
+    );
 }
 
 .st-stamp {
     position: absolute; top: 20px; right: 20px;
     border: 3px double #d00; color: #d00;
     padding: 5px 10px;
-    font-weight: bold; transform: rotate(-10deg); opacity: 0.7;
+    font-weight: bold; text-transform: uppercase;
+    transform: rotate(-10deg); opacity: 0.7;
 }
 
 .st-dossier-header {
-    display: flex; border-bottom: 2px solid #333;
+    display: flex;
+    border-bottom: 2px solid #333;
     padding-bottom: 20px; margin-bottom: 20px;
 }
 
@@ -427,18 +685,238 @@
 }
 
 .st-dossier-info { margin-left: 20px; }
-.st-dossier-info h2 { font-size: 1.2rem; margin: 0 0 10px 0; text-transform: uppercase; }
+.st-dossier-info h2 { font-size: 1.3rem; margin: 0 0 10px 0; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+.st-dossier-detail { margin-bottom: 5px; font-size: 0.9rem; }
 
 .st-dossier-table {
-    width: 100%; border-collapse: collapse; font-size: 0.8rem;
+    width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 15px;
 }
-.st-dossier-table th { text-align: left; border-bottom: 2px solid black; padding: 5px; }
+.st-dossier-table th { text-align: left; border-bottom: 2px solid black; padding: 5px; background: rgba(0,0,0,0.05); }
 .st-dossier-table td { border-bottom: 1px dotted #ccc; padding: 8px 5px; }
 
 .st-print-btn {
-    margin-top: 20px;
+    margin-top: 25px;
     background: #333; color: white; border: none;
-    padding: 8px 15px; cursor: pointer; font-weight: bold;
+    padding: 10px 20px; cursor: pointer; font-weight: bold;
     display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase; font-size: 0.8rem;
 }
 .st-print-btn:hover { background: black; }
+
+/* =========================================
+   6. LOGICA DE PRINTARE (Fixed & Targeted)
+   ========================================= */
+@media print {
+    /* 1. Ascundem TOT corpul paginii */
+    body * {
+        visibility: hidden;
+    }
+
+    /* 2. Facem vizibil DOAR dosarul care are clasa 'printing-active' */
+    /* Această clasă este pusă de React doar când apeși butonul de print pe acel dosar */
+    .st-dossier-card.printing-active,
+    .st-dossier-card.printing-active * {
+        visibility: visible;
+    }
+
+    /* 3. Poziționăm acel dosar specific să ocupe toată foaia */
+    .st-dossier-card.printing-active {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 40px; /* Mai mult padding pentru hârtie */
+        border: 2px solid #000;
+        box-shadow: none;
+        background-color: white !important;
+        z-index: 9999;
+    }
+
+    /* Ascundem butonul de print de pe foaie */
+    .st-print-btn {
+        display: none !important;
+    }
+}
+
+/* =========================================
+   TOOLTIP PERSONALIZAT PENTRU TABELE
+   ========================================= */
+
+/* Clasa pe care o punem pe rândul tabelului (tr) */
+.st-tooltip-trigger {
+    position: relative;
+    cursor: help; /* Cursorul se schimbă într-un semn de întrebare/ajutor */
+}
+
+/* Tooltip-ul propriu-zis (ascuns implicit) */
+.st-tooltip-trigger::after {
+    content: attr(data-tooltip); /* Ia textul din atributul data-tooltip */
+    position: absolute;
+    bottom: 100%; /* Apare deasupra rândului */
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+
+    /* Design Auriu & Navy */
+    background: rgba(10, 38, 71, 0.98); /* Navy aproape opac */
+    color: #ffffff;
+    border: 1px solid #d4af37; /* Contur Auriu */
+    padding: 10px 15px;
+    border-radius: 6px;
+
+    /* Text */
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem;
+    white-space: pre-wrap; /* Permite text pe mai multe linii (\n) */
+    text-align: center;
+    width: max-content;
+    max-width: 250px;
+    z-index: 1000;
+
+    /* Animație */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+/* Săgeata mică de jos a tooltip-ului */
+.st-tooltip-trigger::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #d4af37 transparent transparent transparent; /* Săgeată aurie */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+/* Afișare la hover */
+.st-tooltip-trigger:hover::after,
+.st-tooltip-trigger:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0); /* Ușoară mișcare în jos la apariție */
+}
+
+/* =========================================
+   7. MESAJE DE STARE (NOTIFICATIONS) - NAVY & GOLD THEME
+   ========================================= */
+
+/* I set the main container to match your Dark Navy theme so it pops on the light background */
+.st-message-panel {
+    background: linear-gradient(180deg, #0a2647 0%, #05101e 100%); /* Navy Gradient background */
+    margin-bottom: 30px;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 100px;
+    display: flex;
+    align-items: center;
+    /* I added a strong shadow to make it lift off the light page */
+    box-shadow: 0 10px 25px rgba(10, 38, 71, 0.4);
+    font-family: 'Montserrat', sans-serif;
+    border: 1px solid #bfa05d; /* Gold border all around */
+    position: relative;
+}
+
+/* Hidden state remains the same */
+.st-message-panel.st-hidden {
+    opacity: 0;
+    transform: translateY(-20px);
+    max-height: 0;
+    margin-bottom: 0;
+    pointer-events: none;
+    border: none;
+}
+
+/* --- STIL PENTRU SUCCES --- */
+.st-message-panel.st-msg-success {
+    /* I keep the Navy background but add a Green accent on the left */
+    border-left: 6px solid #10b981;
+}
+
+.st-message-panel.st-msg-success .st-msg-icon-box {
+    /* I use the green color for the icon background to signal success */
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.st-message-panel.st-msg-success .st-msg-text strong {
+    color: #10b981; /* Green title */
+}
+
+/* --- STIL PENTRU EROARE --- */
+.st-message-panel.st-msg-error {
+    /* I keep the Navy background but add a Red accent on the left */
+    border-left: 6px solid #dc3545;
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.st-message-panel.st-msg-error .st-msg-icon-box {
+    /* I use the red color for the icon background to signal error */
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.st-message-panel.st-msg-error .st-msg-text strong {
+    color: #dc3545; /* Red title */
+}
+
+/* --- STRUCTURA INTERNĂ --- */
+.st-msg-content {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    width: 100%;
+}
+
+.st-msg-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%; /* Circle shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-right: 20px;
+    flex-shrink: 0;
+    /* I added a subtle glow to the icon */
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.st-msg-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.st-msg-text strong {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    font-weight: 800;
+}
+
+.st-msg-text span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    /* I set the text color to Gold/White to contrast with the Navy background */
+    color: #e2e8f0;
+}
+
+/* Shake animation remains the same */
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}

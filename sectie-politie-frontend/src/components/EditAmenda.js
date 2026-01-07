@@ -2,155 +2,129 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
+import './styles/Forms.css';
 
 const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
-        motiv: '',
-        suma: '',
-        starePlata: 'Neplatita',
-        dataEmitere: '',
-        politistId: null,
-        persoanaId: null
+        motiv: '', suma: '', starePlata: 'Neplatita',
+        dataEmitere: '', politistId: null, persoanaId: null
     });
+    const [initialNames, setInitialNames] = useState({ politist: '', persoana: '' });
     const [errors, setErrors] = useState({});
-    const [initialPolitistName, setInitialPolitistName] = useState('');
-    const [initialPersoanaName, setInitialPersoanaName] = useState('');
 
     useEffect(() => {
         if (id) {
-            const token = localStorage.getItem('token');
-            axios.get(`http://localhost:8080/api/amenzi/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
+            axios.get(`http://localhost:8080/api/amenzi/${id}`)
                 .then(res => {
-                    const data = res.data;
+                    const d = res.data;
                     setFormData({
-                        motiv: data.motiv || '',
-                        suma: data.suma || '',
-                        starePlata: data.starePlata || 'Neplatita',
-                        dataEmitere: data.dataEmitere || '',
-                        politistId: data.politist?.idPolitist || null,
-                        persoanaId: data.persoana?.idPersoana || null
+                        motiv: d.motiv || '',
+                        suma: d.suma || '',
+                        starePlata: d.starePlata || 'Neplatita',
+                        dataEmitere: d.dataEmitere || '',
+                        politistId: d.politist?.idPolitist || null,
+                        persoanaId: d.persoana?.idPersoana || null
                     });
-
-                    if (data.politist) setInitialPolitistName(`${data.politist.nume} ${data.politist.prenume} (${data.politist.grad})`);
-                    if (data.persoana) setInitialPersoanaName(`${data.persoana.nume} ${data.persoana.prenume} (CNP: ${data.persoana.cnp})`);
-                })
-                .catch(err => toast.error("Eroare la încărcare amendă."));
+                    setInitialNames({
+                        politist: d.politist ? `${d.politist.nume} ${d.politist.prenume}` : '',
+                        persoana: d.persoana ? `${d.persoana.nume} ${d.persoana.prenume}` : ''
+                    });
+                });
         }
     }, [id]);
 
-    const handleClear = (fieldName) => {
-        setFormData({ ...formData, [fieldName]: '' });
-    };
-
-    const handleChange = (fieldName, value) => {
-        setFormData({ ...formData, [fieldName]: value });
-        if (errors[fieldName]) {
-            setErrors({ ...errors, [fieldName]: null });
-        }
+    const handleChange = (name, val) => {
+        setFormData(prev => ({ ...prev, [name]: val }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSave = () => {
-        const token = localStorage.getItem('token');
         setErrors({});
-
-        const sumaNumar = formData.suma ? parseFloat(formData.suma) : null;
-
-        const payload = {
-            motiv: formData.motiv,
-            suma: sumaNumar,
-            starePlata: formData.starePlata,
-            dataEmitere: formData.dataEmitere,
+        axios.put(`http://localhost:8080/api/amenzi/${id}`, {
+            ...formData,
             idPolitist: formData.politistId,
-            idPersoana: formData.persoanaId
-        };
-
-        axios.put(`http://localhost:8080/api/amenzi/${id}`, payload, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            idPersoana: formData.persoanaId,
+            suma: formData.suma ? parseFloat(formData.suma) : null
         })
-            .then((response) => {
-                const updatedId = response.data ? response.data.idAmenda : id;
-                setErrors({});
+            .then(() => {
                 toast.success("Amendă actualizată!");
-                onSaveSuccess(updatedId);
+                onSaveSuccess(id);
             })
-            .catch(error => {
-                if (error.response && error.response.status === 400) {
-                    setErrors(error.response.data);
+            .catch(err => {
+                if (err.response?.status === 400) {
+                    setErrors(err.response.data);
+                    toast.error("Verifică câmpurile invalide!");
                 } else {
                     toast.error("Eroare la modificare!");
                 }
             });
     };
 
-    const renderInput = (label, name, type = 'text') => (
-        <div style={{ position: 'relative' }}>
-            <label className="form-label">{label}</label>
-            <div style={{ position: 'relative' }}>
-                <input
-                    type={type}
-                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
-                    value={formData[name]}
-                    onChange={(e) => handleChange(name, e.target.value)}
-                />
-
-                {formData[name] && type !== 'datetime-local' && (
-                    <span
-                        className="clear-icon"
-                        onClick={() => handleClear(name)}
-                        title="Șterge"
-                    >
-                        &times;
-                    </span>
-                )}
+    const renderInput = (label, name, icon, type = 'text') => {
+        const hasError = errors[name];
+        return (
+            <div className="form-group-item">
+                <label className="form-label"><i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>{label}</label>
+                <div className="input-wrapper">
+                    <input
+                        type={type}
+                        className={`modal-input ${hasError ? 'input-error' : ''}`}
+                        value={formData[name]}
+                        onChange={(e) => handleChange(name, e.target.value)}
+                    />
+                    {formData[name] && type !== 'datetime-local' && (
+                        <button type="button" className="search-clear-btn-gold" onClick={() => handleChange(name, '')}><i className="fa-solid fa-circle-xmark"></i></button>
+                    )}
+                </div>
+                {hasError && <span className="error-text">{errors[name]}</span>}
             </div>
-            {errors[name] && (
-                <span className="error-text">{errors[name]}</span>
-            )}
-        </div>
-    );
+        );
+    };
 
     return (
-        <div>
-            <div className="form-group">
-                {renderInput("Motiv", "motiv")}
-                {renderInput("Sumă (RON)", "suma", "number")}
+        <div className="modal-body-scroll">
+            <div className="form-grid-stack">
+                {renderInput("Motiv Amendă", "motiv", "fa-file-signature")}
+                {renderInput("Sumă (RON)", "suma", "fa-coins", "number")}
 
-                <div style={{ position: 'relative' }}>
-                    <label className="form-label">Stare Plată</label>
-                    <select
-                        className="modal-input"
-                        value={formData.starePlata}
-                        onChange={(e) => handleChange('starePlata', e.target.value)}
-                    >
+                <div className="form-group-item">
+                    <label className="form-label"><i className="fa-solid fa-hand-holding-dollar" style={{marginRight: '8px', color: '#d4af37'}}></i>Stare Plată</label>
+                    <select className="modal-input" value={formData.starePlata} onChange={(e) => handleChange('starePlata', e.target.value)}>
                         <option value="Neplatita">Neplatita</option>
                         <option value="Platita">Platita</option>
                         <option value="Anulata">Anulata</option>
                     </select>
                 </div>
 
-                {renderInput("Data Acordării", "dataEmitere", "datetime-local")}
+                {renderInput("Data Acordării", "dataEmitere", "fa-calendar-day", "datetime-local")}
 
-                <LiveSearchInput
-                    label="Agent Constatator"
-                    apiUrl="http://localhost:8080/api/politisti/cauta"
-                    defaultValue={initialPolitistName}
-                    displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
-                    onSelect={(item) => setFormData({...formData, politistId: item?.idPolitist})}
-                />
+                <div className="form-group-item">
+                    <LiveSearchInput
+                        label="Agent Constatator"
+                        apiUrl="http://localhost:8080/api/politisti/cauta"
+                        icon="fa-user-shield"
+                        defaultValue={initialNames.politist}
+                        onSelect={(item) => handleChange('politistId', item?.idPolitist)}
+                    />
+                    {errors.idPolitist && <span className="error-text">{errors.idPolitist}</span>}
+                </div>
 
-                <LiveSearchInput
-                    label="Persoana Amendată"
-                    apiUrl="http://localhost:8080/api/persoane/cauta"
-                    defaultValue={initialPersoanaName}
-                    displayKey={(p) => `${p.nume} ${p.prenume} (CNP: ${p.cnp})`}
-                    onSelect={(item) => setFormData({...formData, persoanaId: item?.idPersoana})}
-                />
+                <div className="form-group-item">
+                    <LiveSearchInput
+                        label="Persoana Amendată"
+                        apiUrl="http://localhost:8080/api/persoane/cauta"
+                        icon="fa-user-tag"
+                        defaultValue={initialNames.persoana}
+                        onSelect={(item) => handleChange('persoanaId', item?.idPersoana)}
+                    />
+                    {errors.idPersoana && <span className="error-text">{errors.idPersoana}</span>}
+                </div>
             </div>
-            <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>SALVAȚI MODIFICĂRI</button>
+            <div className="modal-footer" style={{marginTop: '30px'}}>
+                <button className="save-btn" onClick={handleSave}>
+                    <i className="fa-solid fa-pen-to-square" style={{marginRight: '8px'}}></i>
+                    SALVAȚI MODIFICĂRI
+                </button>
             </div>
         </div>
     );

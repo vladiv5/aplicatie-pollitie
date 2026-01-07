@@ -1,38 +1,37 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './styles/TableStyles.css';
+// Asigură-te că Forms.css este importat undeva în aplicație (de obicei în index.js sau App.js)
+// Dacă nu, poți adăuga: import './styles/Forms.css'; aici.
 
 const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId, returnRoute = '/politisti' }) => {
     const navigate = useNavigate();
 
     if (!isOpen || !data) return null;
 
-    let headerColor = '#28a745';
+    // Determinăm culorile DOAR pentru text/iconițe, nu fundaluri
+    let statusColor = '#10b981'; // Verde (Succes/Safe)
     let iconClass = 'fa fa-check-circle';
 
     if (data.severitate === 'WARNING') {
-        headerColor = '#fd7e14';
+        statusColor = '#f59e0b'; // Portocaliu (Amber)
         iconClass = 'fa fa-exclamation-triangle';
     } else if (data.severitate === 'BLOCKED') {
-        headerColor = '#dc3545';
+        statusColor = '#ef4444'; // Roșu
         iconClass = 'fa fa-ban';
     }
 
     const handleJump = (type, itemId) => {
-        // 1. Salvăm în SessionStorage datele pentru Bumerang
-        // Asta rezistă și dacă dăm Back din browser
         if (currentPolitistId) {
             const boomerangData = {
-                triggerAction: 'reOpenDelete', // Vrem să redeschidem verificarea
-                triggerId: currentPolitistId,  // ID-ul polițistului la care ne întoarcem
-                returnRoute: returnRoute       // Ca să știm că e pentru pagina asta
+                triggerAction: 'reOpenDelete',
+                triggerId: currentPolitistId,
+                returnRoute: returnRoute
             };
             sessionStorage.setItem('boomerang_pending', JSON.stringify(boomerangData));
         }
 
-        // 2. Navigăm normal (fără state, că folosim storage)
         const targetRoute = type === 'Incident' ? '/incidente' : '/amenzi';
-        // Putem trimite totuși openEditId prin state pentru pagina țintă
         navigate(targetRoute, {
             state: { openEditId: itemId }
         });
@@ -40,88 +39,94 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
 
     return (
         <div className="modal-overlay">
+            {/* Folosim clasa standard modal-content + stiluri specifice */}
             <div className="modal-content modal-content-auto" style={{ maxWidth: '600px', width: '90%' }}>
 
-                <div className="modal-header" style={{ borderBottomColor: headerColor }}>
-                    <h3 style={{ color: headerColor, display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-                        <i className={iconClass}></i> {data.titlu}
-                    </h3>
+                {/* HEADER: Navy Background cu Accent Auriu + Iconiță Colorată */}
+                <div className="modal-header delete-header">
+                    <div className="delete-title" style={{ color: statusColor }}>
+                        <i className={`${iconClass} delete-icon`}></i>
+                        <span style={{ color: 'white' }}>{data.titlu}</span>
+                    </div>
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
-                <div style={{ padding: '20px' }}>
-                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: '#333', marginTop: 0 }}>
+                {/* BODY: Clean & Professional */}
+                <div className="delete-body">
+                    <p className="delete-message">
                         {data.mesaj}
                     </p>
 
+                    {/* Lista Blocantă */}
                     {data.elementeBlocante && data.elementeBlocante.length > 0 && (
-                        <div style={{ marginTop: '15px', background: '#f8f9fa', padding: '10px', borderRadius: '5px', border: '1px solid #ddd', maxHeight: '200px', overflowY: 'auto' }}>
-                            <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
-                                Dosare asociate:
+                        <div className="blocking-list-container">
+                            <h4 className="blocking-title">
+                                <i className="fa-solid fa-link" style={{marginRight:'8px'}}></i>
+                                Dosare Asociate ({data.elementeBlocante.length})
                             </h4>
-                            <table className="mini-table" style={{ width: '100%', background: 'white', borderCollapse: 'collapse' }}>
-                                <thead>
-                                <tr>
-                                    <th style={{ textAlign: 'left', padding: '8px', borderBottom: '2px solid #eee' }}>Tip</th>
-                                    <th style={{ textAlign: 'left', padding: '8px', borderBottom: '2px solid #eee' }}>Detalii</th>
-                                    <th style={{ textAlign: 'center', padding: '8px', borderBottom: '2px solid #eee' }}>Acțiune</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {data.elementeBlocante.map((item, idx) => (
-                                    <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                                        <td style={{ padding: '8px', fontWeight: 'bold', fontSize: '13px' }}>{item.tip}</td>
-                                        <td style={{
-                                            padding: '8px',
-                                            fontSize: '13px',
-                                            color: (item.descriere.includes('Activ') || item.descriere.includes('Neplatita')) ? '#dc3545' :
-                                                (item.descriere.includes('Închis') || item.descriere.includes('Platita')) ? '#fd7e14' :
-                                                    '#28a745'
-                                        }}>
-                                            {item.descriere}
-                                        </td>
-                                        <td style={{ textAlign: 'center', padding: '8px' }}>
-                                            <button
-                                                onClick={() => handleJump(item.tip, item.id)}
-                                                className="action-btn"
-                                                style={{
-                                                    padding: '4px 8px',
-                                                    backgroundColor: 'white',
-                                                    border: '1px solid #007bff',
-                                                    color: '#007bff',
-                                                    borderRadius: '4px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '12px',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            >
-                                                Rezolvă
-                                            </button>
-                                        </td>
+
+                            <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                <table className="mini-tactical-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Tip</th>
+                                        <th>Status / Detalii</th>
+                                        <th style={{ textAlign: 'center' }}>Acțiune</th>
                                     </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                    {data.elementeBlocante.map((item, idx) => {
+                                        // Logică culori text în funcție de status
+                                        let detailClass = 'text-success-custom';
+                                        if (item.descriere.includes('Activ') || item.descriere.includes('Neplatita')) {
+                                            detailClass = 'text-danger-custom';
+                                        } else if (item.descriere.includes('Închis') || item.descriere.includes('Platita')) {
+                                            detailClass = 'text-warning-custom';
+                                        }
+
+                                        return (
+                                            <tr key={idx}>
+                                                <td style={{ fontWeight: '700' }}>{item.tip}</td>
+                                                <td className={detailClass}>
+                                                    {item.descriere}
+                                                </td>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <button
+                                                        onClick={() => handleJump(item.tip, item.id)}
+                                                        className="btn-resolve"
+                                                        title="Mergi la dosar"
+                                                    >
+                                                        Rezolvă
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                <div className="modal-footer-auto" style={{ padding: '20px' }}>
+                {/* FOOTER: Butoane Premium */}
+                <div className="delete-footer">
+                    {/* Buton Anulare (Stil Gri/Navy din Forms.css) */}
                     <button
-                        className="action-btn"
+                        className="btn-close-modal"
                         onClick={onClose}
-                        style={{ backgroundColor: '#6c757d', color: 'white' }}
                     >
                         {data.severitate === 'BLOCKED' ? 'Am înțeles' : 'Anulați'}
                     </button>
 
+                    {/* Buton Ștergere (Doar dacă nu e blocat) - Roșu Premium */}
                     {data.severitate !== 'BLOCKED' && (
                         <button
-                            className="save-btn"
-                            style={{ backgroundColor: '#dc3545' }}
+                            className="btn-delete-confirm"
                             onClick={onConfirm}
                         >
-                            Ștergeți Definitiv
+                            <i className="fa-solid fa-trash-can" style={{marginRight:'8px'}}></i>
+                            Ștergeți
                         </button>
                     )}
                 </div>

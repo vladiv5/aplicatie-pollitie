@@ -155,3 +155,26 @@ textarea.modal-input + .clear-icon {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
+
+/* =========================================
+   GLOBAL LABEL FIX (FOR DARK MODALS)
+   ========================================= */
+
+/* Această regulă forțează culoarea AURIE pe toate etichetele din modale,
+   inclusiv cea din LiveSearchInput ("Căutare Persoană").
+*/
+.modal-content label {
+    color: #d4af37 !important; /* Auriu */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Asigurăm că și containerul LiveSearch are textul auriu dacă e cazul */
+.live-search-container label {
+    color: #d4af37 !important;
+}
