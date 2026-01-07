@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
+import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -14,7 +14,6 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     });
     const [errors, setErrors] = useState({});
 
-    // --- FUNCȚIE NOUĂ: ȘTERGERE CÂMP (X) ---
     const handleClear = (fieldName) => {
         setFormData({ ...formData, [fieldName]: '' });
     };
@@ -54,9 +53,10 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    // --- HELPER INPUT (Cu X și Erori) ---
-    const renderInput = (name, placeholder, style = {}) => (
-        <div style={{ ...style, position: 'relative', marginBottom: '15px' }}>
+    // Helper actualizat (permite stiluri extra pentru containerul părint)
+    const renderInput = (name, label, placeholder, containerStyle = {}) => (
+        <div style={{ ...containerStyle, position: 'relative' }}>
+            <label className="form-label">{label}</label>
             <div style={{ position: 'relative' }}>
                 <input
                     name={name}
@@ -64,24 +64,12 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
                     className={`modal-input ${errors[name] ? 'input-error' : ''}`}
                     value={formData[name]}
                     onChange={handleChange}
-                    style={{ paddingRight: '25px', width: '100%' }} // Loc pt X
                 />
 
                 {formData[name] && (
                     <span
+                        className="clear-icon"
                         onClick={() => handleClear(name)}
-                        style={{
-                            position: 'absolute',
-                            right: '8px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            cursor: 'pointer',
-                            color: '#999',
-                            fontWeight: 'bold',
-                            fontSize: '16px',
-                            lineHeight: '1',
-                            userSelect: 'none'
-                        }}
                         title="Șterge"
                     >
                         &times;
@@ -89,9 +77,7 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
                 )}
             </div>
             {errors[name] && (
-                <span style={{ color: '#dc3545', fontSize: '11px', display: 'block', marginTop: '2px' }}>
-                    {errors[name]}
-                </span>
+                <span className="error-text">{errors[name]}</span>
             )}
         </div>
     );
@@ -99,19 +85,20 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
     return (
         <div>
             <div className="form-group">
-                {renderInput("judetSauSector", "Județ / Sector")}
-                {renderInput("localitate", "Localitate")}
-                {renderInput("strada", "Stradă")}
+                {renderInput("judetSauSector", "Județ / Sector", "ex: București / Sector 1")}
+                {renderInput("localitate", "Localitate", "ex: București")}
+                {renderInput("strada", "Stradă", "ex: Calea Victoriei")}
 
+                {/* Grid pentru detalii număr */}
                 <div style={{display:'flex', gap:'10px'}}>
-                    {renderInput("numar", "Nr.", { width: '30%' })}
-                    {renderInput("bloc", "Bloc", { width: '30%' })}
-                    {renderInput("apartament", "Ap.", { width: '30%' })}
+                    {renderInput("numar", "Nr.", "ex: 12", { width: '30%' })}
+                    {renderInput("bloc", "Bloc", "ex: M3", { width: '30%' })}
+                    {renderInput("apartament", "Ap.", "ex: 5", { width: '30%' })}
                 </div>
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvați Adresa</button>
+                <button className="save-btn" onClick={handleSave}>SALVAȚI ADRESA</button>
             </div>
         </div>
     );

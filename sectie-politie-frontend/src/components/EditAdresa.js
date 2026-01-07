@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
+import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -35,7 +35,6 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
         }
     }, [id]);
 
-    // --- FUNCȚII NOI (X) ---
     const handleClear = (fieldName) => {
         setFormData({ ...formData, [fieldName]: '' });
     };
@@ -74,34 +73,22 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
             });
     };
 
-    // --- HELPER INPUT EDIT (Cu Label, X si Erori) ---
-    const renderInput = (label, name, style = {}) => (
-        <div style={{ ...style, marginBottom: '15px' }}>
-            <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>{label}</label>
+    // Helper actualizat (suportă stil container)
+    const renderInput = (label, name, containerStyle = {}) => (
+        <div style={{ ...containerStyle, position: 'relative' }}>
+            <label className="form-label">{label}</label>
             <div style={{ position: 'relative' }}>
                 <input
                     name={name}
                     className={`modal-input ${errors[name] ? 'input-error' : ''}`}
                     value={formData[name] || ''}
                     onChange={handleChange}
-                    style={{ paddingRight: '25px', width: '100%' }}
                 />
 
                 {formData[name] && (
                     <span
+                        className="clear-icon"
                         onClick={() => handleClear(name)}
-                        style={{
-                            position: 'absolute',
-                            right: '8px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            cursor: 'pointer',
-                            color: '#999',
-                            fontWeight: 'bold',
-                            fontSize: '16px',
-                            lineHeight: '1',
-                            userSelect: 'none'
-                        }}
                         title="Șterge"
                     >
                         &times;
@@ -109,9 +96,7 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
                 )}
             </div>
             {errors[name] && (
-                <span style={{ color: '#dc3545', fontSize: '11px', display:'block', marginTop:'2px' }}>
-                    {errors[name]}
-                </span>
+                <span className="error-text">{errors[name]}</span>
             )}
         </div>
     );
@@ -131,7 +116,7 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvați Modificări</button>
+                <button className="save-btn" onClick={handleSave}>SALVAȚI MODIFICĂRI</button>
             </div>
         </div>
     );

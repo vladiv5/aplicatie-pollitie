@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './styles/TableStyles.css';
+import './styles/Forms.css'; // Importăm pentru butonul de închidere
 
 const ViewLocatariAdresa = ({ adresaId, onClose }) => {
     const [locatari, setLocatari] = useState([]);
@@ -25,49 +25,53 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
 
     return (
         <div style={{ padding: '10px' }}>
-            <h3>Locatari (Persoane Asociate)</h3>
+            <h3 style={{ marginBottom: '15px', color: 'var(--royal-navy-dark)' }}>Locatari Asociați</h3>
 
-            {loading ? <p>Se încarcă...</p> : (
-                /* MODIFICARE: Am adaugat clasa 'compact-table' */
-                <table className="styled-table compact-table" style={{ marginTop: '15px' }}>
-                    <thead>
-                    <tr>
-                        <th>Nume</th>
-                        <th>Prenume</th>
-                        <th>CNP</th>
-                        <th>Tip Locuire</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {locatari.map((item, index) => (
-                        <tr key={index}>
-                            <td>{item.persoana.nume}</td>
-                            <td>{item.persoana.prenume}</td>
-                            <td>{item.persoana.cnp}</td>
-                            <td>
-                                    <span style={{
-                                        fontWeight: 'bold',
-                                        color: item.tipAdresa === 'Domiciliu' ? 'blue' : 'green'
-                                    }}>
+            {loading ? (
+                <div className="loading-container">
+                    <div className="spinner"></div>
+                    <p>Se încarcă...</p>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="styled-table compact-table">
+                        <thead>
+                        <tr>
+                            <th>Nume</th>
+                            <th>Prenume</th>
+                            <th>CNP</th>
+                            <th style={{textAlign: 'center'}}>Tip Locuire</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {locatari.map((item, index) => (
+                            <tr key={index}>
+                                <td>{item.persoana.nume}</td>
+                                <td>{item.persoana.prenume}</td>
+                                <td>{item.persoana.cnp}</td>
+                                <td style={{textAlign: 'center'}}>
+                                    <span className={`badge-status ${item.tipAdresa === 'Domiciliu' ? 'status-inchis' : 'status-activ'}`}
+                                          style={{background: item.tipAdresa === 'Domiciliu' ? '#e0e7ff' : '#dcfce7', color: item.tipAdresa === 'Domiciliu' ? '#3730a3' : '#166534'}}>
                                         {item.tipAdresa}
                                     </span>
-                            </td>
-                        </tr>
-                    ))}
-                    {locatari.length === 0 && (
-                        <tr>
-                            <td colSpan="4" style={{textAlign: 'center'}}>
-                                Nimeni nu este înregistrat la această adresă.
-                            </td>
-                        </tr>
-                    )}
-                    </tbody>
-                </table>
+                                </td>
+                            </tr>
+                        ))}
+                        {locatari.length === 0 && (
+                            <tr>
+                                <td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>
+                                    Nu există persoane înregistrate la această adresă.
+                                </td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </table>
+                </div>
             )}
 
-            <div className="modal-footer" style={{ marginTop: '20px' }}>
-                <button className="action-btn" onClick={onClose} style={{ background: '#6c757d', color: 'white' }}>
-                    Închideți
+            <div className="modal-footer">
+                <button className="btn-close-modal" onClick={onClose}>
+                    ÎNCHIDEȚI
                 </button>
             </div>
         </div>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
-import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
+import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const AddIncident = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -16,14 +16,12 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
     });
     const [errors, setErrors] = useState({});
 
-    // --- FUNCȚIE NOUĂ: ȘTERGERE CÂMP (X) ---
     const handleClear = (fieldName) => {
         setFormData({ ...formData, [fieldName]: '' });
     };
 
     const handleChange = (fieldName, value) => {
         setFormData({ ...formData, [fieldName]: value });
-        // Ștergem eroarea vizuală
         if (errors[fieldName]) {
             setErrors({ ...errors, [fieldName]: null });
         }
@@ -73,10 +71,10 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    // --- HELPER INPUT (Cu X și Erori) ---
+    // Helper generic pentru input și textarea
     const renderInput = (label, name, placeholder, type = 'text', Component = 'input') => (
-        <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{label}</label>
+        <div style={{ position: 'relative' }}>
+            <label className="form-label">{label}</label>
             <div style={{ position: 'relative' }}>
                 <Component
                     type={type}
@@ -85,25 +83,12 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     value={formData[name]}
                     onChange={(e) => handleChange(name, e.target.value)}
                     rows={Component === 'textarea' ? 4 : undefined}
-                    style={{ paddingRight: '30px' }}
                 />
 
-                {/* Buton X (Nu îl punem la datetime-local) */}
                 {formData[name] && type !== 'datetime-local' && (
                     <span
+                        className="clear-icon"
                         onClick={() => handleClear(name)}
-                        style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: Component === 'textarea' ? '10px' : '50%', // Ajustare pt textarea
-                            transform: Component === 'textarea' ? 'none' : 'translateY(-50%)',
-                            cursor: 'pointer',
-                            color: '#999',
-                            fontWeight: 'bold',
-                            fontSize: '18px',
-                            lineHeight: '1',
-                            userSelect: 'none'
-                        }}
                         title="Șterge"
                     >
                         &times;
@@ -111,9 +96,7 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                 )}
             </div>
             {errors[name] && (
-                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                    {errors[name]}
-                </span>
+                <span className="error-text">{errors[name]}</span>
             )}
         </div>
     );
@@ -123,13 +106,13 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
             <div className="form-group">
                 {renderInput("Tip Incident", "tipIncident", "ex: Furt, Altercație")}
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Stare Incident</label>
+                {/* Select cu stiluri consistente */}
+                <div style={{ position: 'relative' }}>
+                    <label className="form-label">Stare Incident</label>
                     <select
                         className="modal-input"
                         value={formData.status}
                         onChange={(e) => handleChange('status', e.target.value)}
-                        style={{backgroundColor: '#f8f9fa'}}
                     >
                         <option value="Activ">Activ (În lucru)</option>
                         <option value="Închis">Închis (Rezolvat)</option>
@@ -155,13 +138,13 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
                     onSelect={(item) => setFormData({...formData, adresaId: item ? item.idAdresa : null})}
                 />
 
-                {renderInput("Descriere Locație", "descriereLocatie", "")}
+                {renderInput("Descriere Locație", "descriereLocatie", "Detalii suplimentare despre loc...")}
 
                 {renderInput("Detalii Incident", "descriereIncident", "Descrieți ce s-a întâmplat...", "text", "textarea")}
             </div>
 
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvați Incident</button>
+                <button className="save-btn" onClick={handleSave}>SALVAȚI INCIDENT</button>
             </div>
         </div>
     );

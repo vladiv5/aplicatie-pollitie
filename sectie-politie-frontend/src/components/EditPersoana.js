@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/TableStyles.css';
+import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -33,7 +33,6 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
         }
     };
 
-    // --- FUNCȚIE ȘTERGERE CÂMP (X) ---
     const handleClear = (fieldName) => {
         setFormData({ ...formData, [fieldName]: '' });
     };
@@ -61,10 +60,10 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
             });
     };
 
-    // --- HELPER INPUT EDIT ---
+    // Helper actualizat cu stilurile Tactical
     const renderInput = (label, name, type = "text", maxLength = null) => (
-        <div style={{ marginBottom: '15px' }}>
-            <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>{label}</label>
+        <div style={{ position: 'relative' }}>
+            <label className="form-label">{label}</label>
             <div style={{ position: 'relative' }}>
                 <input
                     type={type}
@@ -73,23 +72,12 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
                     className={`modal-input ${errors[name] ? 'input-error' : ''}`}
                     value={formData[name] || ''}
                     onChange={handleChange}
-                    style={{ paddingRight: '30px' }}
                 />
-                {formData[name] && (
+
+                {formData[name] && type !== 'date' && (
                     <span
+                        className="clear-icon"
                         onClick={() => handleClear(name)}
-                        style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            cursor: 'pointer',
-                            color: '#999',
-                            fontWeight: 'bold',
-                            fontSize: '18px',
-                            lineHeight: '1',
-                            userSelect: 'none'
-                        }}
                         title="Șterge"
                     >
                         &times;
@@ -97,9 +85,7 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
                 )}
             </div>
             {errors[name] && (
-                <span style={{ color: '#dc3545', fontSize: '12px', display:'block', marginTop:'4px' }}>
-                    {errors[name]}
-                </span>
+                <span className="error-text">{errors[name]}</span>
             )}
         </div>
     );
@@ -116,7 +102,7 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
 
             <div className="modal-footer">
                 <button className="save-btn" onClick={handleSave}>
-                    Salvați Modificări
+                    SALVAȚI MODIFICĂRI
                 </button>
             </div>
         </div>

@@ -3,14 +3,16 @@ import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
-import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
+
+// --- IMPORTĂM COMPONENTELE PENTRU VIZUALIZARE ---
+import Modal from './Modal';
+import ViewLocatariAdresa from './ViewLocatariAdresa';
 
 const AdreseList = ({
                         refreshTrigger,
                         onAddClick,
                         onEditClick,
-                        onViewLocatariClick,
                         highlightId,
                         onHighlightComplete,
                         setHighlightId
@@ -20,21 +22,22 @@ const AdreseList = ({
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // --- LOADING STATE ---
     const [isLoading, setIsLoading] = useState(true);
-
     const rowRefs = useRef({});
 
+    // --- STATE PENTRU DELETE ---
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
+
+    // --- STATE PENTRU VIEW LOCATARI ---
+    const [viewLocatariId, setViewLocatariId] = useState(null);
 
     const location = useLocation();
     const navigate = useNavigate();
 
     const loadAdrese = (page, term = '') => {
         setIsLoading(true);
-
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/adrese/lista-paginata?page=${page}&size=10`;
         if (term) url = `http://localhost:8080/api/adrese/cauta?termen=${term}`;
@@ -59,10 +62,8 @@ const AdreseList = ({
 
     useEffect(() => {
         const rawData = sessionStorage.getItem('boomerang_pending');
-
         if (rawData) {
             const data = JSON.parse(rawData);
-
             if (data.returnRoute === '/adrese' && data.triggerId) {
                 if (data.triggerAction === 'reOpenDelete') {
                     setTimeout(() => {
@@ -75,19 +76,22 @@ const AdreseList = ({
                 sessionStorage.removeItem('boomerang_pending');
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         loadAdrese(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
                 const currentList = responseData.content || responseData;
-                const existsOnPage = currentList.some(a => a.idAdresa === highlightId);
-
-                if (!existsOnPage) {
-                    findPageForId(highlightId);
+                if (currentList && Array.isArray(currentList)) {
+                    const existsOnPage = currentList.some(a => a.idAdresa === highlightId);
+                    if (!existsOnPage) {
+                        findPageForId(highlightId);
+                    }
                 }
             }
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
     const findPageForId = async (id) => {
@@ -97,7 +101,6 @@ const AdreseList = ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
-
             allData.sort((a, b) => {
                 const locComparison = a.localitate.localeCompare(b.localitate);
                 if (locComparison !== 0) return locComparison;
@@ -105,7 +108,6 @@ const AdreseList = ({
                 if (judComparison !== 0) return judComparison;
                 return a.strada.localeCompare(b.strada);
             });
-
             const index = allData.findIndex(a => a.idAdresa === id);
 
             if (index !== -1) {
@@ -177,7 +179,9 @@ const AdreseList = ({
     return (
         <div className="page-container">
             <h2 className="page-title">Registru Adrese</h2>
+
             <div className="controls-container">
+                {/* 1. SEARCH - STÂNGA */}
                 <div className="search-wrapper">
                     <input
                         type="text"
@@ -191,6 +195,16 @@ const AdreseList = ({
                     )}
                 </div>
 
+                {/* 2. PAGINARE - MIJLOC (Mutată aici) */}
+                {!searchTerm && !isLoading && totalPages > 1 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                )}
+
+                {/* 3. ADD BUTTON - DREAPTA */}
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Adresă</button>
             </div>
 
@@ -209,7 +223,6 @@ const AdreseList = ({
                     </thead>
                     <tbody>
 
-                    {/* LOGICA LOADING */}
                     {isLoading ? (
                         <tr>
                             <td colSpan="7">
@@ -233,12 +246,31 @@ const AdreseList = ({
                                     <td>{adresa.numar ? adresa.numar : ''}</td>
                                     <td>{adresa.bloc ? adresa.bloc : ''}</td>
                                     <td>{adresa.apartament ? adresa.apartament : ''}</td>
-                                    <td>
-                                        <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                            <button className="action-btn edit-btn" onClick={() => onEditClick(adresa.idAdresa)}>Editați</button>
-                                            <button className="action-btn delete-btn" onClick={() => handleRequestDelete(adresa.idAdresa)}>Ștergeți</button>
-                                            <button className="action-btn" style={{ backgroundColor: '#fd7e14', color: 'white', marginRight: '5px' }} onClick={() => onViewLocatariClick(adresa.idAdresa)} title="Vizualizați Locatari"><i className="fa fa-users"></i> Locatari</button>
-                                        </div>
+
+                                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                        <button
+                                            className="btn-tactical"
+                                            onClick={() => onEditClick(adresa.idAdresa)}
+                                            title="Editați Adresa"
+                                        >
+                                            <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+
+                                        <button
+                                            className="btn-tactical-red"
+                                            onClick={() => handleRequestDelete(adresa.idAdresa)}
+                                            title="Ștergeți Adresa"
+                                        >
+                                            <i className="fa-solid fa-trash"></i>
+                                        </button>
+
+                                        <button
+                                            className="btn-tactical-teal"
+                                            onClick={() => setViewLocatariId(adresa.idAdresa)}
+                                            title="Vizualizați Locatari"
+                                        >
+                                            <i className="fa-solid fa-users"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             ))
@@ -249,8 +281,24 @@ const AdreseList = ({
                     </tbody>
                 </table>
             </div>
-            {!searchTerm && !isLoading && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
+
+            {/* Am șters paginarea de aici de jos */}
+
             <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} currentPolitistId={deleteId} returnRoute="/adrese" />
+
+            <Modal
+                isOpen={!!viewLocatariId}
+                onClose={() => setViewLocatariId(null)}
+                title="Locatari la această adresă"
+                maxWidth="850px"
+            >
+                {viewLocatariId && (
+                    <ViewLocatariAdresa
+                        adresaId={viewLocatariId}
+                        onClose={() => setViewLocatariId(null)}
+                    />
+                )}
+            </Modal>
         </div>
     );
 };

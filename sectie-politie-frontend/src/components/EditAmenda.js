@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
-import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
+import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -41,7 +41,6 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
         }
     }, [id]);
 
-    // --- FUNCȚII NOI (X) ---
     const handleClear = (fieldName) => {
         setFormData({ ...formData, [fieldName]: '' });
     };
@@ -86,34 +85,21 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
             });
     };
 
-    // --- HELPER INPUT (Cu X si Erori) ---
     const renderInput = (label, name, type = 'text') => (
-        <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{label}</label>
+        <div style={{ position: 'relative' }}>
+            <label className="form-label">{label}</label>
             <div style={{ position: 'relative' }}>
                 <input
                     type={type}
                     className={`modal-input ${errors[name] ? 'input-error' : ''}`}
                     value={formData[name]}
                     onChange={(e) => handleChange(name, e.target.value)}
-                    style={{ paddingRight: '30px' }}
                 />
 
                 {formData[name] && type !== 'datetime-local' && (
                     <span
+                        className="clear-icon"
                         onClick={() => handleClear(name)}
-                        style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            cursor: 'pointer',
-                            color: '#999',
-                            fontWeight: 'bold',
-                            fontSize: '18px',
-                            lineHeight: '1',
-                            userSelect: 'none'
-                        }}
                         title="Șterge"
                     >
                         &times;
@@ -121,9 +107,7 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                 )}
             </div>
             {errors[name] && (
-                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                    {errors[name]}
-                </span>
+                <span className="error-text">{errors[name]}</span>
             )}
         </div>
     );
@@ -134,8 +118,8 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                 {renderInput("Motiv", "motiv")}
                 {renderInput("Sumă (RON)", "suma", "number")}
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Stare Plată</label>
+                <div style={{ position: 'relative' }}>
+                    <label className="form-label">Stare Plată</label>
                     <select
                         className="modal-input"
                         value={formData.starePlata}
@@ -166,7 +150,7 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                 />
             </div>
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvați Modificări</button>
+                <button className="save-btn" onClick={handleSave}>SALVAȚI MODIFICĂRI</button>
             </div>
         </div>
     );

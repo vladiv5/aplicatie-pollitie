@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './styles/TableStyles.css';
+import './styles/Forms.css';
 
 const ViewAdresePersoana = ({ persoanaId, onClose }) => {
     const [listaAdrese, setListaAdrese] = useState([]);
@@ -25,53 +25,60 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
 
     return (
         <div style={{ padding: '10px' }}>
-
-            {loading ? <p>Se încarcă...</p> : (
-                /* MODIFICARE: Am adaugat clasa 'compact-table' */
-                <table className="styled-table compact-table" style={{ marginTop: '15px' }}>
-                    <thead>
-                    <tr>
-                        <th>Județ</th>
-                        <th>Localitate</th>
-                        <th>Stradă & Număr</th>
-                        <th>Tip Adresă</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {listaAdrese.map((item, index) => (
-                        <tr key={index}>
-                            <td>{item.adresa.judetSauSector}</td>
-                            <td>{item.adresa.localitate}</td>
-                            <td>
-                                {item.adresa.strada}
-                                {item.adresa.numar ? `, Nr. ${item.adresa.numar}` : ''}
-                                {item.adresa.bloc ? `, Bl. ${item.adresa.bloc}` : ''}
-                                {item.adresa.apartament ? `, Ap. ${item.adresa.apartament}` : ''}
-                            </td>
-                            <td>
-                                    <span style={{
-                                        fontWeight: 'bold',
-                                        color: item.tipAdresa === 'Domiciliu' ? 'blue' : 'green'
-                                    }}>
+            {loading ? (
+                <div className="loading-container">
+                    <div className="spinner"></div>
+                    <p>Se încarcă adresele...</p>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="styled-table compact-table">
+                        <thead>
+                        <tr>
+                            <th>Localitate / Județ</th>
+                            <th>Stradă & Număr</th>
+                            <th style={{textAlign: 'center'}}>Tip</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {listaAdrese.map((item, index) => (
+                            <tr key={index}>
+                                <td>
+                                    <div style={{fontWeight: '500'}}>{item.adresa.localitate}</div>
+                                    <div style={{fontSize: '0.8rem', color: '#64748b'}}>{item.adresa.judetSauSector}</div>
+                                </td>
+                                <td>
+                                    {item.adresa.strada}
+                                    {item.adresa.numar ? `, Nr. ${item.adresa.numar}` : ''}
+                                    {item.adresa.bloc ? `, Bl. ${item.adresa.bloc}` : ''}
+                                    {item.adresa.apartament ? `, Ap. ${item.adresa.apartament}` : ''}
+                                </td>
+                                <td style={{textAlign: 'center'}}>
+                                     <span className={`badge-status`}
+                                           style={{
+                                               background: item.tipAdresa === 'Domiciliu' ? '#e0e7ff' : '#dcfce7',
+                                               color: item.tipAdresa === 'Domiciliu' ? '#3730a3' : '#166534'
+                                           }}>
                                         {item.tipAdresa}
                                     </span>
-                            </td>
-                        </tr>
-                    ))}
-                    {listaAdrese.length === 0 && (
-                        <tr>
-                            <td colSpan="4" style={{textAlign: 'center'}}>
-                                Această persoană nu are adrese asociate.
-                            </td>
-                        </tr>
-                    )}
-                    </tbody>
-                </table>
+                                </td>
+                            </tr>
+                        ))}
+                        {listaAdrese.length === 0 && (
+                            <tr>
+                                <td colSpan="3" style={{textAlign: 'center', padding: '20px', color: '#64748b'}}>
+                                    Această persoană nu are adrese asociate.
+                                </td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </table>
+                </div>
             )}
 
-            <div className="modal-footer" style={{ marginTop: '20px' }}>
-                <button className="action-btn" onClick={onClose} style={{ background: '#6c757d', color: 'white' }}>
-                    Închideți
+            <div className="modal-footer">
+                <button className="btn-close-modal" onClick={onClose}>
+                    ÎNCHIDEȚI
                 </button>
             </div>
         </div>

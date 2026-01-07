@@ -1,29 +1,27 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import './styles/Forms.css'; // <--- IMPORT THE NEW STYLES
 
 const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
         nume: '', prenume: '', grad: '', functie: '', telefon: ''
     });
-    // State pentru erorile venite din Backend
     const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        // Ștergem eroarea vizuală când utilizatorul începe să scrie
         if (errors[e.target.name]) {
             setErrors({ ...errors, [e.target.name]: null });
         }
     };
 
-    // --- FUNCȚIE ȘTERGERE CÂMP (X) ---
     const handleClear = (fieldName) => {
         setFormData({ ...formData, [fieldName]: '' });
     };
 
     const handleSave = () => {
-        setErrors({}); // Resetăm erorile înainte de request
+        setErrors({});
 
         axios.post('http://localhost:8080/api/politisti', {
             nume: formData.nume,
@@ -49,42 +47,35 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    // --- HELPER INPUT (Cu X si Erori fara Bold) ---
-    const renderInput = (name, placeholder) => (
-        <div style={{ position: 'relative', marginBottom: '15px' }}>
-            <input
-                type="text"
-                name={name}
-                placeholder={placeholder}
-                className={`modal-input ${errors[name] ? 'input-error' : ''}`}
-                value={formData[name]}
-                onChange={handleChange}
-                style={{ paddingRight: '30px' }}
-            />
-            {formData[name] && (
-                <span
-                    onClick={() => handleClear(name)}
-                    style={{
-                        position: 'absolute',
-                        right: '10px',
-                        top: '12px', // Ajustat manual pentru aliniere
-                        cursor: 'pointer',
-                        color: '#999',
-                        fontWeight: 'bold',
-                        fontSize: '18px',
-                        lineHeight: '1',
-                        userSelect: 'none'
-                    }}
-                    title="Șterge"
-                >
-                    &times;
-                </span>
-            )}
-            {/* EROAREA: Fără bold acum */}
+    // Helper to render input with label, X button, and error
+    const renderInput = (name, label, placeholder) => (
+        <div style={{ position: 'relative' }}>
+            <label className="form-label">{label}</label>
+            <div style={{ position: 'relative' }}>
+                <input
+                    type="text"
+                    name={name}
+                    placeholder={placeholder}
+                    className={`modal-input ${errors[name] ? 'input-error' : ''}`}
+                    value={formData[name]}
+                    onChange={handleChange}
+                />
+
+                {/* Clear Button (X) */}
+                {formData[name] && (
+                    <span
+                        className="clear-icon"
+                        onClick={() => handleClear(name)}
+                        title="Șterge"
+                    >
+                        &times;
+                    </span>
+                )}
+            </div>
+
+            {/* Error Message */}
             {errors[name] && (
-                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                    {errors[name]}
-                </span>
+                <span className="error-text">{errors[name]}</span>
             )}
         </div>
     );
@@ -92,14 +83,18 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     return (
         <div>
             <div className="form-group">
-                {renderInput("nume", "Nume")}
-                {renderInput("prenume", "Prenume")}
-                {renderInput("grad", "Grad")}
-                {renderInput("functie", "Funcție")}
-                {renderInput("telefon", "Telefon Serviciu")}
+                {/* We arrange them in a grid or stack. Here is a stack. */}
+                {renderInput("nume", "Nume", "ex: Popescu")}
+                {renderInput("prenume", "Prenume", "ex: Andrei")}
+                {renderInput("grad", "Grad", "ex: Agent Șef")}
+                {renderInput("functie", "Funcție", "ex: Patrulare")}
+                {renderInput("telefon", "Telefon Serviciu", "ex: 07xx xxx xxx")}
             </div>
+
             <div className="modal-footer">
-                <button className="save-btn" onClick={handleSave}>Salvați</button>
+                <button className="save-btn" onClick={handleSave}>
+                    SALVAȚI POLIȚIST
+                </button>
             </div>
         </div>
     );

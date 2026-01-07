@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/TableStyles.css';
+import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
 
 const AddPersoana = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -15,20 +15,18 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        // Ștergem eroarea vizuală când utilizatorul scrie
         if (errors[e.target.name]) {
             setErrors({ ...errors, [e.target.name]: null });
         }
     };
 
-    // --- FUNCȚIE ȘTERGERE CÂMP (X) ---
     const handleClear = (fieldName) => {
         setFormData({ ...formData, [fieldName]: '' });
     };
 
     const handleSave = () => {
         const token = localStorage.getItem('token');
-        setErrors({}); // Resetăm erorile
+        setErrors({});
 
         axios.post('http://localhost:8080/api/persoane', formData, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -50,16 +48,10 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    // --- HELPER INPUT (Cu X, Erori și suport pentru Data/MaxLength) ---
-    const renderInput = (name, placeholder, type = 'text', maxLength = null, label = null) => (
-        <div style={{ marginBottom: '15px' }}>
-            {/* Afișăm label doar dacă este specificat (ex: la Data Nașterii) */}
-            {label && (
-                <label style={{ fontSize: '12px', color: '#666', marginLeft: '2px', display: 'block', marginBottom: '5px' }}>
-                    {label}
-                </label>
-            )}
-
+    // Helper actualizat cu clasele din Forms.css
+    const renderInput = (name, label, placeholder, type = 'text', maxLength = null) => (
+        <div style={{ position: 'relative' }}>
+            <label className="form-label">{label}</label>
             <div style={{ position: 'relative' }}>
                 <input
                     type={type}
@@ -69,26 +61,13 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
                     className={`modal-input ${errors[name] ? 'input-error' : ''}`}
                     value={formData[name]}
                     onChange={handleChange}
-                    style={{ paddingRight: '30px' }}
                 />
 
-                {/* Butonul X (Apare doar dacă avem text și nu e tip 'date' - la date browserele pun X-ul lor uneori, dar îl punem și noi pt consistență dacă dorești) */}
-                {/* Notă: La type='date', value e mereu validă sau goală, X-ul nostru o va goli */}
-                {formData[name] && (
+                {/* Buton X - folosim clasa .clear-icon */}
+                {formData[name] && type !== 'date' && (
                     <span
+                        className="clear-icon"
                         onClick={() => handleClear(name)}
-                        style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            cursor: 'pointer',
-                            color: '#999',
-                            fontWeight: 'bold',
-                            fontSize: '18px',
-                            lineHeight: '1',
-                            userSelect: 'none'
-                        }}
                         title="Șterge"
                     >
                         &times;
@@ -96,11 +75,9 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
                 )}
             </div>
 
-            {/* Mesaj Eroare (fără bold) */}
+            {/* Mesaj Eroare - folosim clasa .error-text */}
             {errors[name] && (
-                <span style={{ color: '#dc3545', fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                    {errors[name]}
-                </span>
+                <span className="error-text">{errors[name]}</span>
             )}
         </div>
     );
@@ -108,19 +85,16 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
     return (
         <div>
             <div className="form-group">
-                {renderInput("nume", "Nume")}
-                {renderInput("prenume", "Prenume")}
-                {renderInput("cnp", "CNP", "text", 13)}
-
-                {/* Aici folosim parametrul label pentru Data Nașterii */}
-                {renderInput("dataNasterii", "", "date", null, "Data Nașterii:")}
-
-                {renderInput("telefon", "Telefon")}
+                {renderInput("nume", "Nume", "ex: Ionescu")}
+                {renderInput("prenume", "Prenume", "ex: Maria")}
+                {renderInput("cnp", "CNP", "13 cifre", "text", 13)}
+                {renderInput("dataNasterii", "Data Nașterii", "", "date")}
+                {renderInput("telefon", "Telefon", "ex: 07xx xxx xxx")}
             </div>
 
             <div className="modal-footer">
                 <button className="save-btn" onClick={handleSave}>
-                    Salvați Persoana
+                    SALVAȚI PERSOANA
                 </button>
             </div>
         </div>

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
-import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
 
 const IncidenteList = ({
@@ -24,7 +23,7 @@ const IncidenteList = ({
     const [deleteId, setDeleteId] = useState(null);
 
     const loadIncidente = (page, term = '') => {
-        setIsLoading(true); // Start loading
+        setIsLoading(true);
 
         const token = localStorage.getItem('token');
         let url = `http://localhost:8080/api/incidente/lista-paginata?page=${page}&size=10`;
@@ -44,7 +43,6 @@ const IncidenteList = ({
             })
             .catch(err => console.error(err))
             .finally(() => {
-                // Stop loading cu delay mic pentru fluiditate
                 setTimeout(() => setIsLoading(false), 200);
             });
     };
@@ -53,13 +51,16 @@ const IncidenteList = ({
         loadIncidente(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
                 const currentList = responseData.content || responseData;
-                const existsOnPage = currentList.some(inc => inc.idIncident === highlightId);
-
-                if (!existsOnPage) {
-                    findPageForId(highlightId);
+                // Check if list exists
+                if (currentList && Array.isArray(currentList)) {
+                    const existsOnPage = currentList.some(inc => inc.idIncident === highlightId);
+                    if (!existsOnPage) {
+                        findPageForId(highlightId);
+                    }
                 }
             }
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
     const findPageForId = async (id) => {
@@ -141,28 +142,12 @@ const IncidenteList = ({
             .catch(err => toast.error("Eroare la ștergere!"));
     };
 
-    // --- MODIFICARE AICI: Stiluri noi pentru status ---
-    const getStatusStyle = (status) => {
-        const baseStyle = { padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' };
-        switch(status) {
-            case 'Activ':
-                // Verde deschis fundal, verde închis text (stil similar cu 'Martor'/'Victima')
-                return { ...baseStyle, backgroundColor: '#e8f5e9', color: '#28a745' };
-            case 'Închis':
-                // Gri deschis fundal, gri închis text
-                return { ...baseStyle, backgroundColor: '#f8f9fa', color: '#6c757d', border: '1px solid #dee2e6' };
-            case 'Arhivat':
-                // Portocaliu deschis fundal, portocaliu închis text
-                return { ...baseStyle, backgroundColor: '#fff3cd', color: '#fd7e14' };
-            default:
-                return baseStyle;
-        }
-    };
-
     return (
         <div className="page-container">
             <h2 className="page-title">Registru Incidente</h2>
+
             <div className="controls-container">
+                {/* 1. SEARCH */}
                 <div className="search-wrapper">
                     <input
                         type="text"
@@ -176,6 +161,16 @@ const IncidenteList = ({
                     )}
                 </div>
 
+                {/* 2. PAGINARE MUTATĂ AICI */}
+                {!searchTerm && !isLoading && totalPages > 1 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                )}
+
+                {/* 3. BUTON ADĂUGARE */}
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Incident</button>
             </div>
 
@@ -194,7 +189,6 @@ const IncidenteList = ({
                     </thead>
                     <tbody>
 
-                    {/* LOGICA LOADING */}
                     {isLoading ? (
                         <tr>
                             <td colSpan="7">
@@ -212,31 +206,62 @@ const IncidenteList = ({
                                     ref={(el) => (rowRefs.current[inc.idIncident] = el)}
                                     className={highlightId === inc.idIncident ? 'flash-row' : ''}
                                 >
-                                    <td>{inc.tipIncident}</td>
-                                    {/* AICI SE APLICĂ NOUL STIL */}
-                                    <td><span style={getStatusStyle(inc.status)}>{inc.status || 'Activ'}</span></td>
+                                    <td style={{fontWeight: '500'}}>{inc.tipIncident}</td>
+                                    <td>
+                                        <span className="badge-status">
+                                            {inc.status || 'Activ'}
+                                        </span>
+                                    </td>
                                     <td>{inc.dataEmitere ? new Date(inc.dataEmitere).toLocaleString('ro-RO').substring(0, 17) : ''}</td>
                                     <td>{inc.descriereLocatie}</td>
                                     <td>{inc.adresaIncident ? `${inc.adresaIncident.strada} ${inc.adresaIncident.numar}` : ''}</td>
                                     <td>{inc.politistResponsabil ? `${inc.politistResponsabil.nume} ${inc.politistResponsabil.prenume}` : ''}</td>
-                                    <td>
-                                        <div className="action-buttons-container" style={{justifyContent:'center'}}>
-                                            <button className="action-btn" style={{ backgroundColor: '#17a2b8', color: 'white' }} onClick={() => onViewClick(inc)}>Vizualizați</button>
-                                            <button className="action-btn edit-btn" onClick={() => onEditClick(inc.idIncident)}>Editați</button>
-                                            <button className="action-btn delete-btn" onClick={() => handleRequestDelete(inc.idIncident)}>Ștergeți</button>
-                                            <button className="action-btn" style={{ backgroundColor: '#6f42c1', color: 'white', marginLeft: '5px' }} onClick={() => onManageParticipantsClick(inc.idIncident)}><i className="fa fa-users"></i> Pers</button>
-                                        </div>
+
+                                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                        <button
+                                            className="btn-tactical-teal"
+                                            onClick={() => onViewClick(inc)}
+                                            title="Vizualizați Detalii"
+                                        >
+                                            <i className="fa-solid fa-eye"></i>
+                                        </button>
+
+                                        <button
+                                            className="btn-tactical-purple"
+                                            onClick={() => onManageParticipantsClick(inc.idIncident)}
+                                            title="Gestionați Participanți"
+                                        >
+                                            <i className="fa-solid fa-users"></i>
+                                        </button>
+
+                                        <button
+                                            className="btn-tactical"
+                                            onClick={() => onEditClick(inc.idIncident)}
+                                            title="Editați Incident"
+                                        >
+                                            <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+
+                                        <button
+                                            className="btn-tactical-red"
+                                            onClick={() => handleRequestDelete(inc.idIncident)}
+                                            title="Ștergeți Incident"
+                                        >
+                                            <i className="fa-solid fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există date.</td></tr>
+                            <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există incidente.</td></tr>
                         )
                     )}
                     </tbody>
                 </table>
             </div>
-            {!searchTerm && !isLoading && totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
+
+            {/* Paginarea a fost ștearsă de aici */}
+
             <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
         </div>
     );

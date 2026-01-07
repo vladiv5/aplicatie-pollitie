@@ -3,10 +3,10 @@ import axios from 'axios';
 import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
 
-// Importăm componentele de editare și Modalul generic
 import EditIncident from './EditIncident';
 import EditAmenda from './EditAmenda';
 import Modal from './Modal';
+import './styles/Home.css'
 
 const MyActivityModal = ({ userId, onClose }) => {
     // --- STATE DATE ---
@@ -24,10 +24,9 @@ const MyActivityModal = ({ userId, onClose }) => {
     const [editIncidentId, setEditIncidentId] = useState(null);
     const [editAmendaId, setEditAmendaId] = useState(null);
 
-    // --- FUNCȚIE DE ÎNCĂRCARE DATE (Reutilizabilă) ---
+    // --- FUNCȚIE DE ÎNCĂRCARE DATE ---
     const loadData = useCallback(() => {
         const token = localStorage.getItem('token');
-
         if (!userId) return;
 
         axios.get(`http://localhost:8080/api/politisti/${userId}/dosar-personal`, {
@@ -44,97 +43,76 @@ const MyActivityModal = ({ userId, onClose }) => {
             });
     }, [userId]);
 
-    // Încărcăm la montare
     useEffect(() => {
         loadData();
     }, [loadData]);
 
-    // --- HANDLERS PENTRU UPDATE ---
     const handleEditSuccess = () => {
         setEditIncidentId(null);
         setEditAmendaId(null);
-        loadData(); // Reîmprospătăm datele din tabel
+        loadData();
     };
 
-    // --- HELPER STILURI ---
     const formatDate = (dateString) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleString('ro-RO');
-    };
-
-    const getIncidentStatusStyle = (status) => {
-        switch(status) {
-            case 'Activ': return { backgroundColor: '#28a745', color: 'white' }; // Verde
-            case 'Închis': return { backgroundColor: '#6c757d', color: 'white' }; // Gri
-            case 'Arhivat': return { backgroundColor: '#fd7e14', color: 'white' }; // Portocaliu
-            default: return { backgroundColor: '#eee', color: '#333' };
-        }
-    };
-
-    const getAmendaStatusStyle = (status) => {
-        switch(status) {
-            case 'Platita': return { color: '#28a745' }; // Verde
-            case 'Neplatita': return { color: '#dc3545' }; // Rosu
-            case 'Anulata': return { color: '#fd7e14' }; // Galben/Portocaliu (Mai vizibil decat galben pur pe alb)
-            default: return { color: '#333' };
-        }
+        return new Date(dateString).toLocaleString('ro-RO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     return (
-        <div style={{ minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
+        <div className="my-activity-modal-container">
 
-            {/* STATISTICI RAPIDE */}
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '15px', background: '#f0f4f8', borderRadius: '8px', border: '1px solid #e1e4e8' }}>
-                <div style={{ flex: 1, textAlign: 'center' }}>
-                    <h4 style={{ margin: 0, color: '#0056b3', fontSize: '24px' }}>{data.totalIncidente}</h4>
-                    <span style={{ fontSize: '13px', color: '#666', fontWeight: '500' }}>Dosare Instrumentate</span>
+            {/* 1. STATISTICI RAPIDE */}
+            <div className="dosar-stats-container">
+                <div className="stat-box">
+                    <h4 className="stat-value">{data.totalIncidente}</h4>
+                    <span className="shortcut-desc">Dosare Instrumentate</span>
                 </div>
-                <div style={{ borderLeft: '1px solid #ccc' }}></div>
-                <div style={{ flex: 1, textAlign: 'center' }}>
-                    <h4 style={{ margin: 0, color: '#28a745', fontSize: '24px' }}>{data.totalAmenziCount}</h4>
-                    <span style={{ fontSize: '13px', color: '#666', fontWeight: '500' }}>Sancțiuni Aplicate</span>
+                <div className="stat-box">
+                    <h4 className="stat-value">{data.totalAmenziCount}</h4>
+                    <span className="shortcut-desc">Sancțiuni Aplicate</span>
                 </div>
-                <div style={{ borderLeft: '1px solid #ccc' }}></div>
-                <div style={{ flex: 1, textAlign: 'center' }}>
-                    <h4 style={{ margin: 0, color: '#dc3545', fontSize: '24px' }}>{data.totalAmenziValoare} <span style={{fontSize: '14px'}}>RON</span></h4>
-                    <span style={{ fontSize: '13px', color: '#666', fontWeight: '500' }}>Valoare Totală</span>
+                <div className="stat-box">
+                    <h4 className="stat-value money">
+                        {data.totalAmenziValoare} <small style={{fontSize: '14px'}}>RON</small>
+                    </h4>
+                    <span className="shortcut-desc">Valoare Totală</span>
                 </div>
             </div>
 
-            {/* TABS */}
-            <div style={{ display: 'flex', borderBottom: '2px solid #eee', marginBottom: '0' }}>
+            {/* 2. TABS */}
+            <div className="modal-tabs">
                 <button
+                    className={`tab-btn ${activeTab === 'incidente' ? 'active' : ''}`}
                     onClick={() => setActiveTab('incidente')}
-                    style={{
-                        flex: 1, padding: '12px', background: activeTab === 'incidente' ? 'white' : '#f9f9f9',
-                        border: 'none', borderBottom: activeTab === 'incidente' ? '3px solid #0056b3' : 'none',
-                        fontWeight: 'bold', color: activeTab === 'incidente' ? '#0056b3' : '#666', cursor: 'pointer'
-                    }}
                 >
-                    📁 Incidente ({data.totalIncidente})
+                    <i className="fa-solid fa-folder"></i> Incidente ({data.totalIncidente})
                 </button>
                 <button
+                    className={`tab-btn ${activeTab === 'amenzi' ? 'active' : ''}`}
                     onClick={() => setActiveTab('amenzi')}
-                    style={{
-                        flex: 1, padding: '12px', background: activeTab === 'amenzi' ? 'white' : '#f9f9f9',
-                        border: 'none', borderBottom: activeTab === 'amenzi' ? '3px solid #0056b3' : 'none',
-                        fontWeight: 'bold', color: activeTab === 'amenzi' ? '#0056b3' : '#666', cursor: 'pointer'
-                    }}
                 >
-                    📄 Amenzi ({data.totalAmenziCount})
+                    <i className="fa-solid fa-file-invoice"></i> Amenzi ({data.totalAmenziCount})
                 </button>
             </div>
 
-            {/* CONTENT */}
-            <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #eee', borderTop: 'none', background: 'white', minHeight: '300px' }}>
+            {/* 3. CONTENT */}
+            <div className="table-responsive" style={{ borderTop: 'none', background: 'white', minHeight: '350px' }}>
                 {loading ? (
-                    <p style={{ padding: '20px', textAlign: 'center' }}>Se încarcă datele...</p>
+                    <div className="loading-container">
+                        <div className="spinner"></div>
+                        <p>Se încarcă datele operative...</p>
+                    </div>
                 ) : (
                     <>
-                        {/* --- TABEL INCIDENTE --- */}
                         {activeTab === 'incidente' && (
-                            <table className="styled-table" style={{ width: '100%', margin: 0, boxShadow: 'none', borderRadius: 0 }}>
-                                <thead style={{ position: 'sticky', top: 0 }}>
+                            <table className="styled-table compact-table">
+                                <thead>
                                 <tr>
                                     <th>Tip</th>
                                     <th>Data</th>
@@ -146,34 +124,36 @@ const MyActivityModal = ({ userId, onClose }) => {
                                 <tbody>
                                 {data.incidente.length > 0 ? data.incidente.map(inc => (
                                     <tr key={inc.idIncident}>
-                                        <td>{inc.tipIncident}</td>
+                                        <td style={{fontWeight: '600'}}>{inc.tipIncident}</td>
                                         <td>{formatDate(inc.dataEmitere)}</td>
                                         <td>
-                                                <span style={{
-                                                    padding: '4px 8px', borderRadius: '4px', fontSize: '12px',
-                                                    ...getIncidentStatusStyle(inc.status)
-                                                }}>
+                                                <span className={`badge-status ${inc.status === 'Închis' ? 'status-inchis' : 'status-arhivat'}`}>
                                                     {inc.status}
                                                 </span>
                                         </td>
-                                        <td style={{ fontSize: '13px' }}>{inc.descriereLocatie}</td>
+                                        <td>{inc.descriereLocatie}</td>
+
+                                        {/* FIX 1: Buton curat fără margin și cu title */}
                                         <td style={{ textAlign: 'center' }}>
-                                            <button className="action-btn edit-btn" onClick={() => setEditIncidentId(inc.idIncident)}>
-                                                Editați
+                                            <button
+                                                className="btn-tactical"
+                                                onClick={() => setEditIncidentId(inc.idIncident)}
+                                                title="Editați Incident"
+                                            >
+                                                <i className="fa-solid fa-pen-to-square"></i>
                                             </button>
                                         </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan="5" style={{textAlign:'center', padding: '30px', color: '#999'}}>Nu aveți incidente alocate.</td></tr>
+                                    <tr><td colSpan="5" className="text-center">Nu există incidente alocate acestui profil.</td></tr>
                                 )}
                                 </tbody>
                             </table>
                         )}
 
-                        {/* --- TABEL AMENZI --- */}
                         {activeTab === 'amenzi' && (
-                            <table className="styled-table" style={{ width: '100%', margin: 0, boxShadow: 'none', borderRadius: 0 }}>
-                                <thead style={{ position: 'sticky', top: 0 }}>
+                            <table className="styled-table compact-table">
+                                <thead>
                                 <tr>
                                     <th>Motiv</th>
                                     <th>Suma</th>
@@ -187,27 +167,30 @@ const MyActivityModal = ({ userId, onClose }) => {
                                 {data.amenzi.length > 0 ? data.amenzi.map(a => (
                                     <tr key={a.idAmenda}>
                                         <td>{a.motiv}</td>
-                                        <td style={{fontWeight:'bold', color: 'black'}}>{a.suma} RON</td>
+                                        <td style={{fontWeight:'bold', color: 'var(--royal-navy-dark)'}}>{a.suma} RON</td>
                                         <td>
-                                                <span style={{
-                                                    fontWeight: 'bold',
-                                                    ...getAmendaStatusStyle(a.starePlata)
-                                                }}>
-                                                    {a.starePlata}
-                                                </span>
+                                            <span className="badge-status">
+                                                {a.starePlata}
+                                            </span>
                                         </td>
                                         <td>{formatDate(a.dataEmitere)}</td>
                                         <td>
-                                            {a.persoana ? `${a.persoana.nume} ${a.persoana.prenume}` : <span style={{color:'#999'}}>Necunoscut</span>}
+                                            {a.persoana ? `${a.persoana.nume} ${a.persoana.prenume}` : <span style={{color:'#999'}}>Nespecificat</span>}
                                         </td>
+
+                                        {/* FIX 2: Buton curat fără margin și cu title */}
                                         <td style={{ textAlign: 'center' }}>
-                                            <button className="action-btn edit-btn" onClick={() => setEditAmendaId(a.idAmenda)}>
-                                                Editați
+                                            <button
+                                                className="btn-tactical"
+                                                onClick={() => setEditAmendaId(a.idAmenda)}
+                                                title="Editați Amendă"
+                                            >
+                                                <i className="fa-solid fa-pen-to-square"></i>
                                             </button>
                                         </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan="6" style={{textAlign:'center', padding: '30px', color: '#999'}}>Nu ați acordat amenzi.</td></tr>
+                                    <tr><td colSpan="6" className="text-center">Nu există sancțiuni înregistrate.</td></tr>
                                 )}
                                 </tbody>
                             </table>
@@ -216,44 +199,14 @@ const MyActivityModal = ({ userId, onClose }) => {
                 )}
             </div>
 
-            <div className="modal-footer" style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
-                <button className="action-btn" style={{ background: '#6c757d', color: 'white' }} onClick={onClose}>
-                    Închideți
-                </button>
-            </div>
-
-            {/* --- MODALE PENTRU EDITARE (NESTED MODALS) --- */}
-
-            {/* Modal Edit Incident */}
-            <Modal
-                isOpen={!!editIncidentId}
-                onClose={() => setEditIncidentId(null)}
-                title="Editați Incident"
-            >
-                {editIncidentId && (
-                    <EditIncident
-                        id={editIncidentId}
-                        onSaveSuccess={handleEditSuccess}
-                        onCancel={() => setEditIncidentId(null)}
-                    />
-                )}
+            {/* --- MODALE NESTED --- */}
+            <Modal isOpen={!!editIncidentId} onClose={() => setEditIncidentId(null)} title="Editați Incident Operativ">
+                {editIncidentId && <EditIncident id={editIncidentId} onSaveSuccess={handleEditSuccess} onCancel={() => setEditIncidentId(null)} />}
             </Modal>
 
-            {/* Modal Edit Amenda */}
-            <Modal
-                isOpen={!!editAmendaId}
-                onClose={() => setEditAmendaId(null)}
-                title="Editați Amendă"
-            >
-                {editAmendaId && (
-                    <EditAmenda
-                        id={editAmendaId}
-                        onSaveSuccess={handleEditSuccess}
-                        onCancel={() => setEditAmendaId(null)}
-                    />
-                )}
+            <Modal isOpen={!!editAmendaId} onClose={() => setEditAmendaId(null)} title="Editați Proces Verbal">
+                {editAmendaId && <EditAmenda id={editAmendaId} onSaveSuccess={handleEditSuccess} onCancel={() => setEditAmendaId(null)} />}
             </Modal>
-
         </div>
     );
 };

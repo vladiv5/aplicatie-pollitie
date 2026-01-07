@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
-import './styles/TableStyles.css';
 import toast from "react-hot-toast";
+import './styles/Forms.css'; // Importăm stilurile globale
 
 const GestionareParticipanti = ({ incidentId, onClose }) => {
     const [participanti, setParticipanti] = useState([]);
     const [persoanaSelectata, setPersoanaSelectata] = useState(null);
     const [calitate, setCalitate] = useState('Martor');
-
-    // --- LOADING STATE (Anti-Flicărit) ---
     const [isLoading, setIsLoading] = useState(true);
 
-    // Încarcă lista existentă
     const loadParticipanti = () => {
-        setIsLoading(true); // Pornim încărcarea
+        setIsLoading(true);
         const token = localStorage.getItem('token');
 
         axios.get(`http://localhost:8080/api/participanti/incident/${incidentId}`, {
@@ -23,7 +20,6 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
             .then(res => setParticipanti(res.data))
             .catch(err => console.error(err))
             .finally(() => {
-                // Oprim încărcarea cu un mic delay pentru fluiditate
                 setTimeout(() => setIsLoading(false), 200);
             });
     };
@@ -32,7 +28,6 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
         loadParticipanti();
     }, [incidentId]);
 
-    // Adăugați om nou
     const handleAdd = () => {
         if (!persoanaSelectata) {
             toast.error("Selectați o persoană!");
@@ -49,10 +44,9 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                 setPersoanaSelectata(null);
                 toast.success("Persoană asociată cu succes!");
             })
-            .catch(err => toast.error("Eroare: Persoana este deja adăugată sau sistemul a eșuat."));
+            .catch(err => toast.error("Eroare: Persoana este deja adăugată!"));
     };
 
-    // Șterge om
     const handleDelete = (persoanaId) => {
         const token = localStorage.getItem('token');
         axios.delete(`http://localhost:8080/api/participanti/${incidentId}/${persoanaId}`, {
@@ -69,72 +63,65 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
     };
 
     return (
-        <div style={{ padding: '10px' }}>
+        <div style={{ padding: '5px' }}>
 
-            {/* ZONA DE ADAUGARE */}
-            <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '5px', marginBottom: '20px', border: '1px solid #eee' }}>
-                <h5 style={{ marginTop: 0, marginBottom: '10px', color: '#555' }}>Adăugați un participant nou</h5>
-                <LiveSearchInput
-                    label=""
-                    placeholder="Introduceți nume sau CNP..."
-                    apiUrl="http://localhost:8080/api/persoane/cauta"
-                    displayKey={(p) => `${p.nume} ${p.prenume} (CNP: ${p.cnp})`}
-                    onSelect={setPersoanaSelectata}
-                />
+            {/* ZONA DE ADAUGARE (STILIZATĂ CLEAN) */}
+            <div style={{
+                background: '#f8fafc',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '25px',
+                border: '1px solid #e2e8f0',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.03)'
+            }}>
+                <h5 className="form-label" style={{ fontSize: '0.9rem', marginBottom: '15px', color: '#64748b' }}>
+                    <i className="fa-solid fa-user-plus"></i> Adăugați Participant Nou
+                </h5>
 
-                <div style={{ marginTop: '15px', display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
-                    <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>În calitate de:</label>
-                        <select
-                            className="modal-input"
-                            value={calitate}
-                            onChange={(e) => setCalitate(e.target.value)}
-                            style={{ width: '100%', padding: '8px' }}
-                        >
-                            <option value="Martor">Martor</option>
-                            <option value="Suspect">Suspect</option>
-                            <option value="Victima">Victimă</option>
-                            <option value="Reclamant">Reclamant</option>
-                            <option value="Faptas">Făptaș</option>
-                        </select>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <LiveSearchInput
+                        label="Căutare Persoană"
+                        placeholder="Introduceți nume sau CNP..."
+                        apiUrl="http://localhost:8080/api/persoane/cauta"
+                        displayKey={(p) => `${p.nume} ${p.prenume} (CNP: ${p.cnp})`}
+                        onSelect={setPersoanaSelectata}
+                    />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '15px', alignItems: 'end' }}>
+                        <div>
+                            <label className="form-label">În calitate de:</label>
+                            <select
+                                className="modal-input"
+                                value={calitate}
+                                onChange={(e) => setCalitate(e.target.value)}
+                            >
+                                <option value="Martor">Martor</option>
+                                <option value="Suspect">Suspect</option>
+                                <option value="Victima">Victimă</option>
+                                <option value="Reclamant">Reclamant</option>
+                                <option value="Faptas">Făptaș</option>
+                            </select>
+                        </div>
+
+                        <button className="save-btn" onClick={handleAdd} style={{ height: '42px', padding: '0 25px' }}>
+                            ADAUGĂ
+                        </button>
                     </div>
-
-                    <button className="add-btn-primary" onClick={handleAdd} style={{ height: '38px', marginBottom: '1px' }}>
-                        Adăugați
-                    </button>
                 </div>
             </div>
 
-            {/* TABEL LISTA - WRAPPER CU UMBRA */}
-            <div style={{
-                borderRadius: '10px',
-                width: '100%',
-                marginTop: '10px',
-                backgroundColor: 'white',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-            }}>
-                {/* MODIFICARE AICI: Am adăugat clasa 'compact-table'
-                    Aceasta va activa regula CSS pe care ai adăugat-o pentru a micșora coloana de acțiuni.
-                */}
-                <table className="styled-table compact-table" style={{
-                    width: '100%',
-                    margin: 0,
-                    boxShadow: 'none',
-                    borderTopLeftRadius: '10px',
-                    borderTopRightRadius: '10px',
-                    borderCollapse: 'separate',
-                    borderSpacing: 0
-                }}>
+            {/* TABEL LISTA */}
+            <div className="table-responsive">
+                <table className="styled-table compact-table">
                     <thead>
                     <tr>
-                        <th style={{ borderTopLeftRadius: '10px' }}>Nume</th>
+                        <th>Nume</th>
                         <th>Calitate</th>
-                        <th style={{ textAlign: 'center', borderTopRightRadius: '10px' }}>Acțiune</th>
+                        <th style={{ textAlign: 'center' }}>Acțiune</th>
                     </tr>
                     </thead>
                     <tbody>
 
-                    {/* LOGICA DE LOADING APLICATĂ */}
                     {isLoading ? (
                         <tr>
                             <td colSpan="3">
@@ -146,33 +133,40 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                         </tr>
                     ) : (
                         participanti.length > 0 ? participanti.map((p, index) => (
-                            <tr key={p.id.idPersoana} style={{ borderBottom: index === participanti.length - 1 ? 'none' : '1px solid #eee' }}>
-                                <td style={{ padding: '12px 15px' }}>{p.persoana.nume} {p.persoana.prenume}</td>
+                            <tr key={p.id.idPersoana}>
+                                <td style={{ fontWeight: '500' }}>{p.persoana.nume} {p.persoana.prenume}</td>
                                 <td>
-                                    <span style={{
-                                        fontWeight: 'bold',
-                                        color: (p.calitate === 'Suspect' || p.calitate === 'Faptas') ? '#dc3545' :
-                                            (p.calitate === 'Victima' ? '#fd7e14' : '#28a745')
+                                    <span className="badge-status" style={{
+                                        backgroundColor: (p.calitate === 'Suspect' || p.calitate === 'Faptas') ? '#fee2e2' :
+                                            (p.calitate === 'Victima' ? '#fff7ed' : '#dcfce7'),
+                                        color: (p.calitate === 'Suspect' || p.calitate === 'Faptas') ? '#991b1b' :
+                                            (p.calitate === 'Victima' ? '#9a3412' : '#166534')
                                     }}>
                                         {p.calitate}
                                     </span>
                                 </td>
+
+                                {/* BUTON ȘTERGERE ICON-ONLY (TACTICAL RED) */}
                                 <td style={{ textAlign: 'center' }}>
-                                    <button className="action-btn delete-btn" onClick={() => handleDelete(p.id.idPersoana)} title="Eliminați participantul">
-                                        Eliminați
+                                    <button
+                                        className="btn-tactical-red"
+                                        onClick={() => handleDelete(p.id.idPersoana)}
+                                        title="Eliminați participantul"
+                                    >
+                                        <i className="fa-solid fa-trash"></i>
                                     </button>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Niciun participant adăugat.</td></tr>
+                            <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>Niciun participant adăugat la acest dosar.</td></tr>
                         )
                     )}
                     </tbody>
                 </table>
             </div>
 
-            <div className="modal-footer" style={{ marginTop: '20px' }}>
-                <button className="action-btn" onClick={onClose} style={{ background: '#6c757d', color: 'white' }}>Închideți</button>
+            <div className="modal-footer">
+                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
             </div>
         </div>
     );

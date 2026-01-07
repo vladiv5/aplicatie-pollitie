@@ -1,84 +1,88 @@
 import React from 'react';
-import './styles/TableStyles.css';
+import './styles/Forms.css'; // Stiluri comune
 
 const ViewIncident = ({ incident, onClose }) => {
     if (!incident) return null;
 
-    // --- FUNCȚIE FORMATARE DATĂ (DD-MM-YYYY HH:MM) ---
     const formatData = (dateString) => {
         if (!dateString) return '-';
         const date = new Date(dateString);
-        const zi = String(date.getDate()).padStart(2, '0');
-        const luna = String(date.getMonth() + 1).padStart(2, '0');
-        const an = date.getFullYear();
-        const ora = String(date.getHours()).padStart(2, '0');
-        const min = String(date.getMinutes()).padStart(2, '0');
-        return `${zi}-${luna}-${an} ${ora}:${min}`;
+        return date.toLocaleString('ro-RO', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    };
+
+    // Stil inline pentru "Read-Only Field" (ca un input dezactivat dar mai elegant)
+    const readOnlyFieldStyle = {
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        padding: '10px',
+        borderRadius: '6px',
+        color: '#334155',
+        fontSize: '0.9rem',
+        fontWeight: '500'
+    };
+
+    const labelStyle = {
+        display: 'block',
+        fontSize: '0.75rem',
+        textTransform: 'uppercase',
+        color: '#64748b',
+        fontWeight: 'bold',
+        marginBottom: '4px'
     };
 
     return (
-        <div className="view-container">
-            <div className="view-row">
-                <strong>Tip Incident: </strong>
-                <span>{incident.tipIncident}</span>
+        <div style={{ padding: '10px' }}>
+            {/* Grid layout pentru detalii principale */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                <div>
+                    <span style={labelStyle}>Tip Incident</span>
+                    <div style={readOnlyFieldStyle}>{incident.tipIncident}</div>
+                </div>
+                <div>
+                    <span style={labelStyle}>Data și Ora</span>
+                    <div style={readOnlyFieldStyle}>{formatData(incident.dataEmitere)}</div>
+                </div>
             </div>
 
-            <div className="view-row">
-                <strong>Stare Curentă: </strong>
-                <span style={{fontWeight: 'bold', color: incident.status === 'Activ' ? 'green' : 'gray'}}>
-                    {incident.status || 'Activ'}
-                </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                <div>
+                    <span style={labelStyle}>Stare</span>
+                    <div style={{...readOnlyFieldStyle, color: incident.status === 'Activ' ? '#166534' : '#475569', fontWeight: 'bold'}}>
+                        {incident.status || 'Activ'}
+                    </div>
+                </div>
+                <div>
+                    <span style={labelStyle}>Polițist Responsabil</span>
+                    <div style={readOnlyFieldStyle}>
+                        {incident.politistResponsabil
+                            ? `${incident.politistResponsabil.nume} ${incident.politistResponsabil.prenume}`
+                            : 'Nealocat'}
+                    </div>
+                </div>
             </div>
 
-            <div className="view-row">
-                <strong>Data și Ora: </strong>
-                {/* AICI AM APLICAT FORMATAREA */}
-                <span>{formatData(incident.dataEmitere)}</span>
-            </div>
-
-            <hr style={{margin: '10px 0', border: '0', borderTop: '1px solid #eee'}}/>
-
-            <div className="view-row">
-                <strong>Polițist Responsabil: </strong>
-                <span>
-                    {incident.politistResponsabil
-                        ? `${incident.politistResponsabil.nume} ${incident.politistResponsabil.prenume} (${incident.politistResponsabil.grad})`
-                        : 'Nealocat'}
-                </span>
-            </div>
-
-            <div className="view-row">
-                <strong>Adresă Exactă: </strong>
-                <span>
+            <div style={{ marginBottom: '15px' }}>
+                <span style={labelStyle}>Adresă & Locație</span>
+                <div style={readOnlyFieldStyle}>
                     {incident.adresaIncident
                         ? `${incident.adresaIncident.strada}, Nr. ${incident.adresaIncident.numar}, ${incident.adresaIncident.localitate}`
-                        : 'Nespecificată'}
-                </span>
+                        : ''}
+                    {incident.descriereLocatie ? ` (${incident.descriereLocatie})` : ''}
+                </div>
             </div>
 
-            <div className="view-row">
-                <strong>Descriere Locație: </strong>
-                <span>{incident.descriereLocatie || '-'}</span>
-            </div>
-
-            <hr style={{margin: '10px 0', border: '0', borderTop: '1px solid #eee'}}/>
-
-            <div className="view-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                <strong>Descriere Detaliată: </strong>
-                <p style={{
-                    background: '#f9f9f9',
-                    padding: '10px',
-                    borderRadius: '4px',
-                    width: '100%',
-                    marginTop: '5px',
-                    whiteSpace: 'pre-wrap'
-                }}>
+            <div style={{ marginBottom: '15px' }}>
+                <span style={labelStyle}>Descriere Detaliată</span>
+                <div style={{ ...readOnlyFieldStyle, minHeight: '80px', whiteSpace: 'pre-wrap' }}>
                     {incident.descriereIncident || 'Fără descriere.'}
-                </p>
+                </div>
             </div>
 
             <div className="modal-footer">
-                <button className="action-btn delete-btn" onClick={onClose} style={{background: '#6c757d'}}>Închideți</button>
+                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
             </div>
         </div>
     );

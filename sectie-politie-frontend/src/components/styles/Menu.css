@@ -4,51 +4,79 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #1a3c6e; /* Albastru Politie */
-    padding: 0 30px;
-    height: 70px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    font-family: 'Segoe UI', sans-serif;
+
+    /* Fundalul cel mai inchis din paletă (#0A2647) */
+    background-color: var(--royal-navy-dark);
+
+    padding: 0 40px;
+    height: 75px;
+
+    /* Umbră și o linie aurie fină jos */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    border-bottom: 2px solid var(--gold-border);
+
+    font-family: 'Montserrat', sans-serif;
     position: sticky;
     top: 0;
     z-index: 1000;
 }
 
+/* --- LOGO --- */
 .logo {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: white;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    user-select: none;
 }
 
+.logo-icon {
+    font-size: 1.4em;
+    /* Gradient auriu pe iconița scut */
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.4));
+}
+
+/* --- MENIU --- */
 .menu-items {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
     height: 100%;
 }
 
-/* Link-uri standard din meniu */
+/* Link-uri standard */
 .nav-link {
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     font-weight: 500;
-    padding: 8px 15px;
-    border-radius: 4px;
+    padding: 10px 18px;
+    border-radius: 8px;
     transition: all 0.3s;
     font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.nav-link:hover {
-    color: white;
-    background-color: rgba(255, 255, 255, 0.1);
+/* HOVER: Fundal mai deschis (#205295) + Text Auriu */
+.nav-link:hover, .dropbtn:hover {
+    background-color: var(--royal-navy-light); /* Culoarea 3 */
+    color: var(--gold-text);
+    transform: translateY(-2px);
 }
 
-/* Dropdown Container */
+.nav-link i {
+    font-size: 1.1em;
+}
+
+/* --- DROPDOWN --- */
 .dropdown {
     position: relative;
     height: 100%;
@@ -58,58 +86,67 @@
 
 .dropbtn {
     background: none;
-    color: rgba(255, 255, 255, 0.85);
-    padding: 8px 15px;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 10px 18px;
     font-size: 15px;
     font-weight: 500;
     border: none;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 8px;
     transition: all 0.3s;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    font-family: 'Montserrat', sans-serif;
 }
 
-.dropbtn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-/* Continut Dropdown */
+/* Continut Dropdown - ACUM DARK (#144272) */
 .dropdown-content {
     display: none;
     position: absolute;
-    top: 60px; /* Imediat sub navbar */
+    top: 70px;
     left: 0;
-    background-color: white;
-    min-width: 200px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    border-radius: 4px;
+
+    /* Fundal Albastru Mediu (#144272) */
+    background-color: var(--royal-navy-medium);
+    border: 1px solid var(--gold-border);
+
+    min-width: 220px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    border-radius: 8px;
     overflow: hidden;
     z-index: 100;
-    border-top: 3px solid #fbc02d; /* Linie aurie */
+
+    animation: fadeIn 0.2s ease forwards;
 }
 
 .dropdown-content a {
-    color: #333;
-    padding: 12px 20px;
+    color: white; /* Text Alb */
+    padding: 14px 20px;
     text-decoration: none;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 14px;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.2s;
 }
 
+.dropdown-content a i {
+    width: 20px;
+    text-align: center;
+    color: var(--gold-text); /* Iconitele din dropdown sunt aurii */
+}
+
+/* Hover pe element din lista: Se face si mai deschis (#2C74B3) */
 .dropdown-content a:hover {
-    background-color: #f8f9fa;
-    color: #1a3c6e;
-    padding-left: 25px; /* Efect de miscare la hover */
+    background-color: var(--royal-blue-accent); /* Culoarea 4 */
+    padding-left: 25px; /* Efect glisare */
+    color: white;
 }
 
 .dropdown:hover .dropdown-content {
     display: block;
-    animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
@@ -117,21 +154,25 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Logout Button */
+/* --- LOGOUT BUTTON (GHOST STYLE) --- */
 .logout-btn {
-    background-color: #dc3545; /* Rosu */
-    color: white;
-    border: none;
+    background-color: transparent;
+    color: #ff6b6b; /* Un roșu deschis care se vede bine pe dark */
+    border: 1px solid #ff6b6b;
     padding: 8px 20px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    border-radius: 4px;
-    transition: background 0.3s;
+    border-radius: 6px;
+    transition: all 0.3s;
     margin-left: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .logout-btn:hover {
-    background-color: #c82333;
+    background-color: #ff6b6b;
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
 }

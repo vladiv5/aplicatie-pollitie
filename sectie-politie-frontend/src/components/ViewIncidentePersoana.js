@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './styles/TableStyles.css';
+import './styles/Forms.css'; // Importăm stilurile
 
 const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
     const [istoric, setIstoric] = useState([]);
@@ -29,59 +29,52 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
         return d.toLocaleDateString('ro-RO') + ' ' + d.toLocaleTimeString('ro-RO', {hour: '2-digit', minute:'2-digit'});
     };
 
-    return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+    // Funcție helper pentru culoarea calității
+    const getCalitateStyle = (calitate) => {
+        switch(calitate) {
+            case 'Suspect': case 'Faptas': return { bg: '#fee2e2', col: '#991b1b' }; // Roșu
+            case 'Victima': return { bg: '#fef3c7', col: '#92400e' }; // Portocaliu
+            case 'Martor': return { bg: '#dcfce7', col: '#166534' }; // Verde
+            default: return { bg: '#f1f5f9', col: '#475569' }; // Gri
+        }
+    };
 
+    return (
+        <div style={{ padding: '10px' }}>
             {loading ? (
-                <p style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Se încarcă datele...</p>
+                <div className="loading-container">
+                    <div className="spinner"></div>
+                    <p>Se încarcă istoricul...</p>
+                </div>
             ) : (
-                <div style={{
-                    borderRadius: '10px',
-                    width: '100%',
-                    marginTop: '10px',
-                    backgroundColor: 'white',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                }}>
-                    {/* MODIFICARE: Am adaugat clasa 'compact-table' */}
-                    <table className="styled-table compact-table" style={{
-                        width: '100%',
-                        margin: 0,
-                        borderTopLeftRadius: '10px',
-                        borderTopRightRadius: '10px',
-                        borderCollapse: 'separate',
-                        borderSpacing: 0
-                    }}>
-                        <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                <div className="table-responsive">
+                    <table className="styled-table compact-table">
+                        <thead>
                         <tr>
-                            <th style={{ borderTopLeftRadius: '10px' }}>Tip Incident</th>
-                            <th style={{ textAlign: 'center' }}>Data</th>
-                            <th style={{ textAlign: 'center' }}>Locație</th>
-                            <th style={{ textAlign: 'center', borderTopRightRadius: '10px' }}>Calitate</th>
+                            <th>Tip Incident</th>
+                            <th>Data</th>
+                            <th>Locație</th>
+                            <th style={{ textAlign: 'center' }}>Calitate</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {istoric.length > 0 ? istoric.map((item, index) => (
-                            <tr key={index} style={{ borderBottom: index === istoric.length - 1 ? 'none' : '1px solid #eee' }}>
-                                <td style={{ padding: '12px 15px' }}>{item.incident.tipIncident}</td>
-                                <td style={{ textAlign: 'center' }}>{formatDate(item.incident.dataEmitere)}</td>
-                                <td style={{ textAlign: 'center' }}>{item.incident.descriereLocatie}</td>
-                                <td style={{ textAlign: 'center' }}>
-                                    <span style={{
-                                        fontWeight: 'bold',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        backgroundColor: (item.calitate === 'Suspect' || item.calitate === 'Faptas') ? '#ffebee' :
-                                            (item.calitate === 'Victima' ? '#fff3cd' : '#e8f5e9'),
-                                        color: (item.calitate === 'Suspect' || item.calitate === 'Faptas') ? '#dc3545' :
-                                            (item.calitate === 'Victima' ? '#fd7e14' : '#28a745')
-                                    }}>
-                                        {item.calitate}
-                                    </span>
-                                </td>
-                            </tr>
-                        )) : (
+                        {istoric.length > 0 ? istoric.map((item, index) => {
+                            const style = getCalitateStyle(item.calitate);
+                            return (
+                                <tr key={index}>
+                                    <td style={{fontWeight: '500'}}>{item.incident.tipIncident}</td>
+                                    <td>{formatDate(item.incident.dataEmitere)}</td>
+                                    <td>{item.incident.descriereLocatie}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <span className="badge-status" style={{ backgroundColor: style.bg, color: style.col }}>
+                                            {item.calitate}
+                                        </span>
+                                    </td>
+                                </tr>
+                            );
+                        }) : (
                             <tr>
-                                <td colSpan="4" style={{textAlign: 'center', padding: '30px', color: '#999'}}>
+                                <td colSpan="4" style={{textAlign: 'center', padding: '30px', color: '#64748b'}}>
                                     Această persoană nu figurează în niciun incident.
                                 </td>
                             </tr>
@@ -91,9 +84,9 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
                 </div>
             )}
 
-            <div className="modal-footer" style={{ padding: '15px 0 0 0', display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                <button className="action-btn" onClick={onClose} style={{ background: '#6c757d', color: 'white' }}>
-                    Închideți
+            <div className="modal-footer">
+                <button className="btn-close-modal" onClick={onClose}>
+                    ÎNCHIDEȚI
                 </button>
             </div>
         </div>

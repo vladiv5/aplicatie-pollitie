@@ -16,33 +16,38 @@ const Menu = () => {
         <>
             <nav className="navbar">
                 <div className="logo">
-                    <span>🛡️</span> ADMINISTRAȚIE POLIȚIE
+                    {/* Iconița FontAwesome cu gradient auriu din CSS */}
+                    <i className="fa-solid fa-shield-halved logo-icon"></i>
+                    <span className="logo-text">POLICE <span style={{fontWeight:300}}>DB</span></span>
                 </div>
 
-                {/* Afișez meniul DOAR dacă userul este logat */}
                 {user && (
                     <>
                         <div className="menu-items">
-                            <Link to="/acasa" className="nav-link">Acasă</Link>
+                            <Link to="/acasa" className="nav-link">
+                                <i className="fa-solid fa-house"></i> Acasă
+                            </Link>
 
                             <div className="dropdown">
-                                {/* Am simplificat numele aici */}
-                                <button className="dropbtn">Gestiune ▼</button>
+                                <button className="dropbtn">
+                                    <i className="fa-solid fa-layer-group"></i> Gestiune <i className="fa-solid fa-caret-down" style={{fontSize:'0.8em', marginLeft:'5px'}}></i>
+                                </button>
                                 <div className="dropdown-content">
-                                    {/* Am simplificat numele și aici */}
-                                    <Link to="/politisti">👮 Personal</Link>
-                                    <Link to="/persoane">👥 Cetățeni</Link>
-                                    <Link to="/incidente">🚨 Incidente</Link>
-                                    <Link to="/amenzi">📝 Amenzi</Link>
-                                    <Link to="/adrese">📍 Adrese</Link>
+                                    <Link to="/politisti"><i className="fa-solid fa-user-shield"></i> Personal</Link>
+                                    <Link to="/persoane"><i className="fa-solid fa-users"></i> Cetățeni</Link>
+                                    <Link to="/incidente"><i className="fa-solid fa-car-burst"></i> Incidente</Link>
+                                    <Link to="/amenzi"><i className="fa-solid fa-file-invoice-dollar"></i> Amenzi</Link>
+                                    <Link to="/adrese"><i className="fa-solid fa-map-location-dot"></i> Adrese</Link>
                                 </div>
                             </div>
 
-                            <Link to="/statistici" className="nav-link">Statistici</Link>
+                            <Link to="/statistici" className="nav-link">
+                                <i className="fa-solid fa-chart-pie"></i> Statistici
+                            </Link>
                         </div>
 
                         <button className="logout-btn" onClick={handleLogout}>
-                            Deconectare
+                            <i className="fa-solid fa-right-from-bracket"></i> Ieșire
                         </button>
                     </>
                 )}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import './styles/Pagination.css';
+// import './styles/Pagination.css'; // NU mai avem nevoie, stilurile sunt acum globale în index.css
 import toast from "react-hot-toast";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+    // --- PĂSTRĂM LOGICA TA VECHE INTACTĂ ---
+
     // State local pentru inputul "Mergi la pagina"
     const [inputPage, setInputPage] = useState('');
 
@@ -16,7 +18,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         setInputPage(e.target.value);
     };
 
-    // Handler pentru "Go"
+    // Handler pentru "Go" (Logica ta de validare + Toast)
     const handleGoToPage = () => {
         const pageNumber = parseInt(inputPage, 10);
 
@@ -40,41 +42,55 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 
     if (totalPages <= 1) return null;
 
+    // --- SCHIMBĂM DOAR DESIGN-UL (JSX) ---
     return (
         <div className="pagination-container">
-            {/* Buton Previous */}
-            <button
-                className="page-btn"
-                disabled={currentPage === 0}
-                onClick={() => onPageChange(currentPage - 1)}
-            >
-                &#8592; Anterior
-            </button>
+            <div className="pagination-bar">
 
-            {/* Zona de Info si Input */}
-            <div className="pagination-jump">
-                <span className="page-label">Pagina</span>
-                <input
-                    type="number"
-                    className="page-input"
-                    value={inputPage}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                    min="1"
-                    max={totalPages}
-                />
-                <span className="page-label">din {totalPages}</span>
-                <button className="go-btn" onClick={handleGoToPage}>Go</button>
+                {/* Buton Anterior (Acum cu iconiță) */}
+                <button
+                    className="pag-btn"
+                    disabled={currentPage === 0}
+                    onClick={() => onPageChange(currentPage - 1)}
+                    title="Pagina Anterioară"
+                >
+                    <i className="fa-solid fa-chevron-left"></i>
+                </button>
+
+                {/* Text Info (Pagina X din Y) */}
+                <span className="pagination-info">
+                    Pagina <b>{currentPage + 1}</b> din <b>{totalPages}</b>
+                </span>
+
+                {/* Buton Următor (Acum cu iconiță) */}
+                <button
+                    className="pag-btn"
+                    disabled={currentPage + 1 >= totalPages}
+                    onClick={() => onPageChange(currentPage + 1)}
+                    title="Pagina Următoare"
+                >
+                    <i className="fa-solid fa-chevron-right"></i>
+                </button>
+
+                {/* Separator vizual */}
+                <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.2)', margin: '0 5px' }}></div>
+
+                {/* Zona de Input "Go To" */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                        type="number"
+                        className="pag-input"
+                        value={inputPage}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        placeholder="#"
+                    />
+                    <button className="pag-go-btn" onClick={handleGoToPage}>
+                        GO
+                    </button>
+                </div>
+
             </div>
-
-            {/* Buton Next */}
-            <button
-                className="page-btn"
-                disabled={currentPage + 1 >= totalPages}
-                onClick={() => onPageChange(currentPage + 1)}
-            >
-                Următor &#8594;
-            </button>
         </div>
     );
 };
