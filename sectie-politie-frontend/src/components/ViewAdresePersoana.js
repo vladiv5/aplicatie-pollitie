@@ -1,3 +1,7 @@
+/** Modal pentru vizualizarea tuturor adreselor asociate unei persoane (Domiciliu, Resedinta)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './styles/Forms.css';
@@ -56,7 +60,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
                                 <td style={{textAlign: 'center'}}>
                                      <span className={`badge-status`}
                                            style={{
-                                               // Culori adaptate pentru Dark Mode (Mov neon vs Verde neon)
+                                               // Diferentiez vizual Domiciliul de Resedinta prin culori
                                                background: item.tipAdresa === 'Domiciliu' ? 'rgba(124, 58, 237, 0.2)' : 'rgba(16, 185, 129, 0.2)',
                                                color: item.tipAdresa === 'Domiciliu' ? '#c4b5fd' : '#6ee7b7',
                                                border: item.tipAdresa === 'Domiciliu' ? '1px solid #8b5cf6' : '1px solid #10b981'
@@ -79,9 +83,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
             )}
 
             <div className="modal-footer">
-                <button className="btn-close-modal" onClick={onClose}>
-                    ÎNCHIDEȚI
-                </button>
+                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
             </div>
         </div>
     );

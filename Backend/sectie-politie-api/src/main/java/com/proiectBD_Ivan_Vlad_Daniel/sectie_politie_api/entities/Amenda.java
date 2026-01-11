@@ -5,29 +5,35 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+/** Clasa pentru entitatea Amenda care inregistreaza sanctiunile
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Entity
 @Table(name = "Amenzi")
 public class Amenda {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_amenda")
     private Integer idAmenda;
 
+    // Validarile pentru motiv si suma le-am implementat direct in Controller, nu aici
     @Column(name = "motiv")
-    // FARA ADNOTARI - VALIDAM IN CONTROLLER
     private String motiv;
 
     @Column(name = "suma")
-    // FARA ADNOTARI - VALIDAM IN CONTROLLER
     private BigDecimal suma;
 
     @Column(name = "stare_plata")
     private String starePlata;
 
+    // Am specificat formatul JSON pentru a fi usor de citit in frontend
     @Column(name = "data_emitere")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataEmitere;
 
+    // Aici am definit relatiile cu Politistul si Persoana amendata
     @ManyToOne
     @JoinColumn(name = "id_politist")
     private Politist politist;
@@ -36,7 +42,8 @@ public class Amenda {
     @JoinColumn(name = "id_persoana")
     private Persoana persoana;
 
-    // Getters/Setters...
+    // --- Metode de acces ---
+
     public Integer getIdAmenda() { return idAmenda; }
     public void setIdAmenda(Integer idAmenda) { this.idAmenda = idAmenda; }
 

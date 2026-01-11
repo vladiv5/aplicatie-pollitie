@@ -1,7 +1,11 @@
+/** Componenta pentru editarea datelor unei persoane
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
+import './styles/Forms.css';
 
 const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -42,10 +46,7 @@ const EditPersoana = ({ id, onSaveSuccess, onCancel }) => {
 
     const renderInput = (label, name, icon, type = "text") => (
         <div className="form-group-item">
-            <label className="form-label">
-                <i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>
-                {label}
-            </label>
+            <label className="form-label"><i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>{label}</label>
             <div className="input-wrapper">
                 <input
                     type={type}

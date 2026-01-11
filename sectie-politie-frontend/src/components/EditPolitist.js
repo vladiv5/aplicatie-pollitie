@@ -1,3 +1,7 @@
+/** Componenta pentru modificarea datelor unui politist
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -20,7 +24,6 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        // I clear the error as soon as the user interacts
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
@@ -43,10 +46,7 @@ const EditPolitist = ({ id, onSaveSuccess, onCancel }) => {
 
     const renderInput = (label, name, icon) => (
         <div className="form-group-item">
-            <label className="form-label">
-                <i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>
-                {label}
-            </label>
+            <label className="form-label"><i className={`fa-solid ${icon}`} style={{marginRight: '8px', color: '#d4af37'}}></i>{label}</label>
             <div className="input-wrapper">
                 <input
                     type="text"

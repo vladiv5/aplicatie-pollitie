@@ -1,6 +1,10 @@
+/** Modal pentru afisarea persoanelor care locuiesc la o anumita adresa
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './styles/Forms.css'; // Importăm pentru butonul de închidere
+import './styles/Forms.css';
 
 const ViewLocatariAdresa = ({ adresaId, onClose }) => {
     const [locatari, setLocatari] = useState([]);
@@ -70,9 +74,7 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
             )}
 
             <div className="modal-footer">
-                <button className="btn-close-modal" onClick={onClose}>
-                    ÎNCHIDEȚI
-                </button>
+                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
             </div>
         </div>
     );

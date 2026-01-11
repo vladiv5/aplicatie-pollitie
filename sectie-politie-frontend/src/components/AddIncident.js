@@ -1,8 +1,12 @@
+/** Componenta pentru inregistrarea unui incident nou
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
+import './styles/Forms.css';
 
 const AddIncident = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -19,7 +23,7 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
 
     const handleSave = () => {
         setErrors({});
-        // Pregătire data (ISO format)
+        // Pregatire data (ISO format)
         let dataFinala = formData.dataEmitere;
         if (dataFinala && dataFinala.length === 16) dataFinala += ":00";
 

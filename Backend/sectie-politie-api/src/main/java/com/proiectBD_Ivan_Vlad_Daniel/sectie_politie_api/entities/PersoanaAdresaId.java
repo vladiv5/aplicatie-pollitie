@@ -4,11 +4,16 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
+/** Clasa ajutatoare pentru definirea cheii primare compuse (id_persoana + id_adresa)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Embeddable
 public class PersoanaAdresaId implements Serializable {
     private Integer idPersoana;
     private Integer idAdresa;
 
+    // Constructor gol necesar pentru JPA
     public PersoanaAdresaId() {}
 
     public PersoanaAdresaId(Integer idPersoana, Integer idAdresa) {
@@ -16,12 +21,7 @@ public class PersoanaAdresaId implements Serializable {
         this.idAdresa = idAdresa;
     }
 
-    public Integer getIdPersoana() { return idPersoana; }
-    public void setIdPersoana(Integer idPersoana) { this.idPersoana = idPersoana; }
-
-    public Integer getIdAdresa() { return idAdresa; }
-    public void setIdAdresa(Integer idAdresa) { this.idAdresa = idAdresa; }
-
+    // Am implementat equals si hashCode, obligatorii pentru cheile compuse
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -35,4 +35,10 @@ public class PersoanaAdresaId implements Serializable {
     public int hashCode() {
         return Objects.hash(idPersoana, idAdresa);
     }
+
+    public Integer getIdPersoana() { return idPersoana; }
+    public void setIdPersoana(Integer idPersoana) { this.idPersoana = idPersoana; }
+
+    public Integer getIdAdresa() { return idAdresa; }
+    public void setIdAdresa(Integer idAdresa) { this.idAdresa = idAdresa; }
 }

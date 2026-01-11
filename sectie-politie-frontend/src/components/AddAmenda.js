@@ -1,3 +1,7 @@
+/** Componenta pentru emiterea unei amenzi noi
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
@@ -13,13 +17,13 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
 
     const handleChange = (name, value) => {
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Curățăm eroarea când utilizatorul modifică câmpul
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSave = () => {
         setErrors({});
-        // Procesare dată pentru backend (ISO string)
+
+        // Formatez data pentru a fi compatibila cu LocalDateTime din Java
         let dataFinala = formData.dataEmitere;
         if (dataFinala && dataFinala.length === 16) dataFinala += ":00";
 
@@ -38,7 +42,6 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
             })
             .catch(error => {
                 if (error.response?.status === 400) {
-                    // Setăm erorile primite de la backend
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
@@ -47,10 +50,8 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    // Funcție de randare consistentă cu restul aplicației
     const renderInput = (label, name, icon, type = 'text', placeholder = "") => {
         const hasError = errors[name];
-        // Pentru LiveSearchInput mapăm eroarea separat
         if (name === 'politistId' || name === 'persoanaId') return null;
 
         return (
@@ -95,15 +96,15 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
 
                 {renderInput("Data Acordării", "dataEmitere", "fa-calendar-day", "datetime-local")}
 
-                {/* LiveSearchInput cu gestiune de erori */}
                 <div className="form-group-item">
                     <LiveSearchInput
                         label="Agent Constatator"
                         apiUrl="http://localhost:8080/api/politisti/cauta"
                         icon="fa-user-shield"
+                        displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
                         onSelect={(item) => handleChange('politistId', item?.idPolitist)}
+                        error={errors.idPolitist}
                     />
-                    {errors.idPolitist && <span className="error-text">{errors.idPolitist}</span>}
                 </div>
 
                 <div className="form-group-item">
@@ -111,9 +112,10 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
                         label="Persoana Amendată"
                         apiUrl="http://localhost:8080/api/persoane/cauta"
                         icon="fa-user-tag"
+                        displayKey={(p) => `${p.nume} ${p.prenume} (CNP: ${p.cnp})`}
                         onSelect={(item) => handleChange('persoanaId', item?.idPersoana)}
+                        error={errors.idPersoana}
                     />
-                    {errors.idPersoana && <span className="error-text">{errors.idPersoana}</span>}
                 </div>
             </div>
             <div className="modal-footer" style={{marginTop: '30px'}}>

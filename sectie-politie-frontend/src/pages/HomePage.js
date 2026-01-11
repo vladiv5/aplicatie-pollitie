@@ -1,3 +1,8 @@
+/** Dashboard-ul principal (Panou Operativ)
+ * Afiseaza ceasul, ID-ul ofiterului si scurtaturi catre module
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -10,6 +15,7 @@ const HomePage = () => {
     const [time, setTime] = useState(new Date());
     const [isActivityOpen, setIsActivityOpen] = useState(false);
 
+    // Actualizez ceasul in timp real
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
@@ -20,7 +26,7 @@ const HomePage = () => {
     return (
         <div className="home-container">
 
-            {/* 1. Header Compact & Premium */}
+            {/* Header: Mesaj de bun venit si Ceas */}
             <div className="welcome-banner">
                 <div className="welcome-text">
                     <h1>Panou Operativ</h1>
@@ -33,8 +39,7 @@ const HomePage = () => {
             </div>
 
             <div className="dashboard-grid">
-
-                {/* 2. Coloana Stânga: ID Badge Premium */}
+                {/* ID Card Virtual (Stanga) */}
                 <div className="left-column">
                     <div className="id-card-wrapper">
                         <div className="id-card-header">
@@ -66,11 +71,10 @@ const HomePage = () => {
                     </div>
                 </div>
 
-                {/* 3. Coloana Dreapta: Grid de Acțiuni */}
+                {/* Grid Scurtaturi (Dreapta) */}
                 <div className="right-column">
                     <h3>Module Operative</h3>
                     <div className="shortcuts-grid">
-
                         <Link to="/incidente" className="shortcut-card">
                             <i className="shortcut-icon fa-solid fa-car-burst"></i>
                             <div className="shortcut-content">
@@ -119,34 +123,21 @@ const HomePage = () => {
                             </div>
                         </Link>
 
-                        {/* Card Dosar Personal */}
-                        <div
-                            className="shortcut-card"
-                            onClick={() => setIsActivityOpen(true)}
-                            style={{ cursor: 'pointer' }}
-                        >
+                        {/* Buton special pentru Dosarul Meu */}
+                        <div className="shortcut-card" onClick={() => setIsActivityOpen(true)} style={{ cursor: 'pointer' }}>
                             <i className="shortcut-icon fa-solid fa-folder-open"></i>
                             <div className="shortcut-content">
                                 <span className="shortcut-title">Dosarul Meu</span>
                                 <span className="shortcut-desc">Activitate și istoric personal</span>
                             </div>
                         </div>
-
                     </div>
                 </div>
-
             </div>
 
-            <Modal
-                isOpen={isActivityOpen}
-                onClose={() => setIsActivityOpen(false)}
-                title={`Dosar: ${user.nume} ${user.prenume}`}
-                maxWidth="900px"
-            >
-                <MyActivityModal
-                    userId={user.idPolitist}
-                    onClose={() => setIsActivityOpen(false)}
-                />
+            {/* Modal Dosar Personal */}
+            <Modal isOpen={isActivityOpen} onClose={() => setIsActivityOpen(false)} title={`Dosar: ${user.nume} ${user.prenume}`} maxWidth="900px">
+                <MyActivityModal userId={user.idPolitist} onClose={() => setIsActivityOpen(false)} />
             </Modal>
         </div>
     );

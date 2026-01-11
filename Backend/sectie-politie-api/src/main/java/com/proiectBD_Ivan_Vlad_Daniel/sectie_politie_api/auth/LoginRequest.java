@@ -1,5 +1,9 @@
 package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.auth;
 
+/** Clasa DTO folosita pentru a prelua datele de autentificare trimise din frontend
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 public class LoginRequest {
     private String nume;
     private String parola;

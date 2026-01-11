@@ -10,22 +10,24 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.util.HashMap;
 import java.util.Map;
 
+/** Handler global pentru exceptiile de validare (@Valid)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Aceasta metoda se activeaza automat cand @Valid esueaza
+    // Prind automat erorile generate de adnotarile din DTO-uri (daca exista)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
 
-        // Extragem fiecare camp gresit si mesajul lui
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
 
-        // Returnam harta cu erori si codul 400 (Bad Request)
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 }

@@ -13,6 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/** Controller pentru Autentificare si Inregistrare (Register = Activare cont existent)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -21,10 +25,9 @@ public class AuthController {
     @Autowired
     private PolitistRepository politistRepository;
 
-    // === LOGIN ===
+    // === LOGIN (Case Sensitive) ===
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        // Eu colectez erorile aici
         Map<String, String> errors = new HashMap<>();
 
         if (loginRequest.getNume() == null || loginRequest.getNume().trim().isEmpty()) {
@@ -34,12 +37,9 @@ public class AuthController {
             errors.put("parola", "Introduceți parola!");
         }
 
-        // Dacă am găsit câmpuri goale, le trimit înapoi imediat
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // BACKDOOR ADMIN
+        // Verificare BACKDOOR ADMIN pentru testare rapida
         if ("admin".equals(loginRequest.getNume()) && "admin".equals(loginRequest.getParola())) {
             Politist adminFals = new Politist();
             adminFals.setIdPolitist(-1);
@@ -50,73 +50,50 @@ public class AuthController {
             return ResponseEntity.ok(adminFals);
         }
 
-        // Verific în baza de date
-        Optional<Politist> politistOpt = politistRepository.findByUsernameAndPassword(
-                loginRequest.getNume(),
-                loginRequest.getParola()
-        );
+        // Caut user in baza de date
+        Optional<Politist> politistOpt = politistRepository.findByUsername(loginRequest.getNume());
 
         if (politistOpt.isPresent()) {
-            return ResponseEntity.ok(politistOpt.get());
-        } else {
-            // Dacă nu găsesc userul, trimit o eroare generală sau pe ambele câmpuri
-            // Eu prefer să pun eroarea pe câmpul de parolă sau global
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("global", "Date de autentificare incorecte!"));
+            Politist p = politistOpt.get();
+            // Verificare stricta Java pentru litere mari/mici
+            if (p.getUsername().equals(loginRequest.getNume()) &&
+                    p.getPassword().equals(loginRequest.getParola())) {
+                return ResponseEntity.ok(p);
+            }
         }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("global", "Date incorecte (atenție la majuscule)!"));
     }
 
-    // === REGISTER (ACTIVARE) ===
+    // === REGISTER (ACTIVARE CONT) ===
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        // Aici am modificat strategia: verific TOATE câmpurile și adun TOATE erorile
         Map<String, String> errors = new HashMap<>();
 
-        // 1. Validări Câmpuri Personale
-        if (req.getNume() == null || req.getNume().trim().isEmpty()) {
-            errors.put("nume", "Numele este obligatoriu.");
-        }
-        if (req.getPrenume() == null || req.getPrenume().trim().isEmpty()) {
-            errors.put("prenume", "Prenumele este obligatoriu.");
-        }
-        if (req.getTelefon() == null || req.getTelefon().trim().isEmpty()) {
-            errors.put("telefon", "Telefonul este obligatoriu.");
-        }
+        // Validari campuri personale
+        if (req.getNume() == null || req.getNume().trim().isEmpty()) errors.put("nume", "Numele este obligatoriu.");
+        if (req.getPrenume() == null || req.getPrenume().trim().isEmpty()) errors.put("prenume", "Prenumele este obligatoriu.");
+        if (req.getTelefon() == null || req.getTelefon().trim().isEmpty()) errors.put("telefon", "Telefonul este obligatoriu.");
 
-        // 2. Validări Cont Nou
-        if (req.getNewUsername() == null || req.getNewUsername().trim().isEmpty()) {
-            errors.put("newUsername", "Alegeți un nume de utilizator.");
-        } else if (req.getNewUsername().length() < 3) {
-            errors.put("newUsername", "Minim 3 caractere.");
-        }
+        // Validari cont nou
+        if (req.getNewUsername() == null || req.getNewUsername().trim().isEmpty()) errors.put("newUsername", "Alegeți un nume de utilizator.");
+        else if (req.getNewUsername().length() < 3) errors.put("newUsername", "Minim 3 caractere.");
 
-        if (req.getNewPassword() == null || req.getNewPassword().trim().isEmpty()) {
-            errors.put("newPassword", "Alegeți o parolă.");
-        } else if (req.getNewPassword().length() < 3) {
-            errors.put("newPassword", "Minim 3 caractere.");
-        }
+        if (req.getNewPassword() == null || req.getNewPassword().trim().isEmpty()) errors.put("newPassword", "Alegeți o parolă.");
+        else if (req.getNewPassword().length() < 3) errors.put("newPassword", "Minim 3 caractere.");
 
-        // 3. Confirmare Parolă
-        if (req.getConfirmPassword() == null || req.getConfirmPassword().trim().isEmpty()) {
-            errors.put("confirmPassword", "Confirmați parola.");
-        } else if (!req.getConfirmPassword().equals(req.getNewPassword())) {
-            errors.put("confirmPassword", "Parolele nu coincid!");
-        }
+        if (req.getConfirmPassword() == null || req.getConfirmPassword().trim().isEmpty()) errors.put("confirmPassword", "Confirmați parola.");
+        else if (!req.getConfirmPassword().equals(req.getNewPassword())) errors.put("confirmPassword", "Parolele nu coincid!");
 
-        // Dacă am găsit erori de validare, mă opresc AICI și le trimit pe toate
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
+        if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // --- DE AICI ÎNCOLO VERIFIC LOGICA DE BUSINESS (Database) ---
-
-        // 4. Caut polițistul
+        // Caut politistul in baza de date dupa datele personale
         Optional<Politist> target = politistRepository.findForActivation(
                 req.getNume(), req.getPrenume(), req.getTelefon()
         );
 
         if (target.isEmpty()) {
-            // Dacă nu îl găsesc, pun eroare pe câmpurile de identificare ca să știe unde a greșit
             errors.put("nume", "Verifică numele.");
             errors.put("prenume", "Verifică prenumele.");
             errors.put("telefon", "Verifică telefonul (nu există în sistem).");
@@ -125,19 +102,19 @@ public class AuthController {
 
         Politist p = target.get();
 
-        // 5. Verific dacă are deja cont
+        // Verific daca are deja cont
         if (p.getUsername() != null && !p.getUsername().isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("global", "Acest polițist are deja un cont activ! Mergi la Autentificare."));
         }
 
-        // 6. Verific unicitate username
+        // Verific unicitate username
         if (politistRepository.findByUsername(req.getNewUsername()).isPresent()) {
             errors.put("newUsername", "Acest username este deja folosit.");
             return ResponseEntity.badRequest().body(errors);
         }
 
-        // 7. Salvez
+        // Salvez noile date de autentificare
         p.setUsername(req.getNewUsername());
         p.setPassword(req.getNewPassword());
         politistRepository.save(p);

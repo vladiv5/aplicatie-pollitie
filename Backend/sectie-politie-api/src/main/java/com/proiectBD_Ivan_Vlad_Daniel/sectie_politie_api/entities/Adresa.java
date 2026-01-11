@@ -2,9 +2,13 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities;
 
 import jakarta.persistence.*;
 
+/** Clasa care defineste structura unei adrese fizice din baza de date * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Entity
 @Table(name = "Adrese")
 public class Adresa {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_adresa")
@@ -16,6 +20,7 @@ public class Adresa {
     @Column(name = "numar")
     private String numar;
 
+    // Blocul si apartamentul pot fi null in baza de date
     @Column(name = "bloc")
     private String bloc;
 
@@ -28,7 +33,8 @@ public class Adresa {
     @Column(name = "judet_sau_sector")
     private String judetSauSector;
 
-    // --- Getters si Setters ---
+    // --- Metode de acces ---
+
     public Integer getIdAdresa() { return idAdresa; }
     public void setIdAdresa(Integer idAdresa) { this.idAdresa = idAdresa; }
 

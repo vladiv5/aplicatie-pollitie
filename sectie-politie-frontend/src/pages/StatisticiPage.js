@@ -1,15 +1,20 @@
+/** Componenta complexa de raportare si analiza statistica
+ * Include grafice (Recharts), filtre temporale si generare de dosare tiparibile
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-
 import LiveSearchInput from '../components/LiveSearchInput';
 import PaginatedCard from '../components/PaginatedCard';
 import '../components/styles/Statistici.css';
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 
+// Culorile folosite in grafice (tema Navy/Gold/Red)
 const COLORS = ['#0a2647', '#bfa05d', '#dc3545', '#28a745', '#6c757d', '#144272'];
 
+// Helper pentru formatarea datei in format romanesc
 const formatDateDisplay = (isoDate) => {
     if (!isoDate) return '-';
     const datePart = isoDate.toString().split('T')[0];
@@ -18,48 +23,31 @@ const formatDateDisplay = (isoDate) => {
     return `${parts[2]}-${parts[1]}-${parts[0]}`;
 };
 
-// Functie pentru afisare procente pe Pie Chart
+// Randare personalizata pentru etichetele procentuale de pe Pie Chart
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
     const RADIAN = Math.PI / 180;
-    // Calculăm raza exact la mijlocul inelului (între inner și outer)
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
     return (
-        <text
-            x={x}
-            y={y}
-            fill="white"
-            textAnchor="middle"
-            dominantBaseline="central"
-            style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                textShadow: '0px 1px 3px rgba(0,0,0,0.8)', // Umbră ca să se vadă pe orice culoare
-                pointerEvents: 'none'
-            }}
-        >
+        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" style={{ fontSize: '14px', fontWeight: 'bold', textShadow: '0px 1px 3px rgba(0,0,0,0.8)', pointerEvents: 'none' }}>
             {`${(percent * 100).toFixed(0)}%`}
         </text>
     );
 };
 
-// Tooltip Personalizat (foloseste clasa .st-custom-tooltip-box din CSS)
+// Componenta personalizata pentru Tooltip-ul graficelor (afiseaza detalii la hover)
 const CustomChartTooltip = ({ active, payload, label, type }) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
-
         return (
             <div className="st-custom-tooltip-box">
-                {/* Header Tooltip - Verificăm ce tip de date avem */}
                 <div className="st-tooltip-header">
-                    {data.nume
-                        ? `${data.nume} ${data.prenume || ''}`
-                        : (data.grad || label)}
+                    {data.nume ? `${data.nume} ${data.prenume || ''}` : (data.grad || label)}
                 </div>
 
-                {/* Cazul 1: Grafic Polițist */}
+                {/* Afisez continut diferit in functie de tipul graficului */}
                 {type === 'politist' && (
                     <div className="st-tooltip-body">
                         <div>Funcție: {data.functie}</div>
@@ -67,26 +55,19 @@ const CustomChartTooltip = ({ active, payload, label, type }) => {
                         <div className="st-tooltip-value">Total: {data.total_valoare} RON</div>
                     </div>
                 )}
-
-                {/* Cazul 2: Grafic Rău-Platnici */}
                 {type === 'persoana' && (
                     <div className="st-tooltip-body">
                         <div>CNP: {data.cnp}</div>
                         <div className="st-tooltip-alert">Datorie: {data.datorie_totala} RON</div>
                     </div>
                 )}
-
-                {/* Cazul 3: Grafic Străzi */}
                 {type === 'strada' && (
                     <div className="st-tooltip-body">
                         <div className="st-tooltip-info">Incidente: {data.nr_incidente}</div>
                     </div>
                 )}
-
-                {/* Cazul 4: Grafic Pie (Distribuție Grade) - ASTA LIPSEA */}
                 {type === 'standard' && (
                     <div className="st-tooltip-body">
-                        {/* Recharts trimite datele direct în payload pentru Pie Chart */}
                         <div className="st-tooltip-info">Grad: {data.grad}</div>
                         <div className="st-tooltip-value">Valoare: {data.valoare_totala} RON</div>
                     </div>
@@ -98,34 +79,34 @@ const CustomChartTooltip = ({ active, payload, label, type }) => {
 };
 
 const StatisticiPage = () => {
+    // --- STATE PENTRU FILTRE ---
     const [startDate, setStartDate] = useState({d: '', m: '', y: ''});
     const [endDate, setEndDate] = useState({d: '', m: '', y: ''});
     const [dateError, setDateError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
-    const [printTarget, setPrintTarget] = useState(null); // 'politist' sau 'cetatean'
+    const [printTarget, setPrintTarget] = useState(null);
 
     const [activeStartDate, setActiveStartDate] = useState(null);
     const [activeEndDate, setActiveEndDate] = useState(null);
 
-    // State Grafice
+    // --- STATE PENTRU DATE (API) ---
     const [topPolitisti, setTopPolitisti] = useState([]);
     const [amenziGrad, setAmenziGrad] = useState([]);
     const [topStrazi, setTopStrazi] = useState([]);
     const [rauPlatnici, setRauPlatnici] = useState([]);
-
-    // State Carduri
     const [zoneSigure, setZoneSigure] = useState([]);
     const [agentiSeveri, setAgentiSeveri] = useState([]);
     const [recidivisti, setRecidivisti] = useState([]);
     const [zileCritice, setZileCritice] = useState([]);
 
+    // --- STATE PENTRU DOSARE OPERATIVE ---
     const [currentSlide, setCurrentSlide] = useState(0);
-
     const [selectedPolitist, setSelectedPolitist] = useState(null);
     const [rezultatPolitist, setRezultatPolitist] = useState(null);
     const [selectedPersoana, setSelectedPersoana] = useState(null);
     const [rezultatCnp, setRezultatCnp] = useState(null);
 
+    // Functia care incarca toate datele cand se aplica filtrele
     const fetchAllData = () => {
         const token = localStorage.getItem('token');
         const config = {
@@ -134,6 +115,7 @@ const StatisticiPage = () => {
         };
         setDateError('');
 
+        // Fac cereri paralele catre endpoint-urile de statistica
         axios.get('http://localhost:8080/api/statistici/top-politisti', config).then(res => setTopPolitisti(res.data));
         axios.get('http://localhost:8080/api/statistici/amenzi-grad', config).then(res => setAmenziGrad(res.data));
         axios.get('http://localhost:8080/api/statistici/top-strazi', config).then(res => setTopStrazi(res.data));
@@ -148,6 +130,7 @@ const StatisticiPage = () => {
         fetchAllData();
     }, [activeStartDate, activeEndDate]);
 
+    // Gestionez input-ul manual pentru data (doar cifre)
     const handleDateChange = (type, field, value) => {
         if (value && !/^\d+$/.test(value)) return;
         if ((field === 'd' || field === 'm') && value.length > 2) return;
@@ -157,6 +140,7 @@ const StatisticiPage = () => {
         if (successMsg) setSuccessMsg('');
     };
 
+    // Construiesc string-ul de data pentru backend (YYYY-MM-DD)
     const buildDateString = (d, m, y) => {
         if (!d && !m && !y) return null;
         if (!d || !m || !y) return 'INVALID';
@@ -167,6 +151,7 @@ const StatisticiPage = () => {
         return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     };
 
+    // Aplic filtrele si validez logica temporala
     const handleApplyFilters = () => {
         setSuccessMsg('');
         const startStr = buildDateString(startDate.d, startDate.m, startDate.y);
@@ -186,6 +171,7 @@ const StatisticiPage = () => {
         setDateError('');
         if (startStr || endStr) setSuccessMsg("Filtre aplicate!");
 
+        // Daca am selectat deja un politist/persoana, reincarc datele lor cu noile filtre
         if (selectedPolitist) handleCautaPolitist(startStr, endStr);
         if (selectedPersoana) handleCautaCnp(startStr, endStr);
     };
@@ -201,6 +187,7 @@ const StatisticiPage = () => {
         setRezultatCnp(null);
     };
 
+    // Cautare dosar Politist
     const handleCautaPolitist = (start = activeStartDate, end = activeEndDate) => {
         if (!selectedPolitist) return;
         const token = localStorage.getItem('token');
@@ -213,6 +200,7 @@ const StatisticiPage = () => {
             .catch(() => toast.error("Fără date."));
     };
 
+    // Cautare dosar Cetatean (Cazier)
     const handleCautaCnp = (start = activeStartDate, end = activeEndDate) => {
         if (!selectedPersoana) return;
         const token = localStorage.getItem('token');
@@ -222,17 +210,16 @@ const StatisticiPage = () => {
             .catch(() => toast.error("Fără date."));
     };
 
+    // Logica de printare: Activez clasa CSS specifica si apoi deschid dialogul
     const handlePrint = (target) => {
-        setPrintTarget(target); // 1. Marcăm ce vrem să printăm
-
-        // 2. Așteptăm puțin să se randeze clasa CSS, apoi printăm
+        setPrintTarget(target);
         setTimeout(() => {
             window.print();
-            setPrintTarget(null); // 3. Resetăm după ce fereastra de print s-a închis (sau a apărut)
+            setPrintTarget(null);
         }, 500);
     };
 
-    // --- SLIDES CAROUSEL ---
+    // --- DEFINITIA GRAFICELOR DIN CARUSEL ---
     const slides = [
         {
             id: 0,
@@ -258,15 +245,8 @@ const StatisticiPage = () => {
                             axisLine={{stroke: '#475569'}}
                         />
                         <YAxis tick={{fill: '#cbd5e1'}} tickLine={false} axisLine={false}/>
-                        <Tooltip content={<CustomChartTooltip type="politist"/>}
-                                 cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
-                        <Bar
-                            dataKey="total_valoare"
-                            fill="url(#goldGradient)"
-                            name="Total RON"
-                            barSize={30}
-                            radius={[6, 6, 0, 0]}
-                        />
+                        <Tooltip content={<CustomChartTooltip type="politist"/>} cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
+                        <Bar dataKey="total_valoare" fill="url(#goldGradient)" name="Total RON" barSize={30} radius={[6, 6, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             )
@@ -287,7 +267,7 @@ const StatisticiPage = () => {
                             dataKey="valoare_totala"
                             nameKey="grad"
                             stroke="none"
-                            label={renderCustomizedLabel} // AICI am adaugat label pentru procente
+                            label={renderCustomizedLabel}
                             labelLine={false}
                         >
                             {amenziGrad.map((entry, index) => (
@@ -295,11 +275,7 @@ const StatisticiPage = () => {
                             ))}
                         </Pie>
                         <Tooltip content={<CustomChartTooltip type="standard"/>}/>
-                        <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            wrapperStyle={{color: '#cbd5e1', paddingTop: '20px'}}
-                        />
+                        <Legend verticalAlign="bottom" height={36} wrapperStyle={{color: '#cbd5e1', paddingTop: '20px'}} />
                     </PieChart>
                 </ResponsiveContainer>
             )
@@ -328,15 +304,8 @@ const StatisticiPage = () => {
                             axisLine={{stroke: '#475569'}}
                         />
                         <YAxis tick={{fill: '#cbd5e1'}} tickLine={false} axisLine={false}/>
-                        <Tooltip content={<CustomChartTooltip type="strada"/>}
-                                 cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
-                        <Bar
-                            dataKey="nr_incidente"
-                            fill="url(#redGradient)"
-                            name="Incidente"
-                            barSize={30}
-                            radius={[6, 6, 0, 0]}
-                        />
+                        <Tooltip content={<CustomChartTooltip type="strada"/>} cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
+                        <Bar dataKey="nr_incidente" fill="url(#redGradient)" name="Incidente" barSize={30} radius={[6, 6, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             )
@@ -365,15 +334,8 @@ const StatisticiPage = () => {
                             axisLine={{stroke: '#475569'}}
                         />
                         <YAxis tick={{fill: '#cbd5e1'}} tickLine={false} axisLine={false}/>
-                        <Tooltip content={<CustomChartTooltip type="persoana"/>}
-                                 cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
-                        <Bar
-                            dataKey="datorie_totala"
-                            fill="url(#blueGradient)"
-                            name="Datorie (RON)"
-                            barSize={30}
-                            radius={[6, 6, 0, 0]}
-                        />
+                        <Tooltip content={<CustomChartTooltip type="persoana"/>} cursor={{fill: 'rgba(255,255,255,0.05)'}}/>
+                        <Bar dataKey="datorie_totala" fill="url(#blueGradient)" name="Datorie (RON)" barSize={30} radius={[6, 6, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             )
@@ -393,14 +355,11 @@ const StatisticiPage = () => {
                     <div className="st-filter-group">
                         <div className="st-filter-label">Data Start</div>
                         <div className="st-date-group">
-                            <input className="st-date-part st-w-day" placeholder="ZZ" value={startDate.d}
-                                   onChange={(e) => handleDateChange('start', 'd', e.target.value)}/>
+                            <input className="st-date-part st-w-day" placeholder="ZZ" value={startDate.d} onChange={(e) => handleDateChange('start', 'd', e.target.value)}/>
                             <span className="st-date-sep">/</span>
-                            <input className="st-date-part st-w-month" placeholder="LL" value={startDate.m}
-                                   onChange={(e) => handleDateChange('start', 'm', e.target.value)}/>
+                            <input className="st-date-part st-w-month" placeholder="LL" value={startDate.m} onChange={(e) => handleDateChange('start', 'm', e.target.value)}/>
                             <span className="st-date-sep">/</span>
-                            <input className="st-date-part st-w-year" placeholder="AAAA" value={startDate.y}
-                                   onChange={(e) => handleDateChange('start', 'y', e.target.value)}/>
+                            <input className="st-date-part st-w-year" placeholder="AAAA" value={startDate.y} onChange={(e) => handleDateChange('start', 'y', e.target.value)}/>
                         </div>
                     </div>
 
@@ -409,53 +368,33 @@ const StatisticiPage = () => {
                     <div className="st-filter-group">
                         <div className="st-filter-label">Data Sfârșit</div>
                         <div className="st-date-group">
-                            <input className="st-date-part st-w-day" placeholder="ZZ" value={endDate.d}
-                                   onChange={(e) => handleDateChange('end', 'd', e.target.value)}/>
+                            <input className="st-date-part st-w-day" placeholder="ZZ" value={endDate.d} onChange={(e) => handleDateChange('end', 'd', e.target.value)}/>
                             <span className="st-date-sep">/</span>
-                            <input className="st-date-part st-w-month" placeholder="LL" value={endDate.m}
-                                   onChange={(e) => handleDateChange('end', 'm', e.target.value)}/>
+                            <input className="st-date-part st-w-month" placeholder="LL" value={endDate.m} onChange={(e) => handleDateChange('end', 'm', e.target.value)}/>
                             <span className="st-date-sep">/</span>
-                            <input className="st-date-part st-w-year" placeholder="AAAA" value={endDate.y}
-                                   onChange={(e) => handleDateChange('end', 'y', e.target.value)}/>
+                            <input className="st-date-part st-w-year" placeholder="AAAA" value={endDate.y} onChange={(e) => handleDateChange('end', 'y', e.target.value)}/>
                         </div>
                     </div>
                 </div>
 
                 <div className="st-action-buttons">
-                    <button className="st-apply-btn" onClick={handleApplyFilters}>
-                        <i className="fa-solid fa-check"></i> APLICĂ
-                    </button>
-                    <button className="st-reset-btn" onClick={handleReset}>
-                        <i className="fa-solid fa-rotate-left"></i> RESET
-                    </button>
+                    <button className="st-apply-btn" onClick={handleApplyFilters}><i className="fa-solid fa-check"></i> APLICĂ</button>
+                    <button className="st-reset-btn" onClick={handleReset}><i className="fa-solid fa-rotate-left"></i> RESET</button>
                 </div>
             </div>
 
             {/* --- MESAJE STARE --- */}
-            <div
-                className={`st-message-panel ${dateError ? 'st-msg-error' : ''} ${!dateError && successMsg ? 'st-msg-success' : ''} ${!dateError && !successMsg ? 'st-hidden' : ''}`}>
-                {/* Error State */}
+            <div className={`st-message-panel ${dateError ? 'st-msg-error' : ''} ${!dateError && successMsg ? 'st-msg-success' : ''} ${!dateError && !successMsg ? 'st-hidden' : ''}`}>
                 {dateError && (
                     <div className="st-msg-content">
-                        <div className="st-msg-icon-box">
-                            <i className="fa-solid fa-circle-exclamation"></i>
-                        </div>
-                        <div className="st-msg-text">
-                            <strong>Atenție!</strong>
-                            <span>{dateError}</span>
-                        </div>
+                        <div className="st-msg-icon-box"><i className="fa-solid fa-circle-exclamation"></i></div>
+                        <div className="st-msg-text"><strong>Atenție!</strong><span>{dateError}</span></div>
                     </div>
                 )}
-                {/* Success State */}
                 {!dateError && successMsg && (
                     <div className="st-msg-content">
-                        <div className="st-msg-icon-box">
-                            <i className="fa-solid fa-circle-check"></i>
-                        </div>
-                        <div className="st-msg-text">
-                            <strong>Succes!</strong>
-                            <span>{successMsg}</span>
-                        </div>
+                        <div className="st-msg-icon-box"><i className="fa-solid fa-circle-check"></i></div>
+                        <div className="st-msg-text"><strong>Succes!</strong><span>{successMsg}</span></div>
                     </div>
                 )}
             </div>
@@ -463,33 +402,22 @@ const StatisticiPage = () => {
             {/* --- CAROUSEL GRAFICE --- */}
             <div className="st-carousel-container">
                 <div className="st-carousel-content" key={currentSlide}>
-                    <h3 className="st-slide-title">
-                        <i className={slides[currentSlide].icon}></i>
-                        {slides[currentSlide].title}
-                    </h3>
+                    <h3 className="st-slide-title"><i className={slides[currentSlide].icon}></i>{slides[currentSlide].title}</h3>
                     {slides[currentSlide].component}
                 </div>
-
                 <div className="st-carousel-controls">
-                    <button className="st-nav-arrow" onClick={prevSlide}>
-                        <i className="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button className="st-nav-arrow" onClick={nextSlide}>
-                        <i className="fa-solid fa-chevron-right"></i>
-                    </button>
+                    <button className="st-nav-arrow" onClick={prevSlide}><i className="fa-solid fa-chevron-left"></i></button>
+                    <button className="st-nav-arrow" onClick={nextSlide}><i className="fa-solid fa-chevron-right"></i></button>
                 </div>
-
                 <div className="st-slide-indicator">
                     {slides.map((_, idx) => (
-                        <div key={idx} className={`st-dot ${currentSlide === idx ? 'st-active' : ''}`}
-                             onClick={() => setCurrentSlide(idx)}></div>
+                        <div key={idx} className={`st-dot ${currentSlide === idx ? 'st-active' : ''}`} onClick={() => setCurrentSlide(idx)}></div>
                     ))}
                 </div>
             </div>
 
-            {/* --- GRID CARDURI --- */}
+            {/* --- GRID CARDURI PAGINATE --- */}
             <div className="st-analysis-grid">
-                {/* 1. ZONE SIGURE */}
                 <PaginatedCard
                     title="Zone Sigure"
                     icon={<i className="fa-solid fa-shield-halved st-card-fa-icon"></i>}
@@ -498,8 +426,7 @@ const StatisticiPage = () => {
                     itemsPerPage={5}
                     description="Străzi fără niciun incident înregistrat în perioada selectată."
                     renderItem={(item, idx) => (
-                        <tr key={idx} className="st-tooltip-trigger"
-                            data-tooltip={`Locație Sigură\nStrada: ${item.strada}\nLocalitate: ${item.localitate}`}>
+                        <tr key={idx} className="st-tooltip-trigger" data-tooltip={`Locație Sigură\nStrada: ${item.strada}\nLocalitate: ${item.localitate}`}>
                             <td>
                                 <div className="st-tooltip-wrapper">
                                     <span className="st-main-text">{item.strada}</span>
@@ -511,7 +438,6 @@ const StatisticiPage = () => {
                     )}
                 />
 
-                {/* 2. AGENTI SEVERI */}
                 <PaginatedCard
                     title="Agenți Severi"
                     icon={<i className="fa-solid fa-user-secret st-card-fa-icon"></i>}
@@ -520,8 +446,7 @@ const StatisticiPage = () => {
                     itemsPerPage={5}
                     description="Polițiști cu media valorică a amenzilor peste media globală."
                     renderItem={(item, idx) => (
-                        <tr key={idx} className="st-tooltip-trigger"
-                            data-tooltip={`Detalii Agent\nGrad: ${item.grad}\nFuncție: ${item.functie}\nMedie amenzi: ${parseFloat(item.medie_personala).toFixed(0)} RON`}>
+                        <tr key={idx} className="st-tooltip-trigger" data-tooltip={`Detalii Agent\nGrad: ${item.grad}\nFuncție: ${item.functie}\nMedie amenzi: ${parseFloat(item.medie_personala).toFixed(0)} RON`}>
                             <td>
                                 <div className="st-tooltip-wrapper">
                                     <span className="st-main-text">{item.nume} {item.prenume}</span>
@@ -533,7 +458,6 @@ const StatisticiPage = () => {
                     )}
                 />
 
-                {/* 3. RECIDIVISTI */}
                 <PaginatedCard
                     title="Recidiviști"
                     icon={<i className="fa-solid fa-triangle-exclamation st-card-fa-icon"></i>}
@@ -542,8 +466,7 @@ const StatisticiPage = () => {
                     itemsPerPage={5}
                     description="Persoane cu un număr de abateri peste media populației."
                     renderItem={(item, idx) => (
-                        <tr key={idx} className="st-tooltip-trigger"
-                            data-tooltip={`Date Personale\nCNP: ${item.cnp}\nTotal Abateri: ${item.nr_abateri}`}>
+                        <tr key={idx} className="st-tooltip-trigger" data-tooltip={`Date Personale\nCNP: ${item.cnp}\nTotal Abateri: ${item.nr_abateri}`}>
                             <td>
                                 <div className="st-tooltip-wrapper">
                                     <span className="st-main-text">{item.nume} {item.prenume}</span>
@@ -555,7 +478,6 @@ const StatisticiPage = () => {
                     )}
                 />
 
-                {/* 4. ZILE CRITICE */}
                 <PaginatedCard
                     title="Zile Critice"
                     icon={<i className="fa-solid fa-calendar-days st-card-fa-icon"></i>}
@@ -564,8 +486,7 @@ const StatisticiPage = () => {
                     itemsPerPage={5}
                     description="Zile cu un volum de incidente peste media zilnică obișnuită."
                     renderItem={(item, idx) => (
-                        <tr key={idx} className="st-tooltip-trigger"
-                            data-tooltip={`Raport Zilnic\nData: ${formatDateDisplay(item.ziua)}\nVolum Incidente: ${item.nr_incidente}`}>
+                        <tr key={idx} className="st-tooltip-trigger" data-tooltip={`Raport Zilnic\nData: ${formatDateDisplay(item.ziua)}\nVolum Incidente: ${item.nr_incidente}`}>
                             <td>
                                 <div className="st-tooltip-wrapper">
                                     <span className="st-main-text">{formatDateDisplay(item.ziua)}</span>
@@ -577,11 +498,10 @@ const StatisticiPage = () => {
                 />
             </div>
 
-            {/* --- ARHIVĂ DOSARE (SECTIUNE COMPLET RESCRISĂ) --- */}
+            {/* --- ARHIVĂ DOSARE --- */}
             <h2 className="st-page-title" style={{marginTop: '60px'}}>Arhivă Operativă</h2>
 
             <div className="st-dashboard-grid">
-
                 {/* --- COLOANA 1: POLIȚIST --- */}
                 <div className="st-archive-column">
                     <div className="st-search-wrapper">
@@ -593,7 +513,7 @@ const StatisticiPage = () => {
                                 displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
                                 onSelect={(item) => {
                                     setSelectedPolitist(item);
-                                    setRezultatPolitist(null); // FIX: Resetare dosar vechi la selectie noua
+                                    setRezultatPolitist(null);
                                 }}
                             />
                         </div>
@@ -608,9 +528,7 @@ const StatisticiPage = () => {
                             <div className="st-stamp">CONFIDENȚIAL</div>
 
                             <div className="st-dossier-header">
-                                <div className="st-dossier-photo-placeholder">
-                                    <i className="fa-solid fa-user-shield"></i>
-                                </div>
+                                <div className="st-dossier-photo-placeholder"><i className="fa-solid fa-user-shield"></i></div>
                                 <div className="st-dossier-info">
                                     <h2>{selectedPolitist.nume} {selectedPolitist.prenume}</h2>
                                     <div className="st-dossier-detail"><b>GRAD:</b> {selectedPolitist.grad}</div>
@@ -619,16 +537,9 @@ const StatisticiPage = () => {
                             </div>
 
                             <h4 style={{borderBottom: '1px solid #333', marginBottom: '10px'}}>ACTIVITATE INCIDENTE</h4>
-
                             {rezultatPolitist.length > 0 ? (
                                 <table className="st-dossier-table">
-                                    <thead>
-                                    <tr>
-                                        <th>Dată</th>
-                                        <th>Tip</th>
-                                        <th>Locație</th>
-                                    </tr>
-                                    </thead>
+                                    <thead><tr><th>Dată</th><th>Tip</th><th>Locație</th></tr></thead>
                                     <tbody>
                                     {rezultatPolitist.map((r, i) => (
                                         <tr key={i}>
@@ -659,12 +570,10 @@ const StatisticiPage = () => {
                                 displayKey={(p) => `${p.nume} ${p.prenume} (${p.cnp})`}
                                 onSelect={(item) => {
                                     setSelectedPersoana(item);
-                                    setRezultatCnp(null); // FIX: Resetare dosar vechi la selectie noua
+                                    setRezultatCnp(null);
                                 }}
                             />
                         </div>
-
-                        {/* FIX: Butonul apeleaza acum functia corecta pentru CNP */}
                         <button className="st-search-btn-modern" onClick={() => handleCautaCnp()}>
                             <i className="fa-solid fa-folder-open"></i> DOSAR
                         </button>
@@ -676,9 +585,7 @@ const StatisticiPage = () => {
                             <div className="st-stamp">CAZIER</div>
 
                             <div className="st-dossier-header">
-                                <div className="st-dossier-photo-placeholder">
-                                    <i className="fa-solid fa-user"></i>
-                                </div>
+                                <div className="st-dossier-photo-placeholder"><i className="fa-solid fa-user"></i></div>
                                 <div className="st-dossier-info">
                                     <h2>{selectedPersoana.nume} {selectedPersoana.prenume}</h2>
                                     <div className="st-dossier-detail"><b>CNP:</b> {selectedPersoana.cnp}</div>
@@ -687,16 +594,9 @@ const StatisticiPage = () => {
                             </div>
 
                             <h4 style={{borderBottom: '1px solid #333', marginBottom: '10px'}}>ISTORIC SANCȚIUNI</h4>
-
                             {rezultatCnp.length > 0 ? (
                                 <table className="st-dossier-table">
-                                    <thead>
-                                    <tr>
-                                        <th>Dată</th>
-                                        <th>Motiv</th>
-                                        <th>Sumă</th>
-                                    </tr>
-                                    </thead>
+                                    <thead><tr><th>Dată</th><th>Motiv</th><th>Sumă</th></tr></thead>
                                     <tbody>
                                     {rezultatCnp.map((r, i) => (
                                         <tr key={i}>

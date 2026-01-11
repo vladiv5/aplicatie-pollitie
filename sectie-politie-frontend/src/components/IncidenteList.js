@@ -1,3 +1,7 @@
+/** Componenta principala pentru vizualizarea si gestionarea incidentelor
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Pagination from './Pagination';
@@ -12,22 +16,21 @@ const IncidenteList = ({
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-
-    // --- LOADING STATE ---
     const [isLoading, setIsLoading] = useState(true);
-
     const rowRefs = useRef({});
 
+    // State pentru stergere
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
     const loadIncidente = (page, term = '') => {
         setIsLoading(true);
-
         const token = localStorage.getItem('token');
+        const safeTerm = encodeURIComponent(term); // Previn erori caractere speciale
+
         let url = `http://localhost:8080/api/incidente/lista-paginata?page=${page}&size=10`;
-        if (term) url = `http://localhost:8080/api/incidente/cauta?termen=${term}`;
+        if (term) url = `http://localhost:8080/api/incidente/cauta?termen=${safeTerm}`;
 
         return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
@@ -50,8 +53,8 @@ const IncidenteList = ({
     useEffect(() => {
         loadIncidente(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
+                // Logica de highlight automat (sari la pagina potrivita)
                 const currentList = responseData.content || responseData;
-                // Check if list exists
                 if (currentList && Array.isArray(currentList)) {
                     const existsOnPage = currentList.some(inc => inc.idIncident === highlightId);
                     if (!existsOnPage) {
@@ -70,28 +73,23 @@ const IncidenteList = ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
-
+            // Sortare descendenta dupa data, exact ca in backend
             allData.sort((a, b) => new Date(b.dataEmitere) - new Date(a.dataEmitere));
-
             const index = allData.findIndex(inc => inc.idIncident === id);
 
             if (index !== -1) {
                 const targetPage = Math.floor(index / 10);
-                if (targetPage !== currentPage) {
-                    loadIncidente(targetPage, searchTerm);
-                } else {
-                    loadIncidente(currentPage, searchTerm);
-                }
+                loadIncidente(targetPage, searchTerm);
             }
         } catch (err) {
             console.error("Nu am putut calcula pagina automata:", err);
         }
     };
 
+    // Scroll si highlight vizual
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
-
             const timer = setTimeout(() => {
                 if (onHighlightComplete) onHighlightComplete();
             }, 3000);
@@ -99,7 +97,10 @@ const IncidenteList = ({
         }
     }, [isLoading, incidente, highlightId]);
 
-    const handlePageChange = (newPage) => loadIncidente(newPage, searchTerm);
+    // --- FUNCTIA CARE LIPSEA ---
+    const handlePageChange = (newPage) => {
+        loadIncidente(newPage, searchTerm);
+    };
 
     const handleSearchChange = (e) => {
         const val = e.target.value;
@@ -114,6 +115,7 @@ const IncidenteList = ({
 
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
+        // Verific daca incidentul poate fi sters (Smart Delete)
         axios.get(`http://localhost:8080/api/incidente/verifica-stergere/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -122,9 +124,7 @@ const IncidenteList = ({
                 setDeleteId(id);
                 setIsDeleteModalOpen(true);
             })
-            .catch(err => {
-                toast.error("Eroare la verificarea incidentului.");
-            });
+            .catch(() => toast.error("Eroare la verificarea incidentului."));
     };
 
     const handleConfirmDelete = () => {
@@ -132,14 +132,14 @@ const IncidenteList = ({
         axios.delete(`http://localhost:8080/api/incidente/${deleteId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then((res) => {
+            .then(() => {
                 loadIncidente(currentPage, searchTerm);
                 setIsDeleteModalOpen(false);
                 setDeleteData(null);
                 setDeleteId(null);
                 toast.success("Incidentul a fost șters!");
             })
-            .catch(err => toast.error("Eroare la ștergere!"));
+            .catch(() => toast.error("Eroare la ștergere!"));
     };
 
     return (
@@ -147,7 +147,6 @@ const IncidenteList = ({
             <h2 className="page-title">Registru Incidente</h2>
 
             <div className="controls-container">
-                {/* 1. SEARCH */}
                 <div className="search-wrapper">
                     <input
                         type="text"
@@ -161,7 +160,6 @@ const IncidenteList = ({
                     )}
                 </div>
 
-                {/* 2. PAGINARE MUTATĂ AICI */}
                 {!searchTerm && !isLoading && totalPages > 1 && (
                     <Pagination
                         currentPage={currentPage}
@@ -170,7 +168,6 @@ const IncidenteList = ({
                     />
                 )}
 
-                {/* 3. BUTON ADĂUGARE */}
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Incident</button>
             </div>
 
@@ -188,16 +185,8 @@ const IncidenteList = ({
                     </tr>
                     </thead>
                     <tbody>
-
                     {isLoading ? (
-                        <tr>
-                            <td colSpan="7">
-                                <div className="loading-container">
-                                    <div className="spinner"></div>
-                                    <span>Se încarcă datele...</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <tr><td colSpan="7"><div className="loading-container"><div className="spinner"></div><span>Se încarcă datele...</span></div></td></tr>
                     ) : (
                         incidente && incidente.length > 0 ? (
                             incidente.map((inc) => (
@@ -207,48 +196,16 @@ const IncidenteList = ({
                                     className={highlightId === inc.idIncident ? 'flash-row' : ''}
                                 >
                                     <td style={{fontWeight: '500'}}>{inc.tipIncident}</td>
-                                    <td>
-                                        <span className="badge-status">
-                                            {inc.status || 'Activ'}
-                                        </span>
-                                    </td>
+                                    <td><span className="badge-status">{inc.status || 'Activ'}</span></td>
                                     <td>{inc.dataEmitere ? new Date(inc.dataEmitere).toLocaleString('ro-RO').substring(0, 17) : ''}</td>
                                     <td>{inc.descriereLocatie}</td>
                                     <td>{inc.adresaIncident ? `${inc.adresaIncident.strada} ${inc.adresaIncident.numar}` : ''}</td>
                                     <td>{inc.politistResponsabil ? `${inc.politistResponsabil.nume} ${inc.politistResponsabil.prenume}` : ''}</td>
-
                                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                        <button
-                                            className="btn-tactical-teal"
-                                            onClick={() => onViewClick(inc)}
-                                            title="Vizualizați Detalii"
-                                        >
-                                            <i className="fa-solid fa-eye"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical-purple"
-                                            onClick={() => onManageParticipantsClick(inc.idIncident)}
-                                            title="Gestionați Participanți"
-                                        >
-                                            <i className="fa-solid fa-users"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical"
-                                            onClick={() => onEditClick(inc.idIncident)}
-                                            title="Editați Incident"
-                                        >
-                                            <i className="fa-solid fa-pen-to-square"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical-red"
-                                            onClick={() => handleRequestDelete(inc.idIncident)}
-                                            title="Ștergeți Incident"
-                                        >
-                                            <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        <button className="btn-tactical-teal" onClick={() => onViewClick(inc)} title="Detalii"><i className="fa-solid fa-eye"></i></button>
+                                        <button className="btn-tactical-purple" onClick={() => onManageParticipantsClick(inc.idIncident)} title="Participanți"><i className="fa-solid fa-users"></i></button>
+                                        <button className="btn-tactical" onClick={() => onEditClick(inc.idIncident)} title="Editați"><i className="fa-solid fa-pen-to-square"></i></button>
+                                        <button className="btn-tactical-red" onClick={() => handleRequestDelete(inc.idIncident)} title="Ștergeți"><i className="fa-solid fa-trash"></i></button>
                                     </td>
                                 </tr>
                             ))
@@ -259,8 +216,6 @@ const IncidenteList = ({
                     </tbody>
                 </table>
             </div>
-
-            {/* Paginarea a fost ștearsă de aici */}
 
             <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
         </div>

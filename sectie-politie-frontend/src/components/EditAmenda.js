@@ -1,3 +1,7 @@
+/** Componenta pentru modificarea unei amenzi existente
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
@@ -26,8 +30,8 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                         persoanaId: d.persoana?.idPersoana || null
                     });
                     setInitialNames({
-                        politist: d.politist ? `${d.politist.nume} ${d.politist.prenume}` : '',
-                        persoana: d.persoana ? `${d.persoana.nume} ${d.persoana.prenume}` : ''
+                        politist: d.politist ? `${d.politist.nume} ${d.politist.prenume} (${d.politist.grad})` : '',
+                        persoana: d.persoana ? `${d.persoana.nume} ${d.persoana.prenume} (CNP: ${d.persoana.cnp})` : ''
                     });
                 });
         }
@@ -104,9 +108,10 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                         apiUrl="http://localhost:8080/api/politisti/cauta"
                         icon="fa-user-shield"
                         defaultValue={initialNames.politist}
+                        displayKey={(p) => `${p.nume} ${p.prenume} (${p.grad})`}
                         onSelect={(item) => handleChange('politistId', item?.idPolitist)}
+                        error={errors.idPolitist}
                     />
-                    {errors.idPolitist && <span className="error-text">{errors.idPolitist}</span>}
                 </div>
 
                 <div className="form-group-item">
@@ -115,9 +120,10 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                         apiUrl="http://localhost:8080/api/persoane/cauta"
                         icon="fa-user-tag"
                         defaultValue={initialNames.persoana}
+                        displayKey={(p) => `${p.nume} ${p.prenume} (CNP: ${p.cnp})`}
                         onSelect={(item) => handleChange('persoanaId', item?.idPersoana)}
+                        error={errors.idPersoana}
                     />
-                    {errors.idPersoana && <span className="error-text">{errors.idPersoana}</span>}
                 </div>
             </div>
             <div className="modal-footer" style={{marginTop: '30px'}}>

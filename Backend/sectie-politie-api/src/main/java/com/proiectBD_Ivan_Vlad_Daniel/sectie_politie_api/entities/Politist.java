@@ -2,14 +2,21 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities;
 
 import jakarta.persistence.*;
 
+/** Clasa pentru definirea entitatii Politist care mapeaza tabelul din baza de date
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Entity
 @Table(name = "Politisti")
 public class Politist {
+
+    // Am definit cheia primara si am specificat ca baza de date se ocupa de generarea ID-ului
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_politist")
     private Integer idPolitist;
 
+    // Am mapat coloanele tabelului la campurile clasei
     @Column(name = "nume")
     private String nume;
 
@@ -25,13 +32,15 @@ public class Politist {
     @Column(name = "telefon_serviciu")
     private String telefon_serviciu;
 
+    // Aici am adaugat campurile necesare pentru sistemul de login
     @Column(name = "username")
     private String username;
 
     @Column(name = "password")
     private String password;
 
-    // --- GETTERS & SETTERS STANDARD ---
+    // --- Metode de acces (Getters si Setters) ---
+    // Le-am generat pentru a putea citi si modifica datele private ale politistului
 
     public Integer getIdPolitist() { return idPolitist; }
     public void setIdPolitist(Integer idPolitist) { this.idPolitist = idPolitist; }

@@ -1,3 +1,7 @@
+/** Componenta pentru adaugarea/stergerea persoanelor implicate intr-un incident (Martori, Suspecti)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import LiveSearchInput from './LiveSearchInput';
@@ -10,6 +14,7 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
     const [calitate, setCalitate] = useState('Martor');
     const [isLoading, setIsLoading] = useState(true);
 
+    // Incarc lista actuala de participanti la deschiderea modalului
     const loadParticipanti = () => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
@@ -28,6 +33,7 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
         loadParticipanti();
     }, [incidentId]);
 
+    // Adaug un participant nou selectat prin LiveSearch
     const handleAdd = () => {
         if (!persoanaSelectata) {
             toast.error("Selectați o persoană!");
@@ -40,13 +46,14 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
             calitate: calitate
         }, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(() => {
-                loadParticipanti();
+                loadParticipanti(); // Reincarc lista
                 setPersoanaSelectata(null);
                 toast.success("Persoană asociată cu succes!");
             })
-            .catch(err => toast.error("Eroare: Persoana este deja adăugată!"));
+            .catch(() => toast.error("Eroare: Persoana este deja adăugată!"));
     };
 
+    // Sterg un participant din lista
     const handleDelete = (persoanaId) => {
         const token = localStorage.getItem('token');
         axios.delete(`http://localhost:8080/api/participanti/${incidentId}/${persoanaId}`, {
@@ -64,17 +71,13 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
 
     return (
         <div style={{ padding: '5px' }}>
-
-            {/* --- ZONA DE ADAUGARE (REDESENATĂ PREMIUM) --- */}
+            {/* Zona de adaugare (Search + Select Calitate) */}
             <div style={{
-                // NOU: Fundal Gradient Navy, identic cu restul aplicației
                 background: 'linear-gradient(180deg, #0a2647 0%, #05101e 100%)',
                 padding: '25px',
                 borderRadius: '10px',
                 marginBottom: '30px',
-                // NOU: Border Auriu strălucitor
                 border: '1px solid #d4af37',
-                // NOU: Umbră exterioară pentru a ieși în relief
                 boxShadow: '0 5px 15px rgba(0,0,0,0.3)'
             }}>
                 <h5 className="form-label" style={{ fontSize: '1rem', marginBottom: '20px', color: '#d4af37', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -83,7 +86,6 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                 </h5>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {/* LiveSearchInput va prelua automat stilurile globale pentru inputuri dark */}
                     <LiveSearchInput
                         label="Căutare Persoană"
                         placeholder="Introduceți nume sau CNP..."
@@ -94,13 +96,11 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '20px', alignItems: 'end' }}>
                         <div>
-                            {/* NOU: Eticheta este acum AURIE */}
                             <label className="form-label" style={{color:'#d4af37', fontWeight: '700'}}>În calitate de:</label>
                             <select
                                 className="modal-input"
                                 value={calitate}
                                 onChange={(e) => setCalitate(e.target.value)}
-                                // Am scos stilurile inline. Se bazează acum pe clasa globală .modal-input din TableStyles.css
                             >
                                 <option value="Martor">Martor</option>
                                 <option value="Suspect">Suspect</option>
@@ -116,7 +116,7 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                 </div>
             </div>
 
-            {/* TABEL LISTA */}
+            {/* Tabelul cu participantii deja existenti */}
             <div className="table-responsive">
                 <table className="styled-table compact-table">
                     <thead>
@@ -127,23 +127,14 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                     </tr>
                     </thead>
                     <tbody>
-
                     {isLoading ? (
-                        <tr>
-                            <td colSpan="3">
-                                <div className="loading-container">
-                                    <div className="spinner"></div>
-                                    <span style={{color: '#d4af37'}}>Se încarcă lista...</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <tr><td colSpan="3"><div className="loading-container"><div className="spinner"></div><span style={{color: '#d4af37'}}>Se încarcă lista...</span></div></td></tr>
                     ) : (
-                        participanti.length > 0 ? participanti.map((p, index) => (
+                        participanti.length > 0 ? participanti.map((p) => (
                             <tr key={p.id.idPersoana}>
                                 <td style={{ fontWeight: '600', color: '#ffffff' }}>{p.persoana.nume} {p.persoana.prenume}</td>
                                 <td>
                                     <span className="badge-status" style={{
-                                        // Culori adaptate pentru Dark Mode
                                         backgroundColor: (p.calitate === 'Suspect' || p.calitate === 'Faptas') ? 'rgba(239, 68, 68, 0.2)' :
                                             (p.calitate === 'Victima' ? 'rgba(249, 115, 22, 0.2)' : 'rgba(16, 185, 129, 0.2)'),
                                         color: (p.calitate === 'Suspect' || p.calitate === 'Faptas') ? '#fca5a5' :
@@ -154,14 +145,8 @@ const GestionareParticipanti = ({ incidentId, onClose }) => {
                                         {p.calitate}
                                     </span>
                                 </td>
-
-                                {/* BUTON ȘTERGERE ICON-ONLY */}
                                 <td style={{ textAlign: 'center' }}>
-                                    <button
-                                        className="btn-tactical-red"
-                                        onClick={() => handleDelete(p.id.idPersoana)}
-                                        title="Eliminați participantul"
-                                    >
+                                    <button className="btn-tactical-red" onClick={() => handleDelete(p.id.idPersoana)} title="Eliminați participantul">
                                         <i className="fa-solid fa-trash"></i>
                                     </button>
                                 </td>

@@ -5,10 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
+/** Controller pentru generarea rapoartelor complexe si statisticilor
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @RestController
 @RequestMapping("/api/statistici")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -19,24 +22,41 @@ public class StatisticiController {
     @Autowired private PersoanaRepository persoanaRepo;
     @Autowired private AmendaRepository amendaRepo;
 
-    // Helper: Convertește String în LocalDateTime (sau null dacă e gol)
+    // --- FIX CRITIC: Parsing robust pentru date ---
     private LocalDateTime parseDate(String dateStr) {
-        if (dateStr == null || dateStr.trim().isEmpty() || dateStr.equals("null")) {
+        try {
+            // Verificam daca stringul este gol, null, sau textul "undefined"/"null" trimis de JS
+            if (dateStr == null || dateStr.trim().isEmpty() ||
+                    dateStr.equalsIgnoreCase("null") || dateStr.equalsIgnoreCase("undefined")) {
+                return null;
+            }
+            // Daca formatul e doar YYYY-MM-DD, adaugam ora de start
+            if (dateStr.length() == 10) {
+                return LocalDateTime.parse(dateStr + "T00:00:00");
+            }
+            return LocalDateTime.parse(dateStr);
+        } catch (Exception e) {
+            // Daca apare orice eroare de formatare, returnam null (fara filtru) in loc sa dam crash
             return null;
         }
-        // Frontend trimite de obicei YYYY-MM-DD
-        return LocalDateTime.parse(dateStr + "T00:00:00");
     }
 
     private LocalDateTime parseDateEnd(String dateStr) {
-        if (dateStr == null || dateStr.trim().isEmpty() || dateStr.equals("null")) {
+        try {
+            if (dateStr == null || dateStr.trim().isEmpty() ||
+                    dateStr.equalsIgnoreCase("null") || dateStr.equalsIgnoreCase("undefined")) {
+                return null;
+            }
+            if (dateStr.length() == 10) {
+                return LocalDateTime.parse(dateStr + "T23:59:59");
+            }
+            return LocalDateTime.parse(dateStr);
+        } catch (Exception e) {
             return null;
         }
-        // Sfârșitul zilei
-        return LocalDateTime.parse(dateStr + "T23:59:59");
     }
 
-    // --- RAPOARTE SIMPLE (Actualizate cu filtre) ---
+    // --- ENDPOINTS ---
 
     @GetMapping("/top-politisti")
     public List<Map<String, Object>> getTopPolitisti(@RequestParam(required=false) String start, @RequestParam(required=false) String end) {
@@ -58,10 +78,11 @@ public class StatisticiController {
         return politistRepo.getStatisticiPerGrad(parseDate(start), parseDateEnd(end));
     }
 
-    // --- RAPOARTE DINAMICE ---
+    // --- RAPOARTE DOSAR (AICI ERA PROBLEMA) ---
 
     @GetMapping("/incidente-politist")
     public List<Map<String, Object>> getIncidentePolitist(@RequestParam Integer id, @RequestParam(required=false) String start, @RequestParam(required=false) String end) {
+        // Acum parseDate nu va mai da crash daca start e "undefined"
         return incidentRepo.getIncidenteByPolitist(id, parseDate(start), parseDateEnd(end));
     }
 
@@ -70,27 +91,23 @@ public class StatisticiController {
         return amendaRepo.getAmenziByCNP(cnp, parseDate(start), parseDateEnd(end));
     }
 
-    // --- RAPOARTE COMPLEXE (NOI) ---
+    // --- RAPOARTE COMPLEXE ---
 
-    // 1. Zone Sigure (Subcerere NOT IN)
     @GetMapping("/zone-sigure")
     public List<Map<String, Object>> getZoneSigure(@RequestParam(required=false) String start, @RequestParam(required=false) String end) {
         return incidentRepo.getZoneSigure(parseDate(start), parseDateEnd(end));
     }
 
-    // 2. Agenți Severi (Subcerere in HAVING)
     @GetMapping("/agenti-severi")
     public List<Map<String, Object>> getAgentiSeveri(@RequestParam(required=false) String start, @RequestParam(required=false) String end) {
         return politistRepo.getAgentiSeveri(parseDate(start), parseDateEnd(end));
     }
 
-    // 3. Recidiviști (Subcerere in HAVING)
     @GetMapping("/recidivisti")
     public List<Map<String, Object>> getRecidivisti(@RequestParam(required=false) String start, @RequestParam(required=false) String end) {
         return persoanaRepo.getRecidivisti(parseDate(start), parseDateEnd(end));
     }
 
-    // 4. Zile Critice (Subcerere pe Agregare)
     @GetMapping("/zile-critice")
     public List<Map<String, Object>> getZileCritice(@RequestParam(required=false) String start, @RequestParam(required=false) String end) {
         return incidentRepo.getZileCritice(parseDate(start), parseDateEnd(end));

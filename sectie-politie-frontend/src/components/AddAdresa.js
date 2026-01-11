@@ -1,29 +1,40 @@
+/** Componenta pentru adaugarea unei noi adrese in baza de date
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
+import './styles/Forms.css';
 
 const AddAdresa = ({ onSaveSuccess, onCancel }) => {
+    // Initializarea starii formularului cu campuri goale
     const [formData, setFormData] = useState({
         strada: '', numar: '', bloc: '', apartament: '', localitate: '', judetSauSector: ''
     });
     const [errors, setErrors] = useState({});
 
+    // Functie pentru actualizarea starii cand utilizatorul scrie in input
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+        // Daca exista o eroare pe acest camp, o sterg cand utilizatorul incepe sa corecteze
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
+    // Trimiterea datelor catre server
     const handleSave = () => {
-        setErrors({});
+        setErrors({}); // Resetez erorile anterioare
+
         axios.post('http://localhost:8080/api/adrese', formData)
             .then((response) => {
                 toast.success("Adresă înregistrată!");
+                // Apelez functia de callback pentru a notifica parintele si a inchide modalul
                 onSaveSuccess(response.data.idAdresa);
             })
             .catch(err => {
                 if (err.response?.status === 400) {
+                    // Daca primesc erori de validare de la backend, le afisez sub campuri
                     setErrors(err.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
@@ -32,6 +43,7 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
+    // Helper pentru randarea input-urilor cu stiluri consistente
     const renderInput = (name, label, placeholder, icon, containerStyle = {}) => {
         const hasError = errors[name];
         return (
@@ -48,12 +60,14 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
                         value={formData[name]}
                         onChange={handleChange}
                     />
+                    {/* Butonul de stergere rapida (X) apare doar daca exista text */}
                     {formData[name] && (
                         <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
                             <i className="fa-solid fa-circle-xmark"></i>
                         </button>
                     )}
                 </div>
+                {/* Mesajul de eroare venit din backend */}
                 {hasError && <span className="error-text">{errors[name]}</span>}
             </div>
         );

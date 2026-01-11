@@ -23,6 +23,10 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Controller pentru gestionarea persoanelor (cetatenilor)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @RestController
 @RequestMapping("/api/persoane")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -39,13 +43,12 @@ public class PersoanaController {
     @Autowired
     private IncidentRepository incidentRepository;
 
-    // SELECT SQL
+    // --- GETTERS ---
     @GetMapping
     public List<Persoana> getAllPersoane() {
         return persoanaRepository.getAllPersoaneNative();
     }
 
-    // SEARCH SQL
     @GetMapping("/cauta")
     public List<Persoana> cautaPersoane(@RequestParam String termen) {
         if (termen == null || termen.trim().isEmpty()) {
@@ -60,13 +63,13 @@ public class PersoanaController {
                 .orElseThrow(() -> new RuntimeException("Persoana nu exista!"));
     }
 
-    // INSERT (VALIDARE MANUALA)
+    // --- INSERT ---
     @PostMapping
     public ResponseEntity<?> addPersoana(@RequestBody Persoana p) {
         curataDatePersoana(p);
         Map<String, String> errors = valideazaPersoana(p);
 
-        // Validări unicitate
+        // Validari unicitate
         if (!errors.containsKey("cnp") && persoanaRepository.verificaCnpUnic(p.getCnp(), null) > 0) {
             errors.put("cnp", "Acest CNP există deja!");
         }
@@ -76,20 +79,17 @@ public class PersoanaController {
 
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // 1. INSERT MANUAL (SQL PUR)
         persoanaRepository.insertPersoana(
                 p.getNume(), p.getPrenume(), p.getCnp(), p.getDataNasterii(), p.getTelefon()
         );
 
-        // 2. RECUPERARE ID (SQL PUR)
         Integer newId = persoanaRepository.getLastInsertedId();
         p.setIdPersoana(newId);
 
-        // 3. RETURNARE OBIECT
         return ResponseEntity.ok(p);
     }
 
-    // UPDATE (VALIDARE MANUALA)
+    // --- UPDATE ---
     @PutMapping("/{id}")
     public ResponseEntity<?> updatePersoana(@PathVariable Integer id, @RequestBody Persoana p) {
         persoanaRepository.getPersoanaByIdNative(id)
@@ -107,29 +107,20 @@ public class PersoanaController {
 
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // 1. UPDATE MANUAL
         persoanaRepository.updatePersoana(
                 id, p.getNume(), p.getPrenume(), p.getCnp(), p.getDataNasterii(), p.getTelefon()
         );
 
-        // 2. RETURNARE OBIECT ACTUALIZAT
         Persoana updated = persoanaRepository.getPersoanaByIdNative(id).orElse(p);
         return ResponseEntity.ok(updated);
     }
 
-    // --- HELPER: Curatare ---
-    private void curataDatePersoana(Persoana p) {
-        if (p.getTelefon() != null && p.getTelefon().trim().isEmpty()) {
-            p.setTelefon(null);
-        }
-    }
-
-    // --- HELPER: Validare "Babeasca" ---
+    // --- HELPER VALIDARE ---
     private Map<String, String> valideazaPersoana(Persoana p) {
         Map<String, String> errors = new HashMap<>();
         String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
 
-        // --- 1. NUME (Obligatoriu, Litere, Max 50) ---
+        // 1. Nume
         if (p.getNume() == null || p.getNume().trim().isEmpty()) {
             errors.put("nume", "Numele este obligatoriu!");
         } else if (!p.getNume().matches(doarLitereRegex)) {
@@ -138,7 +129,7 @@ public class PersoanaController {
             errors.put("nume", "Maxim 50 de caractere!");
         }
 
-        // --- 2. PRENUME (Obligatoriu, Litere, Max 50) ---
+        // 2. Prenume
         if (p.getPrenume() == null || p.getPrenume().trim().isEmpty()) {
             errors.put("prenume", "Prenumele este obligatoriu!");
         } else if (!p.getPrenume().matches(doarLitereRegex)) {
@@ -147,7 +138,7 @@ public class PersoanaController {
             errors.put("prenume", "Maxim 50 de caractere!");
         }
 
-        // --- 3. CNP (Obligatoriu, 13 Cifre, Validare Matematică) ---
+        // 3. CNP
         if (p.getCnp() == null || p.getCnp().trim().isEmpty()) {
             errors.put("cnp", "CNP-ul este obligatoriu!");
         } else if (!p.getCnp().matches("^\\d{13}$")) {
@@ -156,14 +147,14 @@ public class PersoanaController {
             errors.put("cnp", "CNP invalid (eroare control matematic)!");
         }
 
-        // --- 4. DATA NAȘTERII (Obligatorie, Varstă Reală) ---
+        // 4. Data Nasterii
         if (p.getDataNasterii() == null) {
             errors.put("dataNasterii", "Data nașterii este obligatorie!");
         } else if (!isVarstaValida(p.getDataNasterii())) {
             errors.put("dataNasterii", "Data invalidă (max 120 ani sau din viitor)!");
         }
 
-        // --- 5. TELEFON (Opțional, Format 07xxxxxxxx) ---
+        // 5. Telefon
         if (p.getTelefon() != null && !p.getTelefon().trim().isEmpty()) {
             if (!p.getTelefon().matches("^07\\d{8}$")) {
                 errors.put("telefon", "Format telefon invalid (07xxxxxxxx)!");
@@ -173,18 +164,24 @@ public class PersoanaController {
         return errors;
     }
 
-    // --- ENDPOINT PAGINARE ---
-    @GetMapping("/lista-paginata")
-    public Page<Persoana> getPersoanePaginat(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "nume") String sortBy,
-            @RequestParam(defaultValue = "asc") String dir
-    ) {
-        Sort.Direction direction = dir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Sort sortare = Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.ASC, "prenume"));
-        Pageable pageable = PageRequest.of(page, size, sortare);
-        return persoanaRepository.findAllNativePaginat(pageable);
+    private void curataDatePersoana(Persoana p) {
+        if (p.getTelefon() != null && p.getTelefon().trim().isEmpty()) {
+            p.setTelefon(null);
+        }
+    }
+
+    // --- STERGERE ---
+    @DeleteMapping("/{id}")
+    public String deletePersoana(@PathVariable Integer id) {
+        Persoana p = persoanaRepository.getPersoanaByIdNative(id).orElse(null);
+        String nume = (p != null) ? p.getNume() + " " + p.getPrenume() : "Persoana";
+
+        persoanaAdresaRepository.deleteByPersoanaId(id);
+        persoanaIncidentRepository.deleteByPersoanaId(id);
+        amendaRepository.deleteByPersoanaId(id);
+        persoanaRepository.deletePersoanaNative(id);
+
+        return "Succes: " + nume + " a fost șters(ă) din sistem!";
     }
 
     // --- VERIFICARE STERGERE ---
@@ -212,26 +209,19 @@ public class PersoanaController {
             else if ("Închis".equalsIgnoreCase(status)) hasOrange = true;
         }
 
-        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată - Elemente Active", "Persoana are incidente active sau amenzi neplătite. Ștergerea acesteia nu este posibilă până la rezolvarea lor.", listaTotala);
-        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere cu Istoric", "Persoana are istoric. Ștergerea acesteia va duce la ștergerea din baza de date a următoarelor incidente și amenzi: ", listaTotala);
-        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Nu există date asociate acestei persoane. Ștergerea sa se poate face fără probleme!", listaTotala);
+        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Persoana are incidente active sau amenzi neplătite.", listaTotala);
+        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere cu Istoric", "Persoana are istoric. Ștergerea va duce la pierderea acestuia.", listaTotala);
+        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Nu există date asociate.", listaTotala);
     }
 
-    // --- DELETE CASCADE ---
-    @DeleteMapping("/{id}")
-    public String deletePersoana(@PathVariable Integer id) {
-        Persoana p = persoanaRepository.getPersoanaByIdNative(id).orElse(null);
-        String nume = (p != null) ? p.getNume() + " " + p.getPrenume() : "Persoana";
-
-        persoanaAdresaRepository.deleteByPersoanaId(id);
-        persoanaIncidentRepository.deleteByPersoanaId(id);
-        amendaRepository.deleteByPersoanaId(id);
-        persoanaRepository.deletePersoanaNative(id);
-
-        return "Succes: " + nume + " a fost șters(ă) din sistem!";
+    // --- PAGINARE ---
+    @GetMapping("/lista-paginata")
+    public Page<Persoana> getPersoanePaginat(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        Sort sortare = Sort.by(Sort.Direction.ASC, "nume").and(Sort.by(Sort.Direction.ASC, "prenume"));
+        return persoanaRepository.findAllNativePaginat(PageRequest.of(page, size, sortare));
     }
 
-    // --- VALIDARI LOGICE ---
+    // --- VALIDARI LOGICE MATEMATICE ---
     private boolean isCnpValidMatematic(String cnp) {
         String constanta = "279146358279";
         int suma = 0;

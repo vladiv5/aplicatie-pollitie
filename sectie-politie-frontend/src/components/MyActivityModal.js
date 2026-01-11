@@ -1,30 +1,27 @@
+/** Modalul pentru vizualizarea dosarului personal al unui politist
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './styles/TableStyles.css';
 import toast from 'react-hot-toast';
-
 import EditIncident from './EditIncident';
 import EditAmenda from './EditAmenda';
 import Modal from './Modal';
 import './styles/Home.css'
 
 const MyActivityModal = ({ userId, onClose }) => {
-    // --- STATE DATE ---
     const [data, setData] = useState({
-        incidente: [],
-        amenzi: [],
-        totalAmenziValoare: 0,
-        totalIncidente: 0,
-        totalAmenziCount: 0
+        incidente: [], amenzi: [], totalAmenziValoare: 0, totalIncidente: 0, totalAmenziCount: 0
     });
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('incidente');
 
-    // --- STATE PENTRU EDITARE ---
+    // Stari pentru editarea rapida din dosar
     const [editIncidentId, setEditIncidentId] = useState(null);
     const [editAmendaId, setEditAmendaId] = useState(null);
 
-    // --- FUNCȚIE DE ÎNCĂRCARE DATE ---
     const loadData = useCallback(() => {
         const token = localStorage.getItem('token');
         if (!userId) return;
@@ -50,24 +47,19 @@ const MyActivityModal = ({ userId, onClose }) => {
     const handleEditSuccess = () => {
         setEditIncidentId(null);
         setEditAmendaId(null);
-        loadData();
+        loadData(); // Reincarcam datele dupa editare
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return '-';
         return new Date(dateString).toLocaleString('ro-RO', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     };
 
     return (
         <div className="my-activity-modal-container">
-
-            {/* 1. STATISTICI RAPIDE */}
+            {/* Dashboard Mini - Statistici */}
             <div className="dosar-stats-container">
                 <div className="stat-box">
                     <h4 className="stat-value">{data.totalIncidente}</h4>
@@ -85,68 +77,39 @@ const MyActivityModal = ({ userId, onClose }) => {
                 </div>
             </div>
 
-            {/* 2. TABS */}
+            {/* Tab-uri navigare */}
             <div className="modal-tabs">
-                <button
-                    className={`tab-btn ${activeTab === 'incidente' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('incidente')}
-                >
+                <button className={`tab-btn ${activeTab === 'incidente' ? 'active' : ''}`} onClick={() => setActiveTab('incidente')}>
                     <i className="fa-solid fa-folder"></i> Incidente ({data.totalIncidente})
                 </button>
-                <button
-                    className={`tab-btn ${activeTab === 'amenzi' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('amenzi')}
-                >
+                <button className={`tab-btn ${activeTab === 'amenzi' ? 'active' : ''}`} onClick={() => setActiveTab('amenzi')}>
                     <i className="fa-solid fa-file-invoice"></i> Amenzi ({data.totalAmenziCount})
                 </button>
             </div>
 
-            {/* 3. CONTENT */}
+            {/* Continut Tab */}
             <div className="table-responsive" style={{ borderTop: 'none', background: 'white', minHeight: '350px' }}>
                 {loading ? (
-                    <div className="loading-container">
-                        <div className="spinner"></div>
-                        <p>Se încarcă datele operative...</p>
-                    </div>
+                    <div className="loading-container"><div className="spinner"></div><p>Se încarcă datele operative...</p></div>
                 ) : (
                     <>
                         {activeTab === 'incidente' && (
                             <table className="styled-table compact-table">
                                 <thead>
-                                <tr>
-                                    <th>Tip</th>
-                                    <th>Data</th>
-                                    <th>Status</th>
-                                    <th>Locație</th>
-                                    <th style={{textAlign:'center'}}>Acțiuni</th>
-                                </tr>
+                                <tr><th>Tip</th><th>Data</th><th>Status</th><th>Locație</th><th style={{textAlign:'center'}}>Acțiuni</th></tr>
                                 </thead>
                                 <tbody>
                                 {data.incidente.length > 0 ? data.incidente.map(inc => (
                                     <tr key={inc.idIncident}>
                                         <td style={{fontWeight: '600'}}>{inc.tipIncident}</td>
                                         <td>{formatDate(inc.dataEmitere)}</td>
-                                        <td>
-                                                <span className={`badge-status ${inc.status === 'Închis' ? 'status-inchis' : 'status-arhivat'}`}>
-                                                    {inc.status}
-                                                </span>
-                                        </td>
+                                        <td><span className={`badge-status ${inc.status === 'Închis' ? 'status-inchis' : 'status-arhivat'}`}>{inc.status}</span></td>
                                         <td>{inc.descriereLocatie}</td>
-
-                                        {/* FIX 1: Buton curat fără margin și cu title */}
                                         <td style={{ textAlign: 'center' }}>
-                                            <button
-                                                className="btn-tactical"
-                                                onClick={() => setEditIncidentId(inc.idIncident)}
-                                                title="Editați Incident"
-                                            >
-                                                <i className="fa-solid fa-pen-to-square"></i>
-                                            </button>
+                                            <button className="btn-tactical" onClick={() => setEditIncidentId(inc.idIncident)} title="Editați"><i className="fa-solid fa-pen-to-square"></i></button>
                                         </td>
                                     </tr>
-                                )) : (
-                                    <tr><td colSpan="5" className="text-center">Nu există incidente alocate acestui profil.</td></tr>
-                                )}
+                                )) : <tr><td colSpan="5" className="text-center">Nu există incidente.</td></tr>}
                                 </tbody>
                             </table>
                         )}
@@ -154,44 +117,21 @@ const MyActivityModal = ({ userId, onClose }) => {
                         {activeTab === 'amenzi' && (
                             <table className="styled-table compact-table">
                                 <thead>
-                                <tr>
-                                    <th>Motiv</th>
-                                    <th>Suma</th>
-                                    <th>Stare</th>
-                                    <th>Data</th>
-                                    <th>Persoana</th>
-                                    <th style={{textAlign:'center'}}>Acțiuni</th>
-                                </tr>
+                                <tr><th>Motiv</th><th>Suma</th><th>Stare</th><th>Data</th><th>Persoana</th><th style={{textAlign:'center'}}>Acțiuni</th></tr>
                                 </thead>
                                 <tbody>
                                 {data.amenzi.length > 0 ? data.amenzi.map(a => (
                                     <tr key={a.idAmenda}>
                                         <td>{a.motiv}</td>
                                         <td style={{fontWeight:'bold', color: 'var(--royal-navy-dark)'}}>{a.suma} RON</td>
-                                        <td>
-                                            <span className="badge-status">
-                                                {a.starePlata}
-                                            </span>
-                                        </td>
+                                        <td><span className="badge-status">{a.starePlata}</span></td>
                                         <td>{formatDate(a.dataEmitere)}</td>
-                                        <td>
-                                            {a.persoana ? `${a.persoana.nume} ${a.persoana.prenume}` : <span style={{color:'#999'}}>Nespecificat</span>}
-                                        </td>
-
-                                        {/* FIX 2: Buton curat fără margin și cu title */}
+                                        <td>{a.persoana ? `${a.persoana.nume} ${a.persoana.prenume}` : <span style={{color:'#999'}}>Nespecificat</span>}</td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <button
-                                                className="btn-tactical"
-                                                onClick={() => setEditAmendaId(a.idAmenda)}
-                                                title="Editați Amendă"
-                                            >
-                                                <i className="fa-solid fa-pen-to-square"></i>
-                                            </button>
+                                            <button className="btn-tactical" onClick={() => setEditAmendaId(a.idAmenda)} title="Editați"><i className="fa-solid fa-pen-to-square"></i></button>
                                         </td>
                                     </tr>
-                                )) : (
-                                    <tr><td colSpan="6" className="text-center">Nu există sancțiuni înregistrate.</td></tr>
-                                )}
+                                )) : <tr><td colSpan="6" className="text-center">Nu există sancțiuni.</td></tr>}
                                 </tbody>
                             </table>
                         )}
@@ -199,7 +139,7 @@ const MyActivityModal = ({ userId, onClose }) => {
                 )}
             </div>
 
-            {/* --- MODALE NESTED --- */}
+            {/* Modale de editare nested */}
             <Modal isOpen={!!editIncidentId} onClose={() => setEditIncidentId(null)} title="Editați Incident Operativ">
                 {editIncidentId && <EditIncident id={editIncidentId} onSaveSuccess={handleEditSuccess} onCancel={() => setEditIncidentId(null)} />}
             </Modal>

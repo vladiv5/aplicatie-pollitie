@@ -1,7 +1,11 @@
+/** Componenta pentru adaugarea unei noi persoane in sistem
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
+import './styles/Forms.css';
 
 const AddPersoana = ({ onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({

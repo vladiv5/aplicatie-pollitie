@@ -15,6 +15,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+/** Controller pentru gestionarea Amenzilor (CRUD + Validare matematica)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @RestController
 @RequestMapping("/api/amenzi")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -22,6 +26,95 @@ public class AmendaController {
 
     @Autowired
     private AmendaRepository amendaRepository;
+
+    // --- HELPER VALIDARE (LOGICA MATEMATICĂ) ---
+    private Map<String, String> valideazaAmenda(AmendaRequest req) {
+        Map<String, String> errors = new HashMap<>();
+
+        // 1. Validare Motiv
+        if (req.motiv == null || req.motiv.trim().isEmpty()) {
+            errors.put("motiv", "Motivul amenzii este obligatoriu!");
+        } else if (req.motiv.length() > 255) {
+            errors.put("motiv", "Maxim 255 de caractere!");
+        } else if (req.motiv.matches(".*\\d.*")) {
+            errors.put("motiv", "Motivul nu poate conține cifre!");
+        }
+
+        // 2. Validare Suma (Interval 50-3000, Multiplu de 25)
+        if (req.suma == null) {
+            errors.put("suma", "Suma este obligatorie!");
+        } else {
+            BigDecimal min = new BigDecimal("50");
+            BigDecimal max = new BigDecimal("3000");
+            BigDecimal multiplu = new BigDecimal("25");
+
+            boolean inRange = req.suma.compareTo(min) >= 0 && req.suma.compareTo(max) <= 0;
+            boolean isMultiplu = req.suma.remainder(multiplu).compareTo(BigDecimal.ZERO) == 0;
+
+            if (!inRange || !isMultiplu) {
+                errors.put("suma", "Suma trebuie să fie multiplu de 25 și între 50 și 3000 RON.");
+            }
+        }
+
+        // 3. Validare Data
+        try {
+            if (req.dataEmitere == null || req.dataEmitere.trim().isEmpty()) {
+                errors.put("dataEmitere", "Data acordării este obligatorie!");
+            } else {
+                LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
+                if (!isDataValida(data)) {
+                    errors.put("dataEmitere", "Amenda este mai veche de 15 ani sau din viitor!");
+                }
+            }
+        } catch (Exception e) {
+            errors.put("dataEmitere", "Format dată invalid!");
+        }
+
+        return errors;
+    }
+
+    // --- INSERT ---
+    @PostMapping
+    public ResponseEntity<?> createAmenda(@RequestBody AmendaRequest req) {
+        Map<String, String> errors = valideazaAmenda(req);
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
+
+        // Inserez amenda in baza de date
+        amendaRepository.insertAmenda(
+                req.motiv, req.suma, req.starePlata, data, req.idPolitist, req.idPersoana
+        );
+        Integer newId = amendaRepository.getLastInsertedId();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Amenda salvată cu succes!");
+        response.put("idAmenda", newId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // --- UPDATE ---
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateAmenda(@PathVariable Integer id, @RequestBody AmendaRequest req) {
+        amendaRepository.getAmendaByIdNative(id).orElseThrow(() -> new RuntimeException("Amenda nu exista!"));
+
+        Map<String, String> errors = valideazaAmenda(req);
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
+
+        amendaRepository.updateAmenda(
+                id, req.motiv, req.suma, req.starePlata, data, req.idPolitist, req.idPersoana
+        );
+
+        Amenda updated = amendaRepository.getAmendaByIdNative(id).orElse(null);
+        return ResponseEntity.ok(updated);
+    }
 
     // --- VERIFICARE STERGERE ---
     @GetMapping("/verifica-stergere/{id}")
@@ -39,7 +132,7 @@ public class AmendaController {
         }
     }
 
-    // --- GET METHODS ---
+    // --- Metode Standard GET/DELETE ---
     @GetMapping
     public List<Amenda> getAllAmenzi() { return amendaRepository.getAllAmenziNative(); }
 
@@ -53,108 +146,12 @@ public class AmendaController {
         return (termen == null || termen.trim().isEmpty()) ? amendaRepository.getAllAmenziNative() : amendaRepository.cautaDupaInceput(termen);
     }
 
-    // --- HELPER VALIDARE ---
-    private Map<String, String> valideazaAmenda(AmendaRequest req) {
-        Map<String, String> errors = new HashMap<>();
-
-        // --- 1. MOTIV (Obligatoriu, Max 255) ---
-        if (req.motiv == null || req.motiv.trim().isEmpty()) {
-            errors.put("motiv", "Motivul amenzii este obligatoriu!");
-        } else if (req.motiv.length() > 255) {
-            errors.put("motiv", "Maxim 255 de caractere!");
-        }
-
-        // --- 2. SUMA (Obligatoriu, Pozitivă) ---
-        if (req.suma == null) {
-            errors.put("suma", "Suma este obligatorie!");
-        } else if (req.suma.compareTo(BigDecimal.ZERO) <= 0) {
-            errors.put("suma", "Suma trebuie să fie un număr pozitiv!");
-        }
-
-        // --- 3. DATA (Format + Logica 15 ani) ---
-        try {
-            if (req.dataEmitere == null || req.dataEmitere.trim().isEmpty()) {
-                errors.put("dataEmitere", "Data acordării este obligatorie!");
-            } else {
-                LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
-                if (!isDataValida(data)) {
-                    errors.put("dataEmitere", "Amenda este mai veche de 15 ani sau din viitor!");
-                }
-            }
-        } catch (Exception e) {
-            errors.put("dataEmitere", "Format dată invalid!");
-        }
-
-        // --- 4. RELAȚII (Obligatorii) ---
-        if (req.idPolitist == null) {
-            errors.put("idPolitist", "Selectați agentul constatator!");
-        }
-        if (req.idPersoana == null) {
-            errors.put("idPersoana", "Selectați persoana amendată!");
-        }
-
-        return errors;
-    }
-
-    // --- INSERT SQL (VALIDARE MANUALA) ---
-    @PostMapping
-    public ResponseEntity<?> createAmenda(@RequestBody AmendaRequest req) {
-        // AICI ESTE SCHIMBAREA: Apelăm funcția de validare
-        Map<String, String> errors = valideazaAmenda(req);
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        // Parse Data
-        LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
-
-        // 1. INSERT MANUAL (SQL PUR)
-        amendaRepository.insertAmenda(
-                req.motiv, req.suma, req.starePlata, data, req.idPolitist, req.idPersoana
-        );
-
-        // 2. RECUPERARE ID
-        Integer newId = amendaRepository.getLastInsertedId();
-
-        // 3. RETURNARE RĂSPUNS CU ID
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Amenda salvată cu succes!");
-        response.put("idAmenda", newId);
-
-        return ResponseEntity.ok(response);
-    }
-
-    // --- UPDATE (MODIFICAT) ---
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateAmenda(@PathVariable Integer id, @RequestBody AmendaRequest req) {
-        amendaRepository.getAmendaByIdNative(id).orElseThrow(() -> new RuntimeException("Amenda nu exista!"));
-
-        // AICI ESTE SCHIMBAREA: Apelăm funcția de validare și la update
-        Map<String, String> errors = valideazaAmenda(req);
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
-
-        // 1. UPDATE MANUAL
-        amendaRepository.updateAmenda(
-                id, req.motiv, req.suma, req.starePlata, data, req.idPolitist, req.idPersoana
-        );
-
-        // 2. RETURNARE OBIECT ACTUALIZAT
-        Amenda updated = amendaRepository.getAmendaByIdNative(id).orElse(null);
-        return ResponseEntity.ok(updated);
-    }
-
-    // --- DELETE ---
     @DeleteMapping("/{id}")
     public String deleteAmenda(@PathVariable Integer id) {
         amendaRepository.deleteAmendaNative(id);
         return "Amenda a fost ștearsă cu succes!";
     }
 
-    // --- PAGINARE ---
     @GetMapping("/lista-paginata")
     public Page<Amenda> getAmenziPaginat(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return amendaRepository.findAllNativePaginat(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "data_emitere")));
@@ -167,7 +164,6 @@ public class AmendaController {
         return data.isAfter(limitaTrecut) && data.isBefore(acum.plusDays(1));
     }
 
-    // === DTO ===
     public static class AmendaRequest {
         public String motiv;
         public BigDecimal suma;

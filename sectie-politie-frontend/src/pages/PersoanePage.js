@@ -1,3 +1,8 @@
+/** Pagina principala pentru gestionarea Persoanelor
+ * Integreaza lista, modalele de adaugare/editare si vizualizarea istoricului
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import PersoaneList from '../components/PersoaneList';
 import AddPersoana from '../components/AddPersoana';
@@ -7,14 +12,14 @@ import ViewAdresePersoana from '../components/ViewAdresePersoana';
 import Modal from '../components/Modal';
 
 const PersoanePage = () => {
-    // State Modale
+    // --- State Modale ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [historyId, setHistoryId] = useState(null);
     const [adreseId, setAdreseId] = useState(null);
     const [editId, setEditId] = useState(null);
 
-    // Refresh & Highlight
+    // --- State Refresh & Highlight ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
@@ -33,7 +38,6 @@ const PersoanePage = () => {
 
     return (
         <div className="page-wrapper">
-            {/* Lista inteligenta */}
             <PersoaneList
                 refreshTrigger={refreshTrigger}
                 onAddClick={() => setIsAddModalOpen(true)}
@@ -41,24 +45,18 @@ const PersoanePage = () => {
                 onViewHistoryClick={(id) => setHistoryId(id)}
                 onViewAdreseClick={(id) => setAdreseId(id)}
 
-                // --- Highlight Props ---
                 highlightId={highlightId}
                 onHighlightComplete={() => setHighlightId(null)}
-                // IMPORTANT: Trimitem setter-ul pentru Bumerang
+                // IMPORTANT: Trimit setter-ul pentru Bumerang logic (revenire dupa stergere)
                 setHighlightId={setHighlightId}
             />
 
-            {/* MODALE */}
+            {/* --- Modale --- */}
             <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Persoană">
                 <AddPersoana onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* onClose simplu: doar inchide fereastra */}
-            <Modal
-                isOpen={isEditModalOpen}
-                onClose={() => { setIsEditModalOpen(false); setEditId(null); }}
-                title="Editați Persoană"
-            >
+            <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditId(null); }} title="Editați Persoană">
                 {editId && (
                     <EditPersoana
                         id={editId}

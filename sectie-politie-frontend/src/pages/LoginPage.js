@@ -1,3 +1,8 @@
+/** Pagina de Autentificare
+ * Gestioneaza login-ul si afisarea erorilor de validare
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -20,11 +25,12 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
+            // Apelez functia de login din context
             await login(nume, parola);
             toast.success("Acces permis. Bun venit!");
             navigate('/acasa');
         } catch (err) {
-            // Eu preiau aici harta de erori trimisa de AuthController.java
+            // Mapez erorile venite de la backend (AuthController.java)
             if (err.response && err.response.data) {
                 setErrors(err.response.data);
             } else {
@@ -40,8 +46,8 @@ const LoginPage = () => {
             <div className="login-card">
                 <div className="login-header">
                     <i className="fa-solid fa-shield-halved logo-icon"></i>
-                    <h2>Sistem Gestiune</h2>
-                    <p>Secția de Poliție - Acces Restricționat</p>
+                    <h2>Acces Baza de Date Poliție</h2>
+                    <p>Secție de Poliție - Acces Restricționat</p>
                 </div>
 
                 <form onSubmit={handleSubmit}>

@@ -1,21 +1,26 @@
+/** Componenta reutilizabila pentru cautare dinamica (dropdown cu sugestii)
+ * Include debounce pentru performanta si encodeURIComponent pentru siguranta
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import './styles/Forms.css'; // Asigură-te că importă stilurile noi
+import './styles/Forms.css';
 
-const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, icon, error }) => {
+const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, icon, error, placeholder }) => {
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const wrapperRef = useRef(null);
 
-    // Inițializare valoare (pentru Edit)
+    // Initializare valoare (daca suntem in modul Edit)
     useEffect(() => {
         if (defaultValue) {
             setQuery(defaultValue);
         }
     }, [defaultValue]);
 
-    // Închide lista când dai click în afară
+    // Inchid lista de sugestii daca dau click in afara componentei
     useEffect(() => {
         function handleClickOutside(event) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -26,35 +31,37 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [wrapperRef]);
 
-    // Logică căutare
+    // Logică de căutare cu debounce (astept 300ms dupa ultima tasta)
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (query.length > 0 && showSuggestions) {
                 const token = localStorage.getItem('token');
-                // Adăugăm query param pentru filtrare în backend
-                axios.get(`${apiUrl}?termen=${query}`, {
+                // Codific textul pentru a preveni erori de caractere speciale (ex: /, [, %)
+                const safeQuery = encodeURIComponent(query);
+
+                axios.get(`${apiUrl}?termen=${safeQuery}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                     .then(res => setSuggestions(res.data))
-                    .catch(err => console.error(err));
+                    .catch(err => console.error("Eroare LiveSearch:", err));
             } else {
                 setSuggestions([]);
             }
-        }, 300); // Debounce
+        }, 300);
         return () => clearTimeout(timeoutId);
     }, [query, apiUrl, showSuggestions]);
 
     const handleSelect = (item) => {
-        setQuery(displayKey(item)); // Afișează textul frumos în input
+        setQuery(displayKey(item)); // Afisez textul prietenos in input
         setSuggestions([]);
         setShowSuggestions(false);
-        if (onSelect) onSelect(item); // Trimite obiectul complet către părinte
+        if (onSelect) onSelect(item); // Trimit obiectul complet catre parinte
     };
 
     const handleClear = () => {
         setQuery('');
         setSuggestions([]);
-        if (onSelect) onSelect(null); // Trimite null către părinte (câmp opțional)
+        if (onSelect) onSelect(null); // Resetez selectia
     };
 
     return (
@@ -68,12 +75,12 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
                 <input
                     type="text"
                     className={`modal-input ${error ? 'input-error' : ''}`}
-                    placeholder="Caută..."
+                    placeholder={placeholder || "Caută..."}
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value);
                         setShowSuggestions(true);
-                        // Dacă utilizatorul șterge tot textul manual, trimitem null
+                        // Daca sterg tot textul manual, resetez selectia
                         if (e.target.value === '') {
                             if (onSelect) onSelect(null);
                         }
@@ -82,14 +89,13 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
                     autoComplete="off"
                 />
 
-                {/* BUTON X AURIU - Stil unificat */}
+                {/* Buton X auriu */}
                 {query && (
                     <button type="button" className="search-clear-btn-gold" onClick={handleClear}>
                         <i className="fa-solid fa-circle-xmark"></i>
                     </button>
                 )}
 
-                {/* Lista Sugestii */}
                 {showSuggestions && suggestions.length > 0 && (
                     <ul className="suggestions-list">
                         {suggestions.map((item, index) => (
@@ -100,8 +106,7 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
                     </ul>
                 )}
             </div>
-
-            {/* MESAJ EROARE - Stil unificat */}
+            {/* Mesaj de eroare din backend (daca exista) */}
             {error && <span className="error-text">{error}</span>}
         </div>
     );

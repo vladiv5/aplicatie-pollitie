@@ -1,3 +1,7 @@
+/** Componenta pentru inregistrarea unui nou politist (angajat)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -12,16 +16,15 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        // I clear the error for this field as soon as I start typing
+        // Sterg eroarea specifica atunci cand utilizatorul tasteaza
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
-        // Special case for phone mapping
+        // Caz special pentru telefon, care are cheie diferita in backend
         if (name === 'telefon' && errors.telefon_serviciu) {
             setErrors(prev => ({ ...prev, telefon_serviciu: null }));
         }
     };
 
     const handleSave = () => {
-        // I clear previous errors before a new attempt
         setErrors({});
 
         axios.post('http://localhost:8080/api/politisti', {
@@ -32,13 +35,11 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
             telefon_serviciu: formData.telefon
         })
             .then((response) => {
-                // Toasts remain unchanged as requested
                 toast.success("Polițist înregistrat în sistem!");
                 onSaveSuccess(response.data.idPolitist);
             })
             .catch(error => {
                 if (error.response && error.response.status === 400) {
-                    // I map the exact error map from the backend to my state
                     setErrors(error.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
@@ -72,7 +73,6 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
                         </button>
                     )}
                 </div>
-                {/* Fixed red error indication constant across the app */}
                 {hasError && <span className="error-text">{errors[errorKey]}</span>}
             </div>
         );
@@ -97,4 +97,4 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     );
 };
 
-export default AddPolitist
+export default AddPolitist;

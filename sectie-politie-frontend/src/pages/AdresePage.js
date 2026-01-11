@@ -1,4 +1,8 @@
-import toast from 'react-hot-toast';
+/** Pagina principala pentru gestionarea Adreselor
+ * Integreaza lista, modalele de adaugare/editare si vizualizarea locatarilor
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import AdreseList from '../components/AdreseList';
 import AddAdresa from '../components/AddAdresa';
@@ -7,22 +11,24 @@ import ViewLocatariAdresa from '../components/ViewLocatariAdresa';
 import Modal from '../components/Modal';
 
 const AdresePage = () => {
-    // --- STATE MODALE ---
+    // --- Stare Modale ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [locatariAdresaId, setLocatariAdresaId] = useState(null);
     const [editId, setEditId] = useState(null);
 
-    // --- REFRESH & HIGHLIGHT ---
+    // --- Stare pentru Refresh si Evidentiere (Highlight) ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
+    // Callback cand adaugarea a reusit
     const handleAddSuccess = (newId) => {
         setIsAddModalOpen(false);
-        setHighlightId(newId);
-        setRefreshTrigger(prev => prev + 1);
+        setHighlightId(newId); // Activez efectul de flash pe randul nou
+        setRefreshTrigger(prev => prev + 1); // Fortez reincarcarea listei
     };
 
+    // Callback cand editarea a reusit
     const handleEditSuccess = (savedId) => {
         setIsEditModalOpen(false);
         setEditId(null);
@@ -39,13 +45,13 @@ const AdresePage = () => {
                 onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
                 onViewLocatariClick={(id) => setLocatariAdresaId(id)}
 
-                // Highlight props
+                // Props pentru sistemul de highlight si bumerang
                 highlightId={highlightId}
                 onHighlightComplete={() => setHighlightId(null)}
-                setHighlightId={setHighlightId} // <--- IMPORTANT
+                setHighlightId={setHighlightId}
             />
 
-            {/* MODALE */}
+            {/* --- MODALE --- */}
             <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Adresă">
                 <AddAdresa onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>

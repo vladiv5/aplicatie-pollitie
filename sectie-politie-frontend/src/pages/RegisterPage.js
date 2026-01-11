@@ -1,3 +1,8 @@
+/** Pagina de Activare Cont (Register)
+ * Permite politistilor existenti in baza de date sa isi creeze user/parola
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +24,7 @@ const RegisterPage = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+        // Sterg eroarea cand utilizatorul incepe sa scrie
         if (errors[name]) setErrors({ ...errors, [name]: '' });
     };
 
@@ -32,19 +38,20 @@ const RegisterPage = () => {
         setErrors({});
 
         try {
+            // Trimit cererea de activare catre backend
             await register(formData);
             toast.success("Cont activat cu succes!");
             navigate('/login');
         } catch (err) {
+            // Afisez erorile specifice venite de la server
             if (err.response && err.response.data) {
-                setErrors(err.response.data); // Primesc harta de erori din Spring Boot
+                setErrors(err.response.data);
             }
         } finally {
             setLoading(false);
         }
     };
 
-    // Funcție helper pentru a randa input-urile cu X
     const renderInput = (label, name, placeholder, type = "text", icon) => (
         <div className="form-group">
             <label><i className={`fa-solid ${icon}`}></i> {label}</label>

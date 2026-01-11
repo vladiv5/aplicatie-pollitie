@@ -1,5 +1,9 @@
+/** Componenta Read-Only pentru vizualizarea detaliilor unui incident
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React from 'react';
-import './styles/Forms.css'; // Stiluri comune
+import './styles/Forms.css';
 
 const ViewIncident = ({ incident, onClose }) => {
     if (!incident) return null;
@@ -13,7 +17,7 @@ const ViewIncident = ({ incident, onClose }) => {
         });
     };
 
-    // Stil inline pentru "Read-Only Field" (ca un input dezactivat dar mai elegant)
+    // Stil pentru campuri inactive (Read-Only)
     const readOnlyFieldStyle = {
         background: '#f8fafc',
         border: '1px solid #e2e8f0',
@@ -25,17 +29,12 @@ const ViewIncident = ({ incident, onClose }) => {
     };
 
     const labelStyle = {
-        display: 'block',
-        fontSize: '0.75rem',
-        textTransform: 'uppercase',
-        color: '#64748b',
-        fontWeight: 'bold',
-        marginBottom: '4px'
+        display: 'block', fontSize: '0.75rem', textTransform: 'uppercase',
+        color: '#64748b', fontWeight: 'bold', marginBottom: '4px'
     };
 
     return (
         <div style={{ padding: '10px' }}>
-            {/* Grid layout pentru detalii principale */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                 <div>
                     <span style={labelStyle}>Tip Incident</span>

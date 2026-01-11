@@ -1,3 +1,8 @@
+/** Pagina principala pentru gestionarea Incidentelor
+ * Include si functionalitatea "Bumerang" pentru stergeri blocate
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import IncidenteList from '../components/IncidenteList';
@@ -8,7 +13,7 @@ import GestionareParticipanti from "../components/GestionareParticipanti";
 import Modal from "../components/Modal";
 
 const IncidentePage = () => {
-    // --- STATE MODALE ---
+    // --- State Modale ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -17,14 +22,14 @@ const IncidentePage = () => {
     const [selectedIncident, setSelectedIncident] = useState(null);
     const [participantsId, setParticipantsId] = useState(null);
 
-    // REFRESH & HIGHLIGHT
+    // --- State Refresh & Highlight ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
     const location = useLocation();
     const navigate = useNavigate();
 
-    // 1. JUMP IN (Deschide Edit cand venim din alta parte)
+    // 1. Verific daca am fost trimis aici pentru a rezolva un conflict (Jump In)
     useEffect(() => {
         if (location.state && location.state.openEditId) {
             setEditId(location.state.openEditId);
@@ -32,20 +37,18 @@ const IncidentePage = () => {
         }
     }, [location]);
 
-    // --- MODIFICARE AICI: Logica Bumerang pe X / Anuleaza ---
+    // Logica Bumerang: Inchidere modal sau intoarcere la pagina sursa
     const handleCloseOrFinish = () => {
-        // 1. Verificam Bumerangul
         const boomerang = sessionStorage.getItem('boomerang_pending');
         if (boomerang) {
             const data = JSON.parse(boomerang);
             if (data.returnRoute) {
-                // Ne intoarcem la PolitistiPage (acolo se va face highlight)
+                // Ma intorc la Politisti/PersoanePage pentru a continua stergerea
                 navigate(data.returnRoute);
-                return; // STOP AICI
+                return;
             }
         }
 
-        // 2. Comportament Normal (daca nu e Bumerang)
         setIsEditModalOpen(false);
         setEditId(null);
         window.history.replaceState({}, document.title);
@@ -57,15 +60,13 @@ const IncidentePage = () => {
         setRefreshTrigger(prev => prev + 1);
     };
 
-    // --- MODIFICARE AICI: Logica Bumerang pe SAVE ---
     const handleEditSuccess = (savedId) => {
         const boomerang = sessionStorage.getItem('boomerang_pending');
 
         if (boomerang) {
             const data = JSON.parse(boomerang);
-            navigate(data.returnRoute); // Plecam inapoi
+            navigate(data.returnRoute);
         } else {
-            // Ramanem aici
             setRefreshTrigger(prev => prev + 1);
             setHighlightId(savedId);
             handleCloseOrFinish();
@@ -89,7 +90,6 @@ const IncidentePage = () => {
                 <AddIncident onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* AICI FOLOSIM handleCloseOrFinish LA AMBELE EVENT-URI */}
             <Modal isOpen={isEditModalOpen} onClose={handleCloseOrFinish} title="Editați Incident">
                 {editId && <EditIncident id={editId} onSaveSuccess={handleEditSuccess} onCancel={handleCloseOrFinish} />}
             </Modal>
@@ -97,6 +97,7 @@ const IncidentePage = () => {
             <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title="Detalii Incident">
                 {selectedIncident && <ViewIncident incident={selectedIncident} onClose={() => setIsViewModalOpen(false)} />}
             </Modal>
+
             <Modal isOpen={!!participantsId} onClose={() => setParticipantsId(null)} title="Gestionare Participanți">
                 {participantsId && <GestionareParticipanti incidentId={participantsId} onClose={() => setParticipantsId(null)} />}
             </Modal>

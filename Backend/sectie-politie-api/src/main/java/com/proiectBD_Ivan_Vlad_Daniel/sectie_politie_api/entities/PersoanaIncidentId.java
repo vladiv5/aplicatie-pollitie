@@ -4,6 +4,10 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
+/** Clasa ajutatoare pentru cheia primara compusa (id_persoana + id_incident)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Embeddable
 public class PersoanaIncidentId implements Serializable {
     private Integer idPersoana;
@@ -16,7 +20,6 @@ public class PersoanaIncidentId implements Serializable {
         this.idIncident = idIncident;
     }
 
-    // Getters, Setters, hashCode și equals sunt OBLIGATORII la chei compuse
     public Integer getIdPersoana() { return idPersoana; }
     public void setIdPersoana(Integer idPersoana) { this.idPersoana = idPersoana; }
 

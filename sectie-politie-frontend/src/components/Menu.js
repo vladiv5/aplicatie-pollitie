@@ -1,3 +1,7 @@
+/** Componenta de navigare principala (Navbar)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +20,6 @@ const Menu = () => {
         <>
             <nav className="navbar">
                 <div className="logo">
-                    {/* Iconița FontAwesome cu gradient auriu din CSS */}
                     <i className="fa-solid fa-shield-halved logo-icon"></i>
                     <span className="logo-text">POLICE <span style={{fontWeight:300}}>DB</span></span>
                 </div>
@@ -53,6 +56,7 @@ const Menu = () => {
                 )}
             </nav>
 
+            {/* Containerul principal unde se randeaza paginile (Outlet) */}
             <div className="content-container">
                 <Outlet />
             </div>

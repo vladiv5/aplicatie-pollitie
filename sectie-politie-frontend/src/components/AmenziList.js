@@ -1,3 +1,7 @@
+/** Componenta principala pentru afisarea si gestionarea tabelului de amenzi
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Pagination from './Pagination';
@@ -12,10 +16,7 @@ const AmenziList = ({
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-
-    // --- LOADING STATE ---
     const [isLoading, setIsLoading] = useState(true);
-
     const rowRefs = useRef({});
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -24,10 +25,11 @@ const AmenziList = ({
 
     const loadAmenzi = (page, term = '') => {
         setIsLoading(true);
-
         const token = localStorage.getItem('token');
+        const safeTerm = encodeURIComponent(term);
+
         let url = `http://localhost:8080/api/amenzi/lista-paginata?page=${page}&size=10`;
-        if (term) url = `http://localhost:8080/api/amenzi/cauta?termen=${term}`;
+        if (term) url = `http://localhost:8080/api/amenzi/cauta?termen=${safeTerm}`;
 
         return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
@@ -69,18 +71,12 @@ const AmenziList = ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
-
             allData.sort((a, b) => new Date(b.dataEmitere) - new Date(a.dataEmitere));
-
             const index = allData.findIndex(a => a.idAmenda === id);
 
             if (index !== -1) {
                 const targetPage = Math.floor(index / 10);
-                if (targetPage !== currentPage) {
-                    loadAmenzi(targetPage, searchTerm);
-                } else {
-                    loadAmenzi(currentPage, searchTerm);
-                }
+                loadAmenzi(targetPage, searchTerm);
             }
         } catch (err) {
             console.error("Nu am putut calcula pagina automata:", err);
@@ -90,15 +86,12 @@ const AmenziList = ({
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
-
             const timer = setTimeout(() => {
                 if (onHighlightComplete) onHighlightComplete();
             }, 3000);
             return () => clearTimeout(timer);
         }
     }, [isLoading, amenzi, highlightId]);
-
-    const handlePageChange = (newPage) => loadAmenzi(newPage, searchTerm);
 
     const handleSearchChange = (e) => {
         const val = e.target.value;
@@ -122,7 +115,6 @@ const AmenziList = ({
                 setIsDeleteModalOpen(true);
             })
             .catch(err => {
-                console.error(err);
                 toast.error("Eroare la verificarea amenzii.");
             });
     };
@@ -145,12 +137,7 @@ const AmenziList = ({
     const formatDataFrumos = (isoString) => {
         if (!isoString) return '-';
         const d = new Date(isoString);
-        const zi = String(d.getDate()).padStart(2, '0');
-        const luna = String(d.getMonth() + 1).padStart(2, '0');
-        const an = d.getFullYear();
-        const ora = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        return `${zi}.${luna}.${an}, ${ora}:${min}`;
+        return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     };
 
     return (
@@ -158,7 +145,6 @@ const AmenziList = ({
             <h2 className="page-title">Registru Amenzi</h2>
 
             <div className="controls-container">
-                {/* 1. SEARCH - STÂNGA */}
                 <div className="search-wrapper">
                     <input
                         type="text"
@@ -172,16 +158,14 @@ const AmenziList = ({
                     )}
                 </div>
 
-                {/* 2. PAGINARE - MIJLOC (Mutată aici) */}
                 {!searchTerm && !isLoading && totalPages > 1 && (
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        onPageChange={handlePageChange}
+                        onPageChange={loadAmenzi}
                     />
                 )}
 
-                {/* 3. ADD BUTTON - DREAPTA */}
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Amendă</button>
             </div>
 
@@ -199,16 +183,8 @@ const AmenziList = ({
                     </tr>
                     </thead>
                     <tbody>
-
                     {isLoading ? (
-                        <tr>
-                            <td colSpan="7">
-                                <div className="loading-container">
-                                    <div className="spinner"></div>
-                                    <span>Se încarcă datele...</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <tr><td colSpan="7"><div className="loading-container"><div className="spinner"></div><span>Se încarcă datele...</span></div></td></tr>
                     ) : (
                         amenzi && amenzi.length > 0 ? (
                             amenzi.map((amenda) => (
@@ -218,34 +194,14 @@ const AmenziList = ({
                                     className={highlightId === amenda.idAmenda ? 'flash-row' : ''}
                                 >
                                     <td style={{fontWeight: '500'}}>{amenda.motiv}</td>
-                                    <td style={{fontWeight: '800', color: 'var(--royal-navy-dark)'}}>
-                                        {amenda.suma} RON
-                                    </td>
-                                    <td>
-                                        <span className="badge-status">
-                                            {amenda.starePlata}
-                                        </span>
-                                    </td>
+                                    <td style={{fontWeight: '800', color: 'var(--royal-navy-dark)'}}>{amenda.suma} RON</td>
+                                    <td><span className="badge-status">{amenda.starePlata}</span></td>
                                     <td>{formatDataFrumos(amenda.dataEmitere)}</td>
                                     <td>{amenda.persoana ? `${amenda.persoana.nume} ${amenda.persoana.prenume}` : <span style={{color:'#999'}}>Nespecificat</span>}</td>
                                     <td>{amenda.politist ? `${amenda.politist.nume} ${amenda.politist.prenume}` : <span style={{color:'#999'}}>Nespecificat</span>}</td>
-
                                     <td style={{ textAlign: 'center' }}>
-                                        <button
-                                            className="btn-tactical"
-                                            onClick={() => onEditClick(amenda.idAmenda)}
-                                            title="Editați Amendă"
-                                        >
-                                            <i className="fa-solid fa-pen-to-square"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical-red"
-                                            onClick={() => handleRequestDelete(amenda.idAmenda)}
-                                            title="Ștergeți Amendă"
-                                        >
-                                            <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        <button className="btn-tactical" onClick={() => onEditClick(amenda.idAmenda)}><i className="fa-solid fa-pen-to-square"></i></button>
+                                        <button className="btn-tactical-red" onClick={() => handleRequestDelete(amenda.idAmenda)}><i className="fa-solid fa-trash"></i></button>
                                     </td>
                                 </tr>
                             ))
@@ -257,14 +213,7 @@ const AmenziList = ({
                 </table>
             </div>
 
-            {/* Am șters paginarea de aici de jos */}
-
-            <DeleteSmartModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleConfirmDelete}
-                data={deleteData}
-            />
+            <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
         </div>
     );
 };

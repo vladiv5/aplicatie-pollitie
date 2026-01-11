@@ -1,19 +1,24 @@
 package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.auth;
 
+/** Clasa DTO pentru procesul de activare a contului (Register)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 public class RegisterRequest {
-    // Date de identificare a politistului existent
+    // Folosesc aceste campuri pentru a identifica politistul in baza de date
     private String nume;
     private String prenume;
     private String telefon;
 
-    // Datele contului pe care vrea sa il creeze
+    // Acestea sunt noile credentiale pe care utilizatorul vrea sa le seteze
     private String newUsername;
     private String newPassword;
 
-    // --- CAMP NOU ---
+    // Camp suplimentar pentru validarea parolei (sa nu o scrie gresit)
     private String confirmPassword;
 
-    // Getters si Setters
+    // --- Getters si Setters ---
+
     public String getNume() { return nume; }
     public void setNume(String nume) { this.nume = nume; }
 

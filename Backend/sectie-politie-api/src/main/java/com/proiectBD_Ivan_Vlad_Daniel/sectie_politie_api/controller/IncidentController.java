@@ -17,6 +17,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+/** Controller pentru gestionarea incidentelor
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @RestController
 @RequestMapping("/api/incidente")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -59,17 +63,13 @@ public class IncidentController {
 
         LocalDateTime dataFinala = (req.dataEmitere != null) ? LocalDateTime.parse(req.dataEmitere) : LocalDateTime.now();
 
-        // 1. INSERT MANUAL
         incidentRepository.insertIncident(
                 req.tipIncident, dataFinala, locFinal, req.descriereIncident,
                 req.idPolitist, req.idAdresa, statusDeSalvat
         );
 
-        // 2. RECUPERARE ID
         Integer newId = incidentRepository.getLastInsertedId();
 
-        // 3. CONSTRUIRE OBIECT DE RETUR (Sau fetch din DB)
-        // E mai simplu să returnăm un map cu ID-ul pentru frontend
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Incident creat cu succes!");
         response.put("idIncident", newId);
@@ -77,7 +77,7 @@ public class IncidentController {
         return ResponseEntity.ok(response);
     }
 
-    // --- UPDATE (MODIFICAT) ---
+    // --- UPDATE ---
     @PutMapping("/{id}")
     public ResponseEntity<?> updateIncident(@PathVariable Integer id, @RequestBody IncidentRequest req) {
         incidentRepository.getIncidentByIdNative(id)
@@ -90,13 +90,11 @@ public class IncidentController {
         String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
         LocalDateTime dataFinala = LocalDateTime.parse(req.dataEmitere);
 
-        // 1. UPDATE MANUAL
         incidentRepository.updateIncident(
                 id, req.tipIncident, dataFinala, locFinal, req.descriereIncident,
                 req.idPolitist, req.idAdresa, statusDeSalvat
         );
 
-        // 2. RETURNARE OBIECT ACTUALIZAT
         Incident updated = incidentRepository.getIncidentByIdNative(id).orElse(null);
         return ResponseEntity.ok(updated);
     }
@@ -106,7 +104,7 @@ public class IncidentController {
         Map<String, String> errors = new HashMap<>();
         String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
 
-        // --- 1. TIP INCIDENT (Obligatoriu, Litere, Max 100) ---
+        // 1. Tip Incident
         if (req.tipIncident == null || req.tipIncident.trim().isEmpty()) {
             errors.put("tipIncident", "Tipul incidentului este obligatoriu!");
         } else if (!req.tipIncident.matches(doarLitereRegex)) {
@@ -115,17 +113,17 @@ public class IncidentController {
             errors.put("tipIncident", "Maxim 100 de caractere!");
         }
 
-        // --- 2. DESCRIERE INCIDENT (Obligatoriu) ---
+        // 2. Descriere
         if (req.descriereIncident == null || req.descriereIncident.trim().isEmpty()) {
             errors.put("descriereIncident", "Descrierea incidentului este obligatorie!");
         }
 
-        // --- 3. DESCRIERE LOCAȚIE (Opțional, Max 255) ---
+        // 3. Locatie
         if (req.descriereLocatie != null && req.descriereLocatie.length() > 255) {
             errors.put("descriereLocatie", "Maxim 255 de caractere!");
         }
 
-        // --- 4. DATA ȘI ORA (Format + Logica 15 ani) ---
+        // 4. Data
         try {
             if (req.dataEmitere == null || req.dataEmitere.trim().isEmpty()) {
                 errors.put("dataEmitere", "Data și ora sunt obligatorii!");
@@ -152,10 +150,7 @@ public class IncidentController {
 
     // --- PAGINARE ---
     @GetMapping("/lista-paginata")
-    public Page<Incident> getIncidentePaginat(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+    public Page<Incident> getIncidentePaginat(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "data_emitere"));
         return incidentRepository.findAllNativePaginat(pageable);
     }
@@ -169,20 +164,11 @@ public class IncidentController {
         String status = incident.getStatus();
 
         if ("Activ".equalsIgnoreCase(status)) {
-            return new DeleteConfirmation(
-                    false, "BLOCKED", "Ștergere Blocată",
-                    "Acest incident este încă în stadiul 'Activ'. Nu puteți șterge un dosar aflat în lucru.", null
-            );
+            return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Acest incident este încă în stadiul 'Activ'. Nu puteți șterge un dosar aflat în lucru.", null);
         } else if ("Închis".equalsIgnoreCase(status)) {
-            return new DeleteConfirmation(
-                    true, "WARNING", "Atenție - Ștergere Dosar",
-                    "Incidentul este marcat ca 'Închis'. Ștergerea lui este permanentă.", null
-            );
+            return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere Dosar", "Incidentul este marcat ca 'Închis'. Ștergerea lui este permanentă.", null);
         } else {
-            return new DeleteConfirmation(
-                    true, "SAFE", "Ștergere Sigură",
-                    "Incidentul este arhivat. Poate fi șters fără probleme.", null
-            );
+            return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Incidentul este arhivat. Poate fi șters fără probleme.", null);
         }
     }
 
@@ -193,7 +179,6 @@ public class IncidentController {
         return data.isAfter(limitaTrecut) && data.isBefore(acum.plusDays(1));
     }
 
-    // === DTO ===
     public static class IncidentRequest {
         public String tipIncident;
         public String dataEmitere;

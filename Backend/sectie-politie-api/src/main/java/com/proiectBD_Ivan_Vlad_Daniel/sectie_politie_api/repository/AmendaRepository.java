@@ -15,6 +15,10 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+/** Repository pentru gestiunea amenzilor
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Repository
 public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
 
@@ -43,13 +47,14 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
     void deleteAmendaNative(@Param("id") Integer id);
 
     // === SEARCH INTELIGENT (_100_CI_AI) ===
+    // Cautare combinata prin JOIN-uri (cauta si numele persoanei, politistului sau motivul)
     @Query(value = "SELECT a.* FROM Amenzi a " +
             "LEFT JOIN Persoane p ON a.id_persoana = p.id_persoana " +
             "LEFT JOIN Politisti pol ON a.id_politist = pol.id_politist " +
             "WHERE " +
             "CONCAT(COALESCE(a.motiv, ''), ' ', COALESCE(p.nume, ''), ' ', COALESCE(p.prenume, ''), ' ', COALESCE(pol.nume, ''), ' ', COALESCE(pol.prenume, '')) " +
             "COLLATE Latin1_General_100_CI_AI " +
-            "LIKE CONCAT('%', :termen, '%')", nativeQuery = true)
+            "LIKE CONCAT(:termen, '%')", nativeQuery = true)
     List<Amenda> cautaDupaInceput(@Param("termen") String termen);
 
     // --- ALTE QUERY-URI ---

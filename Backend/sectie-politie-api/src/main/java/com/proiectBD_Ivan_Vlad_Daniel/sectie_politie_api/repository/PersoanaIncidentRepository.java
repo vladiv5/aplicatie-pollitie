@@ -11,32 +11,35 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** Repository pentru gestionarea legaturii dintre oameni si incidente (Many-to-Many)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Repository
 public interface PersoanaIncidentRepository extends JpaRepository<PersoanaIncident, PersoanaIncidentId> {
 
     List<PersoanaIncident> findByIncident_IdIncident(Integer idIncident);
     List<PersoanaIncident> findByPersoana_IdPersoana(Integer idPersoana);
 
-    // Sterge legaturile cand stergem un POLITIST
+    // Sterg legaturile cand sterg un POLITIST care e responsabil de cazuri
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_incident IN (SELECT id_incident FROM Incidente WHERE id_politist_responsabil = :idPolitist)", nativeQuery = true)
     void stergeParticipantiDupaPolitist(@Param("idPolitist") Integer idPolitist);
 
-    // Sterge legaturile cand stergem o PERSOANA
+    // Sterg legaturile cand sterg o PERSOANA din baza de date
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_persoana = :id", nativeQuery = true)
     void deleteByPersoanaId(@Param("id") Integer id);
 
-    // --- CORECTIE PENTRU STERGERE INCIDENT ---
-    // Stergem DOAR din tabela de legatura. Persoanele raman in baza de date!
+    // Sterg doar legaturile cand dispare un INCIDENT (nu si persoanele fizice)
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_incident = :idIncident", nativeQuery = true)
     void deleteByIncidentId(@Param("idIncident") Integer idIncident);
 
-    // STERGE participanții de la incidentele care au avut loc la adresa X
+    // Sterg participantii de la incidentele care au avut loc la o ADRESA ce urmeaza a fi stearsa
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_incident IN (SELECT id_incident FROM Incidente WHERE id_adresa_incident = :idAdresa)", nativeQuery = true)

@@ -1,6 +1,10 @@
+/** Modal care afiseaza istoricul infractional al unei persoane
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './styles/Forms.css'; // Asigură-te că stilurile globale sunt încărcate
+import './styles/Forms.css';
 
 const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
     const [istoric, setIstoric] = useState([]);
@@ -29,14 +33,13 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
         return d.toLocaleDateString('ro-RO') + ' ' + d.toLocaleTimeString('ro-RO', {hour: '2-digit', minute:'2-digit'});
     };
 
-    // Funcție helper pentru culori pe fundal Dark Navy
+    // Returnez culori specifice in functie de rolul persoanei (Suspect = Rosu, Victima = Portocaliu)
     const getCalitateStyle = (calitate) => {
         switch(calitate) {
-            // Folosim culori mai luminoase pentru text și fundaluri semi-transparente
-            case 'Suspect': case 'Faptas': return { bg: 'rgba(239, 68, 68, 0.2)', col: '#fca5a5' }; // Roșu deschis
-            case 'Victima': return { bg: 'rgba(245, 158, 11, 0.2)', col: '#fcd34d' }; // Galben/Portocaliu
-            case 'Martor': return { bg: 'rgba(16, 185, 129, 0.2)', col: '#6ee7b7' }; // Verde Mentă
-            default: return { bg: 'rgba(148, 163, 184, 0.2)', col: '#cbd5e1' }; // Gri albăstrui
+            case 'Suspect': case 'Faptas': return { bg: 'rgba(239, 68, 68, 0.2)', col: '#fca5a5' };
+            case 'Victima': return { bg: 'rgba(245, 158, 11, 0.2)', col: '#fcd34d' };
+            case 'Martor': return { bg: 'rgba(16, 185, 129, 0.2)', col: '#6ee7b7' };
+            default: return { bg: 'rgba(148, 163, 184, 0.2)', col: '#cbd5e1' };
         }
     };
 
@@ -86,9 +89,7 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
             )}
 
             <div className="modal-footer">
-                <button className="btn-close-modal" onClick={onClose}>
-                    ÎNCHIDEȚI
-                </button>
+                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
             </div>
         </div>
     );

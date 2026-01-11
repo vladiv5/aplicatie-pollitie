@@ -1,6 +1,9 @@
+/** Componenta pentru gestionarea listei de politisti
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-// import { useLocation, useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
 import toast from 'react-hot-toast';
@@ -13,35 +16,29 @@ const PolitistiList = ({
                            onHighlightComplete,
                            setHighlightId
                        }) => {
-    // --- STATE ---
     const [politisti, setPolitisti] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState('nume');
+    const [sortBy] = useState('nume');
 
-    // --- LOADING STATE ---
     const [isLoading, setIsLoading] = useState(true);
-
     const rowRefs = useRef({});
 
-    // --- DELETE STATE ---
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
-    // --- LOAD DATA ---
     const loadPolitisti = (pageArg, termArg) => {
         setIsLoading(true);
-
         const token = localStorage.getItem('token');
         const page = (pageArg !== undefined) ? pageArg : currentPage;
         const term = (termArg !== undefined) ? termArg : searchTerm;
 
         let url = `http://localhost:8080/api/politisti/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
-
         if (term) {
-            url = `http://localhost:8080/api/politisti/cauta?termen=${term}`;
+            const safeTerm = encodeURIComponent(term);
+            url = `http://localhost:8080/api/politisti/cauta?termen=${safeTerm}`;
         }
 
         return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
@@ -62,9 +59,7 @@ const PolitistiList = ({
             });
     };
 
-    // =========================================================
-    // LOGICA BUMERANG V2
-    // =========================================================
+    // Logica Bumerang (Revenire dupa rezolvare blocaj stergere)
     useEffect(() => {
         const rawData = sessionStorage.getItem('boomerang_pending');
         if (rawData) {
@@ -81,10 +76,8 @@ const PolitistiList = ({
                 sessionStorage.removeItem('boomerang_pending');
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // --- REFRESH + AUTO JUMP LOGIC ---
     useEffect(() => {
         loadPolitisti(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
@@ -97,10 +90,8 @@ const PolitistiList = ({
                 }
             }
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
-    // --- LOGICA DE CĂUTARE A PAGINII ---
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -113,18 +104,13 @@ const PolitistiList = ({
 
             if (index !== -1) {
                 const targetPage = Math.floor(index / 10);
-                if (targetPage !== currentPage) {
-                    loadPolitisti(targetPage, searchTerm);
-                } else {
-                    loadPolitisti(currentPage, searchTerm);
-                }
+                loadPolitisti(targetPage, searchTerm);
             }
         } catch (err) {
             console.error("Nu am putut calcula pagina automata:", err);
         }
     };
 
-    // --- EFFECT: SCROLL & FLASH ---
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -135,7 +121,6 @@ const PolitistiList = ({
         }
     }, [isLoading, politisti, highlightId]);
 
-    // --- HANDLERS STANDARD ---
     const handlePageChange = (newPage) => loadPolitisti(newPage, searchTerm);
 
     const handleSearchChange = (e) => {
@@ -168,12 +153,6 @@ const PolitistiList = ({
         }).catch(() => toast.error("Eroare la ștergere!"));
     };
 
-    const handleCloseDeleteModal = () => {
-        setIsDeleteModalOpen(false);
-        setDeleteData(null);
-        setDeleteId(null);
-    };
-
     const handleClearSearch = () => {
         setSearchTerm('');
         loadPolitisti(0, '');
@@ -184,7 +163,6 @@ const PolitistiList = ({
             <h2 className="page-title">Gestiune Polițiști</h2>
 
             <div className="controls-container">
-                {/* 1. SEARCH */}
                 <div className="search-wrapper">
                     <input
                         type="text"
@@ -198,7 +176,6 @@ const PolitistiList = ({
                     )}
                 </div>
 
-                {/* 2. PAGINARE MUTATĂ AICI */}
                 {!searchTerm && !isLoading && totalPages > 1 && (
                     <Pagination
                         currentPage={currentPage}
@@ -207,7 +184,6 @@ const PolitistiList = ({
                     />
                 )}
 
-                {/* 3. BUTON ADĂUGARE */}
                 <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Polițist</button>
             </div>
 
@@ -224,16 +200,8 @@ const PolitistiList = ({
                     </tr>
                     </thead>
                     <tbody>
-
                     {isLoading ? (
-                        <tr>
-                            <td colSpan="6">
-                                <div className="loading-container">
-                                    <div className="spinner"></div>
-                                    <span>Se încarcă datele...</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <tr><td colSpan="6"><div className="loading-container"><div className="spinner"></div><span>Se încarcă datele...</span></div></td></tr>
                     ) : (
                         politisti && politisti.length > 0 ? (
                             politisti.map(politist => (
@@ -247,23 +215,9 @@ const PolitistiList = ({
                                     <td>{politist.grad}</td>
                                     <td>{politist.functie}</td>
                                     <td>{politist.telefon_serviciu}</td>
-
                                     <td style={{ textAlign: 'center' }}>
-                                        <button
-                                            className="btn-tactical"
-                                            onClick={() => onEditClick(politist.idPolitist)}
-                                            title="Editați Polițist"
-                                        >
-                                            <i className="fa-solid fa-pen-to-square"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical-red"
-                                            onClick={() => handleRequestDelete(politist.idPolitist)}
-                                            title="Ștergeți Polițist"
-                                        >
-                                            <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        <button className="btn-tactical" onClick={() => onEditClick(politist.idPolitist)} title="Editați"><i className="fa-solid fa-pen-to-square"></i></button>
+                                        <button className="btn-tactical-red" onClick={() => handleRequestDelete(politist.idPolitist)} title="Ștergeți"><i className="fa-solid fa-trash"></i></button>
                                     </td>
                                 </tr>
                             ))
@@ -275,11 +229,9 @@ const PolitistiList = ({
                 </table>
             </div>
 
-            {/* Paginarea a fost ștearsă de aici */}
-
             <DeleteSmartModal
                 isOpen={isDeleteModalOpen}
-                onClose={handleCloseDeleteModal}
+                onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
                 data={deleteData}
                 currentPolitistId={deleteId}

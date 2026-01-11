@@ -13,6 +13,10 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+/** Repository pentru accesarea datelor de localizare (Adrese)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 @Repository
 public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
 
@@ -44,7 +48,7 @@ public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
     @Query(value = "SELECT * FROM Adrese WHERE " +
             "CONCAT(COALESCE(strada, ''), ' ', COALESCE(numar, ''), ' ', COALESCE(bloc, ''), ' ', COALESCE(localitate, ''), ' ', COALESCE(judet_sau_sector, '')) " +
             "COLLATE Latin1_General_100_CI_AI " +
-            "LIKE CONCAT('%', :termen, '%')", nativeQuery = true)
+            "LIKE CONCAT(:termen, '%')", nativeQuery = true)
     List<Adresa> cautaDupaInceput(@Param("termen") String termen);
 
     @Query(value = "SELECT MAX(id_adresa) FROM Adrese", nativeQuery = true)

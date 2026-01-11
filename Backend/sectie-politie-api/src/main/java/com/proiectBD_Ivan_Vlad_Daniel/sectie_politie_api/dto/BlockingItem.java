@@ -1,5 +1,9 @@
 package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.dto;
 
+/** Clasa ajutatoare pentru a descrie un element care blocheaza stergerea (ex: o amenda neplatita)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 public class BlockingItem {
     private String tip; // "Incident" sau "Amenda"
     private Integer id;

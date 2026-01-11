@@ -1,9 +1,12 @@
+/** Componenta principala pentru gestionarea registrului de persoane
+ * Include cautare, paginare si actiuni complexe (istoric, adrese)
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-// import { useLocation, useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 import DeleteSmartModal from './DeleteSmartModal';
-// import './styles/TableStyles.css'; // Nu mai e nevoie
 import toast from 'react-hot-toast';
 
 const PersoaneList = ({
@@ -20,31 +23,35 @@ const PersoaneList = ({
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy] = useState('nume');
+    const [sortBy] = useState('nume'); // Sortare implicita
 
-    // --- LOADING STATE ---
     const [isLoading, setIsLoading] = useState(true);
-
     const rowRefs = useRef({});
 
+    // State pentru stergere inteligenta
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
+    // Incarc lista de persoane de la backend
     const loadPersoane = (page, term = '') => {
         setIsLoading(true);
-
         const token = localStorage.getItem('token');
+
         let url = `http://localhost:8080/api/persoane/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
-        if (term) url = `http://localhost:8080/api/persoane/cauta?termen=${term}`;
+        if (term) {
+            // Encodez termenul pentru a evita erori la caractere speciale
+            const safeTerm = encodeURIComponent(term);
+            url = `http://localhost:8080/api/persoane/cauta?termen=${safeTerm}`;
+        }
 
         return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
-                    setPersoane(res.data);
+                    setPersoane(res.data); // Search returneaza lista plata
                     setTotalPages(1);
                 } else {
-                    setPersoane(res.data.content);
+                    setPersoane(res.data.content); // Paginarea returneaza obiect Page
                     setTotalPages(res.data.totalPages);
                 }
                 setCurrentPage(page);
@@ -56,12 +63,11 @@ const PersoaneList = ({
             });
     };
 
+    // Logica "Bumerang": Daca ma intorc de la rezolvarea unui incident blocant, redeschid modalul de stergere
     useEffect(() => {
         const rawData = sessionStorage.getItem('boomerang_pending');
-
         if (rawData) {
             const data = JSON.parse(rawData);
-
             if (data.returnRoute === '/persoane' && data.triggerId) {
                 if (data.triggerAction === 'reOpenDelete') {
                     setTimeout(() => {
@@ -74,9 +80,9 @@ const PersoaneList = ({
                 sessionStorage.removeItem('boomerang_pending');
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Refresh si Highlight automat
     useEffect(() => {
         loadPersoane(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
@@ -89,7 +95,6 @@ const PersoaneList = ({
                 }
             }
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
     const findPageForId = async (id) => {
@@ -99,24 +104,19 @@ const PersoaneList = ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
-
             allData.sort((a, b) => a.nume.localeCompare(b.nume));
-
             const index = allData.findIndex(p => p.idPersoana === id);
 
             if (index !== -1) {
                 const targetPage = Math.floor(index / 10);
-                if (targetPage !== currentPage) {
-                    loadPersoane(targetPage, searchTerm);
-                } else {
-                    loadPersoane(currentPage, searchTerm);
-                }
+                loadPersoane(targetPage, searchTerm);
             }
         } catch (err) {
             console.error("Nu am putut calcula pagina automata:", err);
         }
     };
 
+    // Scroll la elementul evidentiat
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -140,6 +140,7 @@ const PersoaneList = ({
         loadPersoane(0, '');
     };
 
+    // Verificare inainte de stergere (Smart Delete)
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/persoane/verifica-stergere/${id}`, {
@@ -150,9 +151,7 @@ const PersoaneList = ({
                 setDeleteId(id);
                 setIsDeleteModalOpen(true);
             })
-            .catch(err => {
-                toast.error("Eroare la verificarea persoanei.");
-            });
+            .catch(() => toast.error("Eroare la verificarea persoanei."));
     };
 
     const handleConfirmDelete = () => {
@@ -160,20 +159,14 @@ const PersoaneList = ({
         axios.delete(`http://localhost:8080/api/persoane/${deleteId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
-            .then((res) => {
+            .then(() => {
                 loadPersoane(currentPage, searchTerm);
                 setIsDeleteModalOpen(false);
                 setDeleteId(null);
                 setDeleteData(null);
                 toast.success("Persoană ștearsă cu succes!");
             })
-            .catch(err => toast.error("Eroare la ștergerea persoanei!"));
-    };
-
-    const handleCloseDeleteModal = () => {
-        setIsDeleteModalOpen(false);
-        setDeleteData(null);
-        setDeleteId(null);
+            .catch(() => toast.error("Eroare la ștergerea persoanei!"));
     };
 
     const formatDataNasterii = (dateString) => {
@@ -187,7 +180,6 @@ const PersoaneList = ({
             <h2 className="page-title">Registru Persoane</h2>
 
             <div className="controls-container">
-                {/* 1. SEARCH */}
                 <div className="search-wrapper">
                     <input
                         type="text"
@@ -201,7 +193,6 @@ const PersoaneList = ({
                     )}
                 </div>
 
-                {/* 2. PAGINARE MUTATĂ AICI */}
                 {!searchTerm && !isLoading && totalPages > 1 && (
                     <Pagination
                         currentPage={currentPage}
@@ -210,7 +201,6 @@ const PersoaneList = ({
                     />
                 )}
 
-                {/* 3. BUTON ADĂUGARE */}
                 <button className="add-btn-primary" onClick={onAddClick}>
                     <span>+</span> Adăugați Persoană
                 </button>
@@ -229,16 +219,8 @@ const PersoaneList = ({
                     </tr>
                     </thead>
                     <tbody>
-
                     {isLoading ? (
-                        <tr>
-                            <td colSpan="6">
-                                <div className="loading-container">
-                                    <div className="spinner"></div>
-                                    <span>Se încarcă datele...</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <tr><td colSpan="6"><div className="loading-container"><div className="spinner"></div><span>Se încarcă datele...</span></div></td></tr>
                     ) : (
                         persoane && persoane.length > 0 ? (
                             persoane.map((p) => (
@@ -252,39 +234,11 @@ const PersoaneList = ({
                                     <td>{p.cnp}</td>
                                     <td style={{ textAlign: 'center' }}>{formatDataNasterii(p.dataNasterii)}</td>
                                     <td>{p.telefon}</td>
-
                                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                        <button
-                                            className="btn-tactical-teal"
-                                            onClick={() => onViewHistoryClick(p.idPersoana)}
-                                            title="Vizualizați Istoric"
-                                        >
-                                            <i className="fa-solid fa-clock-rotate-left"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical-green"
-                                            onClick={() => onViewAdreseClick(p.idPersoana)}
-                                            title="Vizualizați Adrese"
-                                        >
-                                            <i className="fa-solid fa-map-location-dot"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical"
-                                            onClick={() => onEditClick(p.idPersoana)}
-                                            title="Editați Persoană"
-                                        >
-                                            <i className="fa-solid fa-pen-to-square"></i>
-                                        </button>
-
-                                        <button
-                                            className="btn-tactical-red"
-                                            onClick={() => handleRequestDelete(p.idPersoana)}
-                                            title="Ștergeți Persoană"
-                                        >
-                                            <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        <button className="btn-tactical-teal" onClick={() => onViewHistoryClick(p.idPersoana)} title="Istoric"><i className="fa-solid fa-clock-rotate-left"></i></button>
+                                        <button className="btn-tactical-green" onClick={() => onViewAdreseClick(p.idPersoana)} title="Adrese"><i className="fa-solid fa-map-location-dot"></i></button>
+                                        <button className="btn-tactical" onClick={() => onEditClick(p.idPersoana)} title="Editați"><i className="fa-solid fa-pen-to-square"></i></button>
+                                        <button className="btn-tactical-red" onClick={() => handleRequestDelete(p.idPersoana)} title="Ștergeți"><i className="fa-solid fa-trash"></i></button>
                                     </td>
                                 </tr>
                             ))
@@ -296,11 +250,9 @@ const PersoaneList = ({
                 </table>
             </div>
 
-            {/* Paginarea a fost ștearsă de aici */}
-
             <DeleteSmartModal
                 isOpen={isDeleteModalOpen}
-                onClose={handleCloseDeleteModal}
+                onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
                 data={deleteData}
                 currentPolitistId={deleteId}

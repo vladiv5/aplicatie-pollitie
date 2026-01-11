@@ -1,7 +1,11 @@
+/** Componenta pentru modificarea unei adrese existente
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import './styles/Forms.css'; // IMPORTĂM NOILE STILURI
+import './styles/Forms.css';
 
 const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
     const [formData, setFormData] = useState({
