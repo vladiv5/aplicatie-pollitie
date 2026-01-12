@@ -70,50 +70,40 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         Map<String, String> errors = new HashMap<>();
-
         // Validari campuri personale
         if (req.getNume() == null || req.getNume().trim().isEmpty()) errors.put("nume", "Numele este obligatoriu.");
         if (req.getPrenume() == null || req.getPrenume().trim().isEmpty()) errors.put("prenume", "Prenumele este obligatoriu.");
         if (req.getTelefon() == null || req.getTelefon().trim().isEmpty()) errors.put("telefon", "Telefonul este obligatoriu.");
-
         // Validari cont nou
         if (req.getNewUsername() == null || req.getNewUsername().trim().isEmpty()) errors.put("newUsername", "Alegeți un nume de utilizator.");
         else if (req.getNewUsername().length() < 3) errors.put("newUsername", "Minim 3 caractere.");
-
         if (req.getNewPassword() == null || req.getNewPassword().trim().isEmpty()) errors.put("newPassword", "Alegeți o parolă.");
         else if (req.getNewPassword().length() < 3) errors.put("newPassword", "Minim 3 caractere.");
-
         if (req.getConfirmPassword() == null || req.getConfirmPassword().trim().isEmpty()) errors.put("confirmPassword", "Confirmați parola.");
         else if (!req.getConfirmPassword().equals(req.getNewPassword())) errors.put("confirmPassword", "Parolele nu coincid!");
-
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
         // Caut politistul in baza de date dupa datele personale
         Optional<Politist> target = politistRepository.findForActivation(
                 req.getNume(), req.getPrenume(), req.getTelefon()
         );
-
         if (target.isEmpty()) {
             errors.put("nume", "Verifică numele.");
             errors.put("prenume", "Verifică prenumele.");
             errors.put("telefon", "Verifică telefonul (nu există în sistem).");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors);
         }
-
         Politist p = target.get();
-
         // Verific daca are deja cont
         if (p.getUsername() != null && !p.getUsername().isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("global", "Acest polițist are deja un cont activ! Mergi la Autentificare."));
         }
-
         // Verific unicitate username
         if (politistRepository.findByUsername(req.getNewUsername()).isPresent()) {
             errors.put("newUsername", "Acest username este deja folosit.");
             return ResponseEntity.badRequest().body(errors);
         }
-
         // Salvez noile date de autentificare
         p.setUsername(req.getNewUsername());
         p.setPassword(req.getNewPassword());

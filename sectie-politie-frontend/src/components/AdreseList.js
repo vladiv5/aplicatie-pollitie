@@ -16,7 +16,8 @@ const AdreseList = ({
                         onAddClick,
                         onEditClick,
                         highlightId,
-                        onHighlightComplete
+                        onHighlightComplete,
+                        setHighlightId // IMPORTANT: Primim setter-ul
                     }) => {
     const [adrese, setAdrese] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
@@ -38,7 +39,6 @@ const AdreseList = ({
         setIsLoading(true);
         const token = localStorage.getItem('token');
 
-        // Codific termenul pentru a evita erori cu caractere speciale
         const safeTerm = encodeURIComponent(term);
         let url = `http://localhost:8080/api/adrese/lista-paginata?page=${page}&size=10`;
         if (term) url = `http://localhost:8080/api/adrese/cauta?termen=${safeTerm}`;
@@ -61,10 +61,30 @@ const AdreseList = ({
             });
     };
 
+    // --- LOGICA BUMERANG (Revenire din Incidente) ---
+    useEffect(() => {
+        const rawData = sessionStorage.getItem('boomerang_pending');
+        if (rawData) {
+            const data = JSON.parse(rawData);
+            // Verific daca ruta de intoarcere este '/adrese'
+            if (data.returnRoute === '/adrese' && data.triggerId) {
+                if (data.triggerAction === 'reOpenDelete') {
+                    setTimeout(() => {
+                        handleRequestDelete(data.triggerId);
+                    }, 300);
+                }
+                // Activam highlight-ul pe elementul la care ne-am intors
+                if (setHighlightId) {
+                    setHighlightId(data.triggerId);
+                }
+                sessionStorage.removeItem('boomerang_pending');
+            }
+        }
+    }, []);
+
     useEffect(() => {
         loadAdrese(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
-                // Logica pentru a sari automat la pagina elementului proaspat adaugat/editat
                 const currentList = responseData.content || responseData;
                 if (currentList && Array.isArray(currentList)) {
                     const existsOnPage = currentList.some(a => a.idAdresa === highlightId);
@@ -77,7 +97,6 @@ const AdreseList = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
-    // Algoritm pentru gasirea paginii corecte a unui element (pentru highlight)
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -85,7 +104,6 @@ const AdreseList = ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
-            // Sortare identica cu backend-ul pentru consistenta
             allData.sort((a, b) => {
                 const locComparison = a.localitate.localeCompare(b.localitate);
                 if (locComparison !== 0) return locComparison;
@@ -104,7 +122,6 @@ const AdreseList = ({
         }
     };
 
-    // Scroll automat la randul evidentiat
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -126,7 +143,6 @@ const AdreseList = ({
         loadAdrese(0, '');
     };
 
-    // Verific daca adresa poate fi stearsa
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/adrese/verifica-stergere/${id}`, {
@@ -237,7 +253,15 @@ const AdreseList = ({
                 </table>
             </div>
 
-            <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
+            {/* --- AICI ERA EROAREA: Am adaugat currentPolitistId si returnRoute --- */}
+            <DeleteSmartModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                data={deleteData}
+                currentPolitistId={deleteId} // Transmit ID-ul adresei ca trigger
+                returnRoute="/adrese"        // Specific ruta de intoarcere
+            />
 
             <Modal isOpen={!!viewLocatariId} onClose={() => setViewLocatariId(null)} title="Locatari la această adresă" maxWidth="850px">
                 {viewLocatariId && <ViewLocatariAdresa adresaId={viewLocatariId} onClose={() => setViewLocatariId(null)} />}

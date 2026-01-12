@@ -160,32 +160,74 @@ public class PolitistController {
         return "Succes: " + numeComplet + " a fost șters definitiv din sistem!";
     }
 
-    // --- VERIFICARE STERGERE ---
+    // --- VERIFICARE STERGERE (LOGICA SMART DELETE REVIZUITĂ) ---
     @GetMapping("/verifica-stergere/{id}")
     public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
         List<BlockingItem> listaTotala = new ArrayList<>();
+        boolean hasRed = false;    // Blochează ștergerea (Active/Neplătite)
+        boolean hasOrange = false; // Avertizează (Închise/Plătite) -> Arhivatele vor fi ignorate (Verde)
 
+        // 1. Verificăm Amenzile
         List<Amenda> toateAmenzile = amendaRepository.findAllNativeByPolitist(id);
         for (Amenda a : toateAmenzile) {
-            String desc = a.getStarePlata() + " - " + a.getSuma() + " RON";
+            String status = a.getStarePlata();
+            String desc = status + " - " + a.getSuma() + " RON";
+
+            // Adaug în listă doar ca info
             listaTotala.add(new BlockingItem("Amendă", a.getIdAmenda(), desc));
+
+            // Logica de decizie
+            if ("Neplatita".equalsIgnoreCase(status)) {
+                hasRed = true;
+            } else if ("Platita".equalsIgnoreCase(status)) {
+                hasOrange = true;
+            }
+            // "Anulata" este ignorată -> Rămâne Verde (Safe)
         }
 
+        // 2. Verificăm Incidentele
         List<Incident> toateIncidentele = incidentRepository.findAllNativeByPolitist(id);
         for (Incident i : toateIncidentele) {
-            String desc = i.getTipIncident() + " (" + i.getStatus() + ")";
+            String status = i.getStatus();
+            String desc = i.getTipIncident() + " (" + status + ")";
+
             listaTotala.add(new BlockingItem("Incident", i.getIdIncident(), desc));
+
+            // Logica de decizie
+            if ("Activ".equalsIgnoreCase(status)) {
+                hasRed = true;
+            } else if ("Închis".equalsIgnoreCase(status)) {
+                hasOrange = true;
+            }
+            // "Arhivat" este ignorat -> Rămâne Verde (Safe)
         }
 
-        boolean areActive = listaTotala.stream()
-                .anyMatch(item -> item.getDescriere().contains("Activ") || item.getDescriere().contains("Neplatita"));
-
-        if (areActive) {
-            return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Polițistul are elemente active.", listaTotala);
-        } else if (!listaTotala.isEmpty()) {
-            return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere Istoric", "Polițistul are istoric. Confirmati stergerea?", listaTotala);
+        // 3. Returnăm rezultatul pe baza priorității (Roșu > Portocaliu > Verde)
+        if (hasRed) {
+            return new DeleteConfirmation(
+                    false,
+                    "BLOCKED",
+                    "Ștergere Blocată",
+                    "Polițistul are elemente ACTIVE (cazuri în lucru sau amenzi neplătite). Rezolvați-le înainte de ștergere!",
+                    listaTotala
+            );
+        } else if (hasOrange) {
+            return new DeleteConfirmation(
+                    true,
+                    "WARNING",
+                    "Atenție - Ștergere Istoric",
+                    "Polițistul nu mai are cazuri active, dar există un istoric (dosare închise/amenzi plătite). Ștergerea este permisă, dar ireversibilă.",
+                    listaTotala
+            );
         } else {
-            return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Nu există date asociate.", listaTotala);
+            // Aici ajungem dacă lista e goală SAU dacă are doar "Arhivat" / "Anulata"
+            return new DeleteConfirmation(
+                    true,
+                    "SAFE",
+                    "Ștergere Sigură",
+                    "Nu există date critice asociate. Dosarele arhivate sau anulate vor fi șterse automat.",
+                    listaTotala
+            );
         }
     }
 

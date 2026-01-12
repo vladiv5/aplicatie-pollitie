@@ -64,21 +64,77 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     List<Incident> cautaDupaInceput(@Param("termen") String termen);
 
     // --- RAPOARTE ---
-    // Top strazi periculoase unde au loc cele mai multe incidente
-    @Query(value = "SELECT adr.strada, adr.localitate, COUNT(i.id_incident) as nr_incidente FROM adrese adr JOIN incidente i ON adr.id_adresa = i.id_adresa_incident WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) AND (:endDate IS NULL OR i.data_emitere <= :endDate) GROUP BY adr.strada, adr.localitate ORDER BY nr_incidente DESC", nativeQuery = true)
-    List<Map<String, Object>> getTopStraziIncidente(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    // Lista de incidente pentru un anumit politist (istoric cazuri)
-    @Query(value = "SELECT i.tip_incident, i.data_emitere, i.descriere_locatie, adr.strada FROM incidente i JOIN politisti p ON i.id_politist_responsabil = p.id_politist JOIN adrese adr ON i.id_adresa_incident = adr.id_adresa WHERE p.id_politist = :idPolitist AND (:startDate IS NULL OR i.data_emitere >= :startDate) AND (:endDate IS NULL OR i.data_emitere <= :endDate)", nativeQuery = true)
-    List<Map<String, Object>> getIncidenteByPolitist(@Param("idPolitist") Integer idPolitist, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    // 1. Top străzi periculoase (Cele mai multe incidente)
+    @Query(value = "" +
+            "SELECT adr.strada, adr.localitate, COUNT(i.id_incident) as nr_incidente " +
+            "FROM adrese adr " +
+            "JOIN incidente i ON adr.id_adresa = i.id_adresa_incident " +
+            "WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) " +
+            "  AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
+            "GROUP BY adr.strada, adr.localitate " +
+            "ORDER BY nr_incidente DESC",
+            nativeQuery = true)
+    List<Map<String, Object>> getTopStraziIncidente(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
-    // Strazi 'Sigure' - unde nu s-a inregistrat niciun incident
-    @Query(value = "SELECT a.strada, a.localitate FROM Adrese a LEFT JOIN Incidente i ON a.id_adresa = i.id_adresa_incident AND (:startDate IS NULL OR i.data_emitere >= :startDate) AND (:endDate IS NULL OR i.data_emitere <= :endDate) GROUP BY a.strada, a.localitate HAVING COUNT(i.id_incident) = 0 ORDER BY a.localitate, a.strada", nativeQuery = true)
-    List<Map<String, Object>> getZoneSigure(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    // 2. Dosar Polițist: Lista de incidente instrumentate (Istoric)
+    @Query(value = "" +
+            "SELECT i.tip_incident, i.data_emitere, i.descriere_locatie, adr.strada " +
+            "FROM incidente i " +
+            "JOIN politisti p ON i.id_politist_responsabil = p.id_politist " +
+            "JOIN adrese adr ON i.id_adresa_incident = adr.id_adresa " +
+            "WHERE p.id_politist = :idPolitist " +
+            "  AND (:startDate IS NULL OR i.data_emitere >= :startDate) " +
+            "  AND (:endDate IS NULL OR i.data_emitere <= :endDate)",
+            nativeQuery = true)
+    List<Map<String, Object>> getIncidenteByPolitist(
+            @Param("idPolitist") Integer idPolitist,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
-    // Zile cu activitate infractionala peste medie (Zile Critice)
-    @Query(value = "SELECT CAST(i.data_emitere AS DATE) as ziua, COUNT(*) as nr_incidente FROM Incidente i WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) AND (:endDate IS NULL OR i.data_emitere <= :endDate) GROUP BY CAST(i.data_emitere AS DATE) HAVING COUNT(*) > (SELECT AVG(sub.zilnic) FROM (SELECT COUNT(*) as zilnic FROM Incidente i2 WHERE (:startDate IS NULL OR i2.data_emitere >= :startDate) AND (:endDate IS NULL OR i2.data_emitere <= :endDate) GROUP BY CAST(i2.data_emitere AS DATE)) as sub) ORDER BY nr_incidente DESC", nativeQuery = true)
-    List<Map<String, Object>> getZileCritice(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    // 3. Zone Sigure (Străzi fără incidente în perioada selectată)
+    @Query(value = "" +
+            "SELECT a.strada, a.localitate " +
+            "FROM Adrese a " +
+            "LEFT JOIN Incidente i ON a.id_adresa = i.id_adresa_incident " +
+            "      AND (:startDate IS NULL OR i.data_emitere >= :startDate) " +
+            "      AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
+            "GROUP BY a.strada, a.localitate " +
+            "HAVING COUNT(i.id_incident) = 0 " +
+            "ORDER BY a.localitate, a.strada",
+            nativeQuery = true)
+    List<Map<String, Object>> getZoneSigure(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    // 4. Zile Critice (Zile cu activitate infracțională peste medie)
+    // Utilizează Subquery pentru calculul mediei dinamice
+    @Query(value = "" +
+            "SELECT CAST(i.data_emitere AS DATE) as ziua, COUNT(*) as nr_incidente " +
+            "FROM Incidente i " +
+            "WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) " +
+            "  AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
+            "GROUP BY CAST(i.data_emitere AS DATE) " +
+            "HAVING COUNT(*) > (" +
+            "    SELECT AVG(sub.zilnic) FROM (" +
+            "        SELECT COUNT(*) as zilnic " +
+            "        FROM Incidente i2 " +
+            "        WHERE (:startDate IS NULL OR i2.data_emitere >= :startDate) " +
+            "          AND (:endDate IS NULL OR i2.data_emitere <= :endDate) " +
+            "        GROUP BY CAST(i2.data_emitere AS DATE)" +
+            "    ) as sub" +
+            ") " +
+            "ORDER BY nr_incidente DESC",
+            nativeQuery = true)
+    List<Map<String, Object>> getZileCritice(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
     // --- ALTE METODE AJUTATOARE ---
     @Query(value = "SELECT COUNT(*) FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
