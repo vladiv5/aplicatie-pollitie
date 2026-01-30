@@ -1,6 +1,7 @@
-/** Componenta pentru inregistrarea unui nou politist (angajat)
+/**
+ * Component for registering a new police officer (employee).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import axios from 'axios';
@@ -16,9 +17,9 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        // Sterg eroarea specifica atunci cand utilizatorul tasteaza
+        // I clear the specific error when user types.
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
-        // Caz special pentru telefon, care are cheie diferita in backend
+        // I handle the special mapping for the phone number, which uses a different key ('telefon_serviciu') in the backend error object.
         if (name === 'telefon' && errors.telefon_serviciu) {
             setErrors(prev => ({ ...prev, telefon_serviciu: null }));
         }
@@ -27,6 +28,7 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     const handleSave = () => {
         setErrors({});
 
+        // I map the frontend state keys to the expected backend DTO structure.
         axios.post('http://localhost:8080/api/politisti', {
             nume: formData.nume,
             prenume: formData.prenume,
@@ -49,6 +51,7 @@ const AddPolitist = ({ onSaveSuccess, onCancel }) => {
     };
 
     const renderInput = (name, label, placeholder, icon, backendKey = null) => {
+        // I allow checking errors by an alternative backend key if provided (e.g. for phone).
         const errorKey = backendKey || name;
         const hasError = errors[errorKey];
 

@@ -1,6 +1,7 @@
-/** Componenta pentru editarea datelor unei persoane
+/**
+ * Component for editing personal data of a citizen.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';

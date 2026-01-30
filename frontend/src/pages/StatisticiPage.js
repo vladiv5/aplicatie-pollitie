@@ -1,7 +1,8 @@
-/** Componenta complexa de raportare si analiza statistica
- * Include grafice (Recharts), filtre temporale si generare de dosare tiparibile
+/**
+ * Complex Reporting and Analytics Component.
+ * Includes charts (Recharts), temporal filters, and printable file generation.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -11,10 +12,10 @@ import '../components/styles/Statistici.css';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 
-// Culorile folosite in grafice (tema Navy/Gold/Red)
+// Chart colors (Navy/Gold/Red theme)
 const COLORS = ['#0a2647', '#bfa05d', '#dc3545', '#28a745', '#6c757d', '#144272'];
 
-// Helper pentru formatarea datei in format romanesc
+// Helper for Romanian date formatting
 const formatDateDisplay = (isoDate) => {
     if (!isoDate) return '-';
     const datePart = isoDate.toString().split('T')[0];
@@ -23,7 +24,7 @@ const formatDateDisplay = (isoDate) => {
     return `${parts[2]}-${parts[1]}-${parts[0]}`;
 };
 
-// Randare personalizata pentru etichetele procentuale de pe Pie Chart
+// Customized Label Rendering for Pie Chart percentages
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -37,7 +38,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
     );
 };
 
-// Componenta personalizata pentru Tooltip-ul graficelor (afiseaza detalii la hover)
+// Custom Tooltip Component for charts (displays details on hover)
 const CustomChartTooltip = ({ active, payload, label, type }) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
@@ -47,7 +48,7 @@ const CustomChartTooltip = ({ active, payload, label, type }) => {
                     {data.nume ? `${data.nume} ${data.prenume || ''}` : (data.grad || label)}
                 </div>
 
-                {/* Afisez continut diferit in functie de tipul graficului */}
+                {/* I render different content based on the chart type */}
                 {type === 'politist' && (
                     <div className="st-tooltip-body">
                         <div>Funcție: {data.functie}</div>
@@ -79,7 +80,7 @@ const CustomChartTooltip = ({ active, payload, label, type }) => {
 };
 
 const StatisticiPage = () => {
-    // --- STATE PENTRU FILTRE ---
+    // --- FILTER STATE ---
     const [startDate, setStartDate] = useState({d: '', m: '', y: ''});
     const [endDate, setEndDate] = useState({d: '', m: '', y: ''});
     const [dateError, setDateError] = useState('');
@@ -89,7 +90,7 @@ const StatisticiPage = () => {
     const [activeStartDate, setActiveStartDate] = useState(null);
     const [activeEndDate, setActiveEndDate] = useState(null);
 
-    // --- STATE PENTRU DATE (API) ---
+    // --- DATA STATE (API) ---
     const [topPolitisti, setTopPolitisti] = useState([]);
     const [amenziGrad, setAmenziGrad] = useState([]);
     const [topStrazi, setTopStrazi] = useState([]);
@@ -99,14 +100,14 @@ const StatisticiPage = () => {
     const [recidivisti, setRecidivisti] = useState([]);
     const [zileCritice, setZileCritice] = useState([]);
 
-    // --- STATE PENTRU DOSARE OPERATIVE ---
+    // --- OPERATIONAL FILES STATE ---
     const [currentSlide, setCurrentSlide] = useState(0);
     const [selectedPolitist, setSelectedPolitist] = useState(null);
     const [rezultatPolitist, setRezultatPolitist] = useState(null);
     const [selectedPersoana, setSelectedPersoana] = useState(null);
     const [rezultatCnp, setRezultatCnp] = useState(null);
 
-    // Functia care incarca toate datele cand se aplica filtrele
+    // Function to load all data when filters change.
     const fetchAllData = () => {
         const token = localStorage.getItem('token');
         const config = {
@@ -115,7 +116,7 @@ const StatisticiPage = () => {
         };
         setDateError('');
 
-        // Fac cereri paralele catre endpoint-urile de statistica
+        // I perform parallel requests to statistics endpoints.
         axios.get('http://localhost:8080/api/statistici/top-politisti', config).then(res => setTopPolitisti(res.data));
         axios.get('http://localhost:8080/api/statistici/amenzi-grad', config).then(res => setAmenziGrad(res.data));
         axios.get('http://localhost:8080/api/statistici/top-strazi', config).then(res => setTopStrazi(res.data));
@@ -130,7 +131,7 @@ const StatisticiPage = () => {
         fetchAllData();
     }, [activeStartDate, activeEndDate]);
 
-    // Gestionez input-ul manual pentru data (doar cifre)
+    // I handle manual date input (digits only).
     const handleDateChange = (type, field, value) => {
         if (value && !/^\d+$/.test(value)) return;
         if ((field === 'd' || field === 'm') && value.length > 2) return;
@@ -140,7 +141,7 @@ const StatisticiPage = () => {
         if (successMsg) setSuccessMsg('');
     };
 
-    // Construiesc string-ul de data pentru backend (YYYY-MM-DD)
+    // I construct the date string for the backend (YYYY-MM-DD).
     const buildDateString = (d, m, y) => {
         if (!d && !m && !y) return null;
         if (!d || !m || !y) return 'INVALID';
@@ -151,7 +152,7 @@ const StatisticiPage = () => {
         return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     };
 
-    // Aplic filtrele si validez logica temporala
+    // I apply the filters and validate temporal logic.
     const handleApplyFilters = () => {
         setSuccessMsg('');
         const startStr = buildDateString(startDate.d, startDate.m, startDate.y);
@@ -171,7 +172,7 @@ const StatisticiPage = () => {
         setDateError('');
         if (startStr || endStr) setSuccessMsg("Filtre aplicate!");
 
-        // Daca am selectat deja un politist/persoana, reincarc datele lor cu noile filtre
+        // If an officer/person is already selected, I reload their data with the new filters.
         if (selectedPolitist) handleCautaPolitist(startStr, endStr);
         if (selectedPersoana) handleCautaCnp(startStr, endStr);
     };
@@ -187,7 +188,7 @@ const StatisticiPage = () => {
         setRezultatCnp(null);
     };
 
-    // Cautare dosar Politist
+    // Officer File Search
     const handleCautaPolitist = (start = activeStartDate, end = activeEndDate) => {
         if (!selectedPolitist) return;
         const token = localStorage.getItem('token');
@@ -200,7 +201,7 @@ const StatisticiPage = () => {
             .catch(() => toast.error("Fără date."));
     };
 
-    // Cautare dosar Cetatean (Cazier)
+    // Citizen Record Search (CNP)
     const handleCautaCnp = (start = activeStartDate, end = activeEndDate) => {
         if (!selectedPersoana) return;
         const token = localStorage.getItem('token');
@@ -210,7 +211,7 @@ const StatisticiPage = () => {
             .catch(() => toast.error("Fără date."));
     };
 
-    // Logica de printare: Activez clasa CSS specifica si apoi deschid dialogul
+    // Printing Logic: I activate a specific CSS class and then open the print dialog.
     const handlePrint = (target) => {
         setPrintTarget(target);
         setTimeout(() => {
@@ -219,7 +220,7 @@ const StatisticiPage = () => {
         }, 500);
     };
 
-    // --- DEFINITIA GRAFICELOR DIN CARUSEL ---
+    // --- CAROUSEL CHART DEFINITIONS ---
     const slides = [
         {
             id: 0,
@@ -349,7 +350,7 @@ const StatisticiPage = () => {
         <div className="page-container st-stats-container">
             <h2 className="st-page-title">Dashboard Analitic</h2>
 
-            {/* --- ZONA FILTRE --- */}
+            {/* --- FILTER AREA --- */}
             <div className="st-command-bar">
                 <div className="st-filter-container">
                     <div className="st-filter-group">
@@ -383,7 +384,7 @@ const StatisticiPage = () => {
                 </div>
             </div>
 
-            {/* --- MESAJE STARE --- */}
+            {/* --- STATUS MESSAGES --- */}
             <div className={`st-message-panel ${dateError ? 'st-msg-error' : ''} ${!dateError && successMsg ? 'st-msg-success' : ''} ${!dateError && !successMsg ? 'st-hidden' : ''}`}>
                 {dateError && (
                     <div className="st-msg-content">
@@ -399,7 +400,7 @@ const StatisticiPage = () => {
                 )}
             </div>
 
-            {/* --- CAROUSEL GRAFICE --- */}
+            {/* --- CHARTS CAROUSEL --- */}
             <div className="st-carousel-container">
                 <div className="st-carousel-content" key={currentSlide}>
                     <h3 className="st-slide-title"><i className={slides[currentSlide].icon}></i>{slides[currentSlide].title}</h3>
@@ -416,7 +417,7 @@ const StatisticiPage = () => {
                 </div>
             </div>
 
-            {/* --- GRID CARDURI PAGINATE --- */}
+            {/* --- PAGINATED CARD GRID --- */}
             <div className="st-analysis-grid">
                 <PaginatedCard
                     title="Zone Sigure"
@@ -498,11 +499,11 @@ const StatisticiPage = () => {
                 />
             </div>
 
-            {/* --- ARHIVĂ DOSARE --- */}
+            {/* --- FILE ARCHIVE --- */}
             <h2 className="st-page-title" style={{marginTop: '60px'}}>Arhivă Operativă</h2>
 
             <div className="st-dashboard-grid">
-                {/* --- COLOANA 1: POLIȚIST --- */}
+                {/* --- COLUMN 1: OFFICER --- */}
                 <div className="st-archive-column">
                     <div className="st-search-wrapper">
                         <div className="st-search-input-container">
@@ -559,7 +560,7 @@ const StatisticiPage = () => {
                     )}
                 </div>
 
-                {/* --- COLOANA 2: CETĂȚEAN --- */}
+                {/* --- COLUMN 2: CITIZEN --- */}
                 <div className="st-archive-column">
                     <div className="st-search-wrapper">
                         <div className="st-search-input-container">

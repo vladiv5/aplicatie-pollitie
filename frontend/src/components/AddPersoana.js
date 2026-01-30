@@ -1,6 +1,7 @@
-/** Componenta pentru adaugarea unei noi persoane in sistem
+/**
+ * Component for adding a new person (citizen) to the system.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import axios from 'axios';
@@ -21,6 +22,7 @@ const AddPersoana = ({ onSaveSuccess, onCancel }) => {
 
     const handleSave = () => {
         setErrors({});
+        // I send the person data to the backend API via POST.
         axios.post('http://localhost:8080/api/persoane', formData)
             .then((response) => {
                 toast.success("Persoană adăugată cu succes!");

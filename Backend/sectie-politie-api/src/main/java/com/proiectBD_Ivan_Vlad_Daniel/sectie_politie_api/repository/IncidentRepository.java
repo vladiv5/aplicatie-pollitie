@@ -14,19 +14,20 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-/** Repository pentru gestionarea incidentelor din sistem
- * Contine interogarile cele mai complexe (Analiza Criminalitatii).
+/**
+ * Repository for managing incidents in the system.
+ * Contains the most complex queries (Crime Analysis).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Repository
 public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
     // =================================================================================
-    // 1. OPERATII CRUD NATIVE (Insert, Update, Delete)
+    // 1. NATIVE CRUD OPERATIONS (Insert, Update, Delete)
     // =================================================================================
 
-    // INSERT (Parametri Variabili)
+    // INSERT (Variable Parameters)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -45,7 +46,7 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             @Param("status") String status
     );
 
-    // UPDATE (Parametri Variabili)
+    // UPDATE (Variable Parameters)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -70,7 +71,7 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             @Param("status") String status
     );
 
-    // DELETE (Parametru Variabil: ID)
+    // DELETE (Variable Parameter: ID)
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Incidente WHERE id_incident = :id", nativeQuery = true)
@@ -78,11 +79,11 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
 
     // =================================================================================
-    // 2. INTEROGARI SIMPLE CU JOIN (Si Parametri Variabili)
+    // 2. SIMPLE QUERIES WITH JOIN (And Variable Parameters)
     // =================================================================================
 
-    // Raport "Dosar Politist": Istoricul cazurilor lucrate (JOIN Incidente-Politisti-Adrese)
-    // [Parametri Variabili]: ID Politist + Interval Data
+    // Report "Officer File": History of worked cases (JOIN Incidents-Officers-Addresses)
+    // [Variable Parameters]: Officer ID + Date Range
     @Query(value = "" +
             "SELECT i.tip_incident, i.data_emitere, i.descriere_locatie, adr.strada " +
             "FROM incidente i " +
@@ -98,8 +99,8 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             @Param("endDate") LocalDateTime endDate
     );
 
-    // Live Search: Cauta in Incidente SI in numele Politistului (LEFT JOIN)
-    // [Parametru Variabil]: Termenul de cautare
+    // Live Search: Searches Incidents AND Officer name (LEFT JOIN)
+    // [Variable Parameter]: Search term
     @Query(value = "" +
             "SELECT i.* FROM Incidente i " +
             "LEFT JOIN Politisti p ON i.id_politist_responsabil = p.id_politist " +
@@ -114,11 +115,12 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
 
     // =================================================================================
-    // 3. INTEROGARI COMPLEXE (Subcereri, Having, Functii Agregat, LEFT JOIN)
+    // 3. COMPLEX QUERIES (Subqueries, Having, Aggregate Functions, LEFT JOIN)
     // =================================================================================
 
-    // Raport "Zile Critice": Zile cu criminalitate peste media zilnica globala
-    // [Complexitate]: Subquery in HAVING + AVG + GROUP BY DATE()
+    // Report "Critical Days": Days with crime rate above global daily average.
+    // [Complexity]: Subquery in HAVING + AVG + GROUP BY DATE()
+    // I calculate the daily average first, then filter days exceeding this baseline.
     @Query(value = "" +
             "SELECT CAST(i.data_emitere AS DATE) as ziua, COUNT(*) as nr_incidente " +
             "FROM Incidente i " +
@@ -141,8 +143,8 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             @Param("endDate") LocalDateTime endDate
     );
 
-    // Raport "Top Strazi Periculoase": Agregare dupa locatie
-    // [Complexitate]: JOIN + GROUP BY + COUNT + ORDER BY
+    // Report "Top Dangerous Streets": Aggregation by location.
+    // [Complexity]: JOIN + GROUP BY + COUNT + ORDER BY
     @Query(value = "" +
             "SELECT adr.strada, adr.localitate, COUNT(i.id_incident) as nr_incidente " +
             "FROM adrese adr " +
@@ -157,9 +159,9 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             @Param("endDate") LocalDateTime endDate
     );
 
-    // 3. Zone Sigure (Complexă cu Subcerere)
-    // Cerinta: Strazi unde nu s-au inregistrat incidente
-    // Implementare: Selectam strazile a caror ID nu se afla in lista ID-urilor cu incidente (Subquery)
+    // 3. Safe Zones (Complex with Subquery)
+    // Requirement: Streets where NO incidents have been recorded.
+    // Implementation: I select streets whose IDs are NOT IN the list of IDs with incidents (Subquery).
     @Query(value = "" +
             "SELECT a.strada, a.localitate " +
             "FROM Adrese a " +
@@ -180,10 +182,10 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
 
     // =================================================================================
-    // 4. UTILITARE & DEPENDENTE (Smart Delete, Paginare)
+    // 4. UTILITIES & DEPENDENCIES (Smart Delete, Pagination)
     // =================================================================================
 
-    // Paginare Nativa
+    // Native Pagination
     @Query(value = "SELECT * FROM Incidente", countQuery = "SELECT count(*) FROM Incidente", nativeQuery = true)
     Page<Incident> findAllNativePaginat(Pageable pageable);
 
@@ -193,18 +195,18 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Query(value = "SELECT * FROM Incidente", nativeQuery = true)
     List<Incident> getAllIncidenteNative();
 
-    // Verificari pentru Smart Delete (Politist)
+    // Checks for Smart Delete (Officer)
     @Query(value = "SELECT * FROM Incidente WHERE id_politist_responsabil = :id AND status = 'Activ'", nativeQuery = true)
     List<Incident> findActiveIncidentsByPolitist(@Param("id") Integer id);
 
     @Query(value = "SELECT * FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
     List<Incident> findAllNativeByPolitist(@Param("id") Integer id);
 
-    // Istoric Persoana (Incidente in care e implicata)
+    // Person History (Incidents they are involved in)
     @Query(value = "SELECT i.* FROM Incidente i JOIN Persoane_Incidente pi ON i.id_incident = pi.id_incident WHERE pi.id_persoana = :idPersoana", nativeQuery = true)
     List<Incident> findIncidenteByPersoana(@Param("idPersoana") Integer idPersoana);
 
-    // Stergeri in cascada
+    // Cascading deletions
     @Modifying
     @Transactional
     @Query(value = "UPDATE Incidente SET id_politist_responsabil = :idNou WHERE id_politist_responsabil = :idVechi", nativeQuery = true)
@@ -220,7 +222,7 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Query(value = "DELETE FROM Incidente WHERE id_adresa_incident = :idAdresa", nativeQuery = true)
     void deleteByAdresaId(@Param("idAdresa") Integer idAdresa);
 
-    // Alte utilitare (Count, GetLastId)
+    // Other utilities (Count, GetLastId)
     @Query(value = "SELECT COUNT(*) FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
     int countIncidenteByPolitist(@Param("id") Integer id);
 

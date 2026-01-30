@@ -1,6 +1,7 @@
-/** Componenta pentru gestionarea listei de politisti
+/**
+ * Component for managing the list of Police Officers.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -59,7 +60,7 @@ const PolitistiList = ({
             });
     };
 
-    // Logica Bumerang (Revenire dupa rezolvare blocaj stergere)
+    // Boomerang Logic (Return after resolving blocking dependency)
     useEffect(() => {
         const rawData = sessionStorage.getItem('boomerang_pending');
         if (rawData) {

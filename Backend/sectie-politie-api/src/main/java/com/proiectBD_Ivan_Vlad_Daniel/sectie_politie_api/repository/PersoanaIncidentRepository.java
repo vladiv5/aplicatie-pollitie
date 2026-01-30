@@ -11,9 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** Repository pentru gestionarea legaturii dintre oameni si incidente (Many-to-Many)
+/**
+ * Repository for managing the link between People and Incidents (Many-to-Many).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Repository
 public interface PersoanaIncidentRepository extends JpaRepository<PersoanaIncident, PersoanaIncidentId> {
@@ -21,25 +22,25 @@ public interface PersoanaIncidentRepository extends JpaRepository<PersoanaIncide
     List<PersoanaIncident> findByIncident_IdIncident(Integer idIncident);
     List<PersoanaIncident> findByPersoana_IdPersoana(Integer idPersoana);
 
-    // Sterg legaturile cand sterg un POLITIST care e responsabil de cazuri
+    // I clean up links when deleting an OFFICER responsible for cases (Cascade via subquery).
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_incident IN (SELECT id_incident FROM Incidente WHERE id_politist_responsabil = :idPolitist)", nativeQuery = true)
     void stergeParticipantiDupaPolitist(@Param("idPolitist") Integer idPolitist);
 
-    // Sterg legaturile cand sterg o PERSOANA din baza de date
+    // I clean up links when deleting a PERSON from the database.
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_persoana = :id", nativeQuery = true)
     void deleteByPersoanaId(@Param("id") Integer id);
 
-    // Sterg doar legaturile cand dispare un INCIDENT (nu si persoanele fizice)
+    // I clean up only links when an INCIDENT disappears (not the physical persons).
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_incident = :idIncident", nativeQuery = true)
     void deleteByIncidentId(@Param("idIncident") Integer idIncident);
 
-    // Sterg participantii de la incidentele care au avut loc la o ADRESA ce urmeaza a fi stearsa
+    // I delete participants from incidents that occurred at an ADDRESS to be deleted.
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Incidente WHERE id_incident IN (SELECT id_incident FROM Incidente WHERE id_adresa_incident = :idAdresa)", nativeQuery = true)

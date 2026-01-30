@@ -1,6 +1,7 @@
-/** Componenta pentru adaugarea unei noi adrese in baza de date
+/**
+ * Component for adding a new address to the database.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import axios from 'axios';
@@ -8,33 +9,34 @@ import toast from 'react-hot-toast';
 import './styles/Forms.css';
 
 const AddAdresa = ({ onSaveSuccess, onCancel }) => {
-    // Initializarea starii formularului cu campuri goale
+    // I initialize the form state with empty strings to ensure controlled inputs.
     const [formData, setFormData] = useState({
         strada: '', numar: '', bloc: '', apartament: '', localitate: '', judetSauSector: ''
     });
     const [errors, setErrors] = useState({});
 
-    // Functie pentru actualizarea starii cand utilizatorul scrie in input
+    // I update the state as the user types and clear specific errors to improve UX.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        // Daca exista o eroare pe acest camp, o sterg cand utilizatorul incepe sa corecteze
+
+        // If the user starts correcting a field, I remove the validation error immediately.
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
-    // Trimiterea datelor catre server
+    // I handle the data submission to the backend API.
     const handleSave = () => {
-        setErrors({}); // Resetez erorile anterioare
+        setErrors({}); // I reset global errors before a new attempt.
 
         axios.post('http://localhost:8080/api/adrese', formData)
             .then((response) => {
                 toast.success("Adresă înregistrată!");
-                // Apelez functia de callback pentru a notifica parintele si a inchide modalul
+                // I trigger the callback to notify the parent component and close the modal.
                 onSaveSuccess(response.data.idAdresa);
             })
             .catch(err => {
                 if (err.response?.status === 400) {
-                    // Daca primesc erori de validare de la backend, le afisez sub campuri
+                    // I map backend validation errors to the frontend state to display them under inputs.
                     setErrors(err.response.data);
                     toast.error("Verifică câmpurile invalide!");
                 } else {
@@ -43,7 +45,7 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
             });
     };
 
-    // Helper pentru randarea input-urilor cu stiluri consistente
+    // Helper function to render input fields with consistent styling and error handling.
     const renderInput = (name, label, placeholder, icon, containerStyle = {}) => {
         const hasError = errors[name];
         return (
@@ -60,14 +62,14 @@ const AddAdresa = ({ onSaveSuccess, onCancel }) => {
                         value={formData[name]}
                         onChange={handleChange}
                     />
-                    {/* Butonul de stergere rapida (X) apare doar daca exista text */}
+                    {/* I allow users to quickly clear the field if it contains text. */}
                     {formData[name] && (
                         <button type="button" className="search-clear-btn-gold" onClick={() => setFormData({...formData, [name]: ''})}>
                             <i className="fa-solid fa-circle-xmark"></i>
                         </button>
                     )}
                 </div>
-                {/* Mesajul de eroare venit din backend */}
+                {/* I display the specific error message returned from the Java backend. */}
                 {hasError && <span className="error-text">{errors[name]}</span>}
             </div>
         );

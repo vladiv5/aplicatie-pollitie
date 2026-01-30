@@ -13,9 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/** Controller pentru Autentificare si Inregistrare (Register = Activare cont existent)
+/**
+ * Controller for Authentication and Registration (Register = Activating an existing officer account).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -31,15 +32,15 @@ public class AuthController {
         Map<String, String> errors = new HashMap<>();
 
         if (loginRequest.getNume() == null || loginRequest.getNume().trim().isEmpty()) {
-            errors.put("nume", "Introduceți numele de utilizator!");
+            errors.put("nume", "Enter username!");
         }
         if (loginRequest.getParola() == null || loginRequest.getParola().trim().isEmpty()) {
-            errors.put("parola", "Introduceți parola!");
+            errors.put("parola", "Enter password!");
         }
 
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // Verificare BACKDOOR ADMIN pentru testare rapida
+        // I included a BACKDOOR ADMIN check for rapid testing during development.
         if ("admin".equals(loginRequest.getNume()) && "admin".equals(loginRequest.getParola())) {
             Politist adminFals = new Politist();
             adminFals.setIdPolitist(-1);
@@ -50,12 +51,12 @@ public class AuthController {
             return ResponseEntity.ok(adminFals);
         }
 
-        // Caut user in baza de date
+        // I search for the user in the database.
         Optional<Politist> politistOpt = politistRepository.findByUsername(loginRequest.getNume());
 
         if (politistOpt.isPresent()) {
             Politist p = politistOpt.get();
-            // Verificare stricta Java pentru litere mari/mici
+            // I perform strict case-sensitive validation using Java's .equals().
             if (p.getUsername().equals(loginRequest.getNume()) &&
                     p.getPassword().equals(loginRequest.getParola())) {
                 return ResponseEntity.ok(p);
@@ -63,52 +64,58 @@ public class AuthController {
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("global", "Date incorecte (atenție la majuscule)!"));
+                .body(Map.of("global", "Invalid credentials (case sensitive)!"));
     }
 
-    // === REGISTER (ACTIVARE CONT) ===
+    // === REGISTER (ACCOUNT ACTIVATION) ===
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         Map<String, String> errors = new HashMap<>();
-        // Validari campuri personale
-        if (req.getNume() == null || req.getNume().trim().isEmpty()) errors.put("nume", "Numele este obligatoriu.");
-        if (req.getPrenume() == null || req.getPrenume().trim().isEmpty()) errors.put("prenume", "Prenumele este obligatoriu.");
-        if (req.getTelefon() == null || req.getTelefon().trim().isEmpty()) errors.put("telefon", "Telefonul este obligatoriu.");
-        // Validari cont nou
-        if (req.getNewUsername() == null || req.getNewUsername().trim().isEmpty()) errors.put("newUsername", "Alegeți un nume de utilizator.");
-        else if (req.getNewUsername().length() < 3) errors.put("newUsername", "Minim 3 caractere.");
-        if (req.getNewPassword() == null || req.getNewPassword().trim().isEmpty()) errors.put("newPassword", "Alegeți o parolă.");
-        else if (req.getNewPassword().length() < 3) errors.put("newPassword", "Minim 3 caractere.");
-        if (req.getConfirmPassword() == null || req.getConfirmPassword().trim().isEmpty()) errors.put("confirmPassword", "Confirmați parola.");
-        else if (!req.getConfirmPassword().equals(req.getNewPassword())) errors.put("confirmPassword", "Parolele nu coincid!");
+        // Personal data validation
+        if (req.getNume() == null || req.getNume().trim().isEmpty()) errors.put("nume", "Name required.");
+        if (req.getPrenume() == null || req.getPrenume().trim().isEmpty()) errors.put("prenume", "Surname required.");
+        if (req.getTelefon() == null || req.getTelefon().trim().isEmpty()) errors.put("telefon", "Phone required.");
+
+        // New account credential validation
+        if (req.getNewUsername() == null || req.getNewUsername().trim().isEmpty()) errors.put("newUsername", "Choose a username.");
+        else if (req.getNewUsername().length() < 3) errors.put("newUsername", "Min 3 chars.");
+
+        if (req.getNewPassword() == null || req.getNewPassword().trim().isEmpty()) errors.put("newPassword", "Choose a password.");
+        else if (req.getNewPassword().length() < 3) errors.put("newPassword", "Min 3 chars.");
+
+        if (req.getConfirmPassword() == null || req.getConfirmPassword().trim().isEmpty()) errors.put("confirmPassword", "Confirm password.");
+        else if (!req.getConfirmPassword().equals(req.getNewPassword())) errors.put("confirmPassword", "Passwords do not match!");
+
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // Caut politistul in baza de date dupa datele personale
+        // I verify that the officer actually exists in the system before letting them create an account.
         Optional<Politist> target = politistRepository.findForActivation(
                 req.getNume(), req.getPrenume(), req.getTelefon()
         );
         if (target.isEmpty()) {
-            errors.put("nume", "Verifică numele.");
-            errors.put("prenume", "Verifică prenumele.");
-            errors.put("telefon", "Verifică telefonul (nu există în sistem).");
+            errors.put("nume", "Check Name.");
+            errors.put("prenume", "Check Surname.");
+            errors.put("telefon", "Check Phone (Officer not found in system).");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors);
         }
         Politist p = target.get();
-        // Verific daca are deja cont
+
+        // I prevent re-registration if the account is already active.
         if (p.getUsername() != null && !p.getUsername().isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("global", "Acest polițist are deja un cont activ! Mergi la Autentificare."));
+                    .body(Map.of("global", "Officer already has an active account! Go to Login."));
         }
-        // Verific unicitate username
+        // I ensure username uniqueness.
         if (politistRepository.findByUsername(req.getNewUsername()).isPresent()) {
-            errors.put("newUsername", "Acest username este deja folosit.");
+            errors.put("newUsername", "Username already taken.");
             return ResponseEntity.badRequest().body(errors);
         }
-        // Salvez noile date de autentificare
+
+        // I save the new credentials to activate the account.
         p.setUsername(req.getNewUsername());
         p.setPassword(req.getNewPassword());
         politistRepository.save(p);
 
-        return ResponseEntity.ok("Cont activat cu succes!");
+        return ResponseEntity.ok("Account activated successfully!");
     }
 }

@@ -1,7 +1,8 @@
-/** Pagina principala pentru gestionarea Adreselor
- * Integreaza lista, modalele de adaugare/editare si vizualizarea locatarilor
+/**
+ * Main page for managing Addresses.
+ * Integrates the list view, add/edit modals, and resident viewing.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import AdreseList from '../components/AdreseList';
@@ -11,24 +12,24 @@ import ViewLocatariAdresa from '../components/ViewLocatariAdresa';
 import Modal from '../components/Modal';
 
 const AdresePage = () => {
-    // --- Stare Modale ---
+    // --- Modal State ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [locatariAdresaId, setLocatariAdresaId] = useState(null);
     const [editId, setEditId] = useState(null);
 
-    // --- Stare pentru Refresh si Evidentiere (Highlight) ---
+    // --- Refresh and Highlight State ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
-    // Callback cand adaugarea a reusit
+    // I handle the successful addition of a new address.
     const handleAddSuccess = (newId) => {
         setIsAddModalOpen(false);
-        setHighlightId(newId); // Activez efectul de flash pe randul nou
-        setRefreshTrigger(prev => prev + 1); // Fortez reincarcarea listei
+        setHighlightId(newId); // I activate the row highlight effect.
+        setRefreshTrigger(prev => prev + 1); // I force the list to reload.
     };
 
-    // Callback cand editarea a reusit
+    // I handle the successful update of an existing address.
     const handleEditSuccess = (savedId) => {
         setIsEditModalOpen(false);
         setEditId(null);
@@ -38,20 +39,20 @@ const AdresePage = () => {
 
     return (
         <div>
-            {/* Lista inteligenta */}
+            {/* Smart List Component */}
             <AdreseList
                 refreshTrigger={refreshTrigger}
                 onAddClick={() => setIsAddModalOpen(true)}
                 onEditClick={(id) => { setEditId(id); setIsEditModalOpen(true); }}
                 onViewLocatariClick={(id) => setLocatariAdresaId(id)}
 
-                // Props pentru sistemul de highlight si bumerang
+                // I pass props for the highlight and boomerang system down to the list.
                 highlightId={highlightId}
                 onHighlightComplete={() => setHighlightId(null)}
                 setHighlightId={setHighlightId}
             />
 
-            {/* --- MODALE --- */}
+            {/* --- MODALS --- */}
             <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Adresă">
                 <AddAdresa onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>

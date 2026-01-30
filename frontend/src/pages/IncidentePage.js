@@ -1,7 +1,8 @@
-/** Pagina principala pentru gestionarea Incidentelor
- * Include si functionalitatea "Bumerang" pentru stergeri blocate
+/**
+ * Main page for managing Incidents.
+ * Includes "Boomerang" functionality for handling blocked deletions.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -13,7 +14,7 @@ import GestionareParticipanti from "../components/GestionareParticipanti";
 import Modal from "../components/Modal";
 
 const IncidentePage = () => {
-    // --- State Modale ---
+    // --- Modal States ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -22,14 +23,14 @@ const IncidentePage = () => {
     const [selectedIncident, setSelectedIncident] = useState(null);
     const [participantsId, setParticipantsId] = useState(null);
 
-    // --- State Refresh & Highlight ---
+    // --- Refresh & Highlight State ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
     const location = useLocation();
     const navigate = useNavigate();
 
-    // 1. Verific daca am fost trimis aici pentru a rezolva un conflict (Jump In)
+    // 1. I check if I was redirected here to resolve a conflict (Jump In).
     useEffect(() => {
         if (location.state && location.state.openEditId) {
             setEditId(location.state.openEditId);
@@ -37,13 +38,13 @@ const IncidentePage = () => {
         }
     }, [location]);
 
-    // Logica Bumerang: Inchidere modal sau intoarcere la pagina sursa
+    // Boomerang Logic: Close modal or return to source page.
     const handleCloseOrFinish = () => {
         const boomerang = sessionStorage.getItem('boomerang_pending');
         if (boomerang) {
             const data = JSON.parse(boomerang);
             if (data.returnRoute) {
-                // Ma intorc la Politisti/PersoanePage pentru a continua stergerea
+                // I return to Politisti/PersoanePage to continue the deletion process.
                 navigate(data.returnRoute);
                 return;
             }

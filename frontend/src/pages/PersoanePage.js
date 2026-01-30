@@ -1,7 +1,8 @@
-/** Pagina principala pentru gestionarea Persoanelor
- * Integreaza lista, modalele de adaugare/editare si vizualizarea istoricului
+/**
+ * Main page for managing Persons (Citizens).
+ * Integrates the list view, add/edit modals, and history viewing.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import PersoaneList from '../components/PersoaneList';
@@ -12,14 +13,14 @@ import ViewAdresePersoana from '../components/ViewAdresePersoana';
 import Modal from '../components/Modal';
 
 const PersoanePage = () => {
-    // --- State Modale ---
+    // --- Modal State ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [historyId, setHistoryId] = useState(null);
     const [adreseId, setAdreseId] = useState(null);
     const [editId, setEditId] = useState(null);
 
-    // --- State Refresh & Highlight ---
+    // --- Refresh & Highlight State ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
@@ -47,11 +48,11 @@ const PersoanePage = () => {
 
                 highlightId={highlightId}
                 onHighlightComplete={() => setHighlightId(null)}
-                // IMPORTANT: Trimit setter-ul pentru Bumerang logic (revenire dupa stergere)
+                // IMPORTANT: I pass the setter to enable "Boomerang" logic (returning after resolving a delete conflict).
                 setHighlightId={setHighlightId}
             />
 
-            {/* --- Modale --- */}
+            {/* --- Modals --- */}
             <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Adăugați Persoană">
                 <AddPersoana onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>

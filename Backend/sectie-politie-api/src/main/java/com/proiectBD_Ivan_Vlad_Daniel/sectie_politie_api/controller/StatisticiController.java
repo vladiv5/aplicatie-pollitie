@@ -8,9 +8,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-/** Controller pentru generarea rapoartelor complexe si statisticilor
+/**
+ * Controller for generating complex reports and statistics.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @RestController
 @RequestMapping("/api/statistici")
@@ -22,21 +23,21 @@ public class StatisticiController {
     @Autowired private PersoanaRepository persoanaRepo;
     @Autowired private AmendaRepository amendaRepo;
 
-    // --- FIX CRITIC: Parsing robust pentru date ---
+    // --- CRITICAL FIX: Robust Date Parsing ---
+    // I handle null or "undefined" strings coming from the frontend to prevent crashes.
     private LocalDateTime parseDate(String dateStr) {
         try {
-            // Verificam daca stringul este gol, null, sau textul "undefined"/"null" trimis de JS
             if (dateStr == null || dateStr.trim().isEmpty() ||
                     dateStr.equalsIgnoreCase("null") || dateStr.equalsIgnoreCase("undefined")) {
                 return null;
             }
-            // Daca formatul e doar YYYY-MM-DD, adaugam ora de start
+            // If only YYYY-MM-DD is provided, I append start time.
             if (dateStr.length() == 10) {
                 return LocalDateTime.parse(dateStr + "T00:00:00");
             }
             return LocalDateTime.parse(dateStr);
         } catch (Exception e) {
-            // Daca apare orice eroare de formatare, returnam null (fara filtru) in loc sa dam crash
+            // I return null on any parsing error to allow query to run without filters.
             return null;
         }
     }
@@ -78,11 +79,10 @@ public class StatisticiController {
         return politistRepo.getStatisticiPerGrad(parseDate(start), parseDateEnd(end));
     }
 
-    // --- RAPOARTE DOSAR (AICI ERA PROBLEMA) ---
+    // --- PERSONAL FILE REPORTS ---
 
     @GetMapping("/incidente-politist")
     public List<Map<String, Object>> getIncidentePolitist(@RequestParam Integer id, @RequestParam(required=false) String start, @RequestParam(required=false) String end) {
-        // Acum parseDate nu va mai da crash daca start e "undefined"
         return incidentRepo.getIncidenteByPolitist(id, parseDate(start), parseDateEnd(end));
     }
 
@@ -91,7 +91,7 @@ public class StatisticiController {
         return amendaRepo.getAmenziByCNP(cnp, parseDate(start), parseDateEnd(end));
     }
 
-    // --- RAPOARTE COMPLEXE ---
+    // --- COMPLEX REPORTS ---
 
     @GetMapping("/zone-sigure")
     public List<Map<String, Object>> getZoneSigure(@RequestParam(required=false) String start, @RequestParam(required=false) String end) {

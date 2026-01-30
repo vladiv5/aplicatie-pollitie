@@ -1,6 +1,7 @@
-/** Componenta pentru inregistrarea unui incident nou
+/**
+ * Component for registering a new incident (case file).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import axios from 'axios';
@@ -23,10 +24,11 @@ const AddIncident = ({ onSaveSuccess, onCancel }) => {
 
     const handleSave = () => {
         setErrors({});
-        // Pregatire data (ISO format)
+        // I normalize the date string for backend parsing.
         let dataFinala = formData.dataEmitere;
         if (dataFinala && dataFinala.length === 16) dataFinala += ":00";
 
+        // I construct the payload matching the backend DTO.
         const payload = { ...formData, dataEmitere: dataFinala, idPolitist: formData.politistId, idAdresa: formData.adresaId };
 
         axios.post('http://localhost:8080/api/incidente', payload)

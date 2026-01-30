@@ -1,6 +1,7 @@
-/** Componenta pentru modificarea datelor unui politist
+/**
+ * Component for modifying officer data.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';

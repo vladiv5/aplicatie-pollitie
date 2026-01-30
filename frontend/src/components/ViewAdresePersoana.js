@@ -1,6 +1,7 @@
-/** Modal pentru vizualizarea tuturor adreselor asociate unei persoane (Domiciliu, Resedinta)
+/**
+ * Modal for viewing all addresses associated with a person (Domicile, Residence).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -32,16 +33,16 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
             {loading ? (
                 <div className="loading-container">
                     <div className="spinner"></div>
-                    <p style={{color:'#d4af37'}}>Se încarcă adresele...</p>
+                    <p style={{color:'#d4af37'}}>Loading addresses...</p>
                 </div>
             ) : (
                 <div className="table-responsive">
                     <table className="styled-table compact-table">
                         <thead>
                         <tr>
-                            <th>Localitate / Județ</th>
-                            <th>Stradă & Număr</th>
-                            <th style={{textAlign: 'center'}}>Tip</th>
+                            <th>City / County</th>
+                            <th>Street & Number</th>
+                            <th style={{textAlign: 'center'}}>Type</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -60,7 +61,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
                                 <td style={{textAlign: 'center'}}>
                                      <span className={`badge-status`}
                                            style={{
-                                               // Diferentiez vizual Domiciliul de Resedinta prin culori
+                                               // I visually differentiate Domicile from Residence using colors.
                                                background: item.tipAdresa === 'Domiciliu' ? 'rgba(124, 58, 237, 0.2)' : 'rgba(16, 185, 129, 0.2)',
                                                color: item.tipAdresa === 'Domiciliu' ? '#c4b5fd' : '#6ee7b7',
                                                border: item.tipAdresa === 'Domiciliu' ? '1px solid #8b5cf6' : '1px solid #10b981'
@@ -73,7 +74,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
                         {listaAdrese.length === 0 && (
                             <tr>
                                 <td colSpan="3" style={{textAlign: 'center', padding: '20px', color: '#94a3b8', fontStyle: 'italic'}}>
-                                    Această persoană nu are adrese asociate.
+                                    This person has no associated addresses.
                                 </td>
                             </tr>
                         )}
@@ -83,7 +84,7 @@ const ViewAdresePersoana = ({ persoanaId, onClose }) => {
             )}
 
             <div className="modal-footer">
-                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
+                <button className="btn-close-modal" onClick={onClose}>CLOSE</button>
             </div>
         </div>
     );

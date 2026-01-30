@@ -16,19 +16,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Interfata Repository pentru manipularea datelor cetatenilor
- * Structurata pe categorii: CRUD Nativ, Rapoarte, Validari.
+/**
+ * Repository interface for manipulating citizen data.
+ * Structured by category: Native CRUD, Reports, Validations.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Repository
 public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
 
     // =================================================================================
-    // 1. OPERATII CRUD NATIVE (Insert, Update, Delete)
+    // 1. NATIVE CRUD OPERATIONS (Insert, Update, Delete)
     // =================================================================================
 
-    // INSERT (Parametri Variabili: Date Personale)
+    // INSERT (Variable Parameters: Personal Data)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -43,7 +44,7 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             @Param("telefon") String telefon
     );
 
-    // UPDATE (Parametri Variabili: ID + Date Noi)
+    // UPDATE (Variable Parameters: ID + New Data)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -64,7 +65,7 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             @Param("telefon") String telefon
     );
 
-    // DELETE (Parametru Variabil: ID)
+    // DELETE (Variable Parameter: ID)
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane WHERE id_persoana = :id", nativeQuery = true)
@@ -72,11 +73,11 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
 
 
     // =================================================================================
-    // 2. INTEROGARI SIMPLE CU JOIN (Si Parametri Variabili)
+    // 2. SIMPLE QUERIES WITH JOIN (And Variable Parameters)
     // =================================================================================
 
-    // Raport "Rau Platnici": Persoane cu datorii neplatite (JOIN Persoane-Amenzi)
-    // [Parametri Variabili]: Intervalul de date
+    // Report "Bad Payers": People with unpaid debt (JOIN Persons-Fines)
+    // [Variable Parameters]: Date Range
     @Query(value = "" +
             "SELECT p.nume, p.prenume, p.cnp, SUM(a.suma) as datorie_totala " +
             "FROM persoane p " +
@@ -94,12 +95,13 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
 
 
     // =================================================================================
-    // 3. INTEROGARI COMPLEXE (Subcereri, Having, Functii Agregat)
+    // 3. COMPLEX QUERIES (Subqueries, Having, Aggregate Functions)
     // =================================================================================
 
-    // Raport "Recidivisti": Persoane cu nr. amenzi peste media populatiei
-    // [Complexitate]: Subquery in HAVING + COUNT/AVG
-    // [Parametri Variabili]: Intervalul de date
+    // Report "Recidivists": People with fine count > population average
+    // [Complexity]: Subquery in HAVING + COUNT/AVG
+    // [Variable Parameters]: Date Range
+    // I compare the individual count against a dynamically calculated global average.
     @Query(value = "" +
             "SELECT p.nume, p.prenume, p.cnp, COUNT(a.id_amenda) as nr_abateri " +
             "FROM Persoane p " +
@@ -122,10 +124,10 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
 
 
     // =================================================================================
-    // 4. LIVE SEARCH & VALIDARI (Logica SQL)
+    // 4. LIVE SEARCH & VALIDATIONS (SQL Logic)
     // =================================================================================
 
-    // Search Inteligent (CONCAT + COLLATE pentru diacritice)
+    // Intelligent Search (CONCAT + COLLATE for diacritics)
     @Query(value = "" +
             "SELECT * FROM Persoane WHERE " +
             "CONCAT(COALESCE(nume, ''), ' ', COALESCE(prenume, ''), ' ', " +
@@ -135,7 +137,7 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             nativeQuery = true)
     List<Persoana> cautaDupaInceput(@Param("termen") String termen);
 
-    // Validare Unicitate CNP (COUNT conditionat)
+    // CNP Uniqueness Validation (Conditional COUNT)
     @Query(value = "" +
             "SELECT count(*) FROM Persoane " +
             "WHERE cnp = :cnp " +
@@ -143,7 +145,7 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             nativeQuery = true)
     int verificaCnpUnic(@Param("cnp") String cnp, @Param("idExclus") Integer idExclus);
 
-    // Validare Unicitate Telefon
+    // Phone Uniqueness Validation
     @Query(value = "" +
             "SELECT count(*) FROM Persoane " +
             "WHERE telefon = :tel " +
@@ -151,7 +153,7 @@ public interface PersoanaRepository extends JpaRepository<Persoana, Integer> {
             nativeQuery = true)
     int verificaTelefonUnic(@Param("tel") String tel, @Param("idExclus") Integer idExclus);
 
-    // --- Select-uri Standard ---
+    // --- Standard Selects ---
     @Query(value = "SELECT * FROM Persoane", countQuery = "SELECT count(*) FROM Persoane", nativeQuery = true)
     Page<Persoana> findAllNativePaginat(Pageable pageable);
 

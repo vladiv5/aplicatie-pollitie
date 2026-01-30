@@ -1,7 +1,8 @@
-/** Pagina de Autentificare
- * Gestioneaza login-ul si afisarea erorilor de validare
+/**
+ * Authentication Page.
+ * Manages login logic and validation error display.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -25,12 +26,12 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            // Apelez functia de login din context
+            // I call the login function from the context.
             await login(nume, parola);
             toast.success("Acces permis. Bun venit!");
             navigate('/acasa');
         } catch (err) {
-            // Mapez erorile venite de la backend (AuthController.java)
+            // I map errors returned by the backend (AuthController.java).
             if (err.response && err.response.data) {
                 setErrors(err.response.data);
             } else {

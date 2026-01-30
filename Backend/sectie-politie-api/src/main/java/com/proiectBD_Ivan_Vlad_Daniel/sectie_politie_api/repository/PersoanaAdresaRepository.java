@@ -11,25 +11,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** Repository pentru gestionarea locatarilor la adrese
+/**
+ * Repository for managing residents at addresses.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Repository
 public interface PersoanaAdresaRepository extends JpaRepository<PersoanaAdresa, PersoanaAdresaId> {
 
     List<PersoanaAdresa> findByPersoana_IdPersoana(Integer idPersoana);
 
-    // Găsesc toti oamenii care locuiesc la o anumita adresa
+    // I find all people living at a certain address.
     List<PersoanaAdresa> findByAdresa_IdAdresa(Integer idAdresa);
 
-    // Sterg legaturile persoanei cu adresele (cand persoana dispare)
+    // I delete the person-address links when the person is removed.
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Adrese WHERE id_persoana = :id", nativeQuery = true)
     void deleteByPersoanaId(@Param("id") Integer id);
 
-    // Sterg legatura locatarilor cu adresa (cand adresa dispare)
+    // I delete the resident links when the address is removed.
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Persoane_Adrese WHERE id_adresa = :idAdresa", nativeQuery = true)

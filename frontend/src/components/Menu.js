@@ -1,6 +1,7 @@
-/** Componenta de navigare principala (Navbar)
+/**
+ * Main navigation component (Navbar).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
@@ -56,7 +57,7 @@ const Menu = () => {
                 )}
             </nav>
 
-            {/* Containerul principal unde se randeaza paginile (Outlet) */}
+            {/* I use Outlet as the placeholder for child routes content */}
             <div className="content-container">
                 <Outlet />
             </div>

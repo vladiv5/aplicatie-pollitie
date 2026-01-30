@@ -1,6 +1,7 @@
-/** Modal pentru afisarea persoanelor care locuiesc la o anumita adresa
+/**
+ * Modal for displaying people residing at a specific address.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -29,22 +30,22 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
 
     return (
         <div style={{ padding: '10px' }}>
-            <h3 style={{ marginBottom: '15px', color: 'var(--royal-navy-dark)' }}>Locatari Asociați</h3>
+            <h3 style={{ marginBottom: '15px', color: 'var(--royal-navy-dark)' }}>Associated Residents</h3>
 
             {loading ? (
                 <div className="loading-container">
                     <div className="spinner"></div>
-                    <p>Se încarcă...</p>
+                    <p>Loading...</p>
                 </div>
             ) : (
                 <div className="table-responsive">
                     <table className="styled-table compact-table">
                         <thead>
                         <tr>
-                            <th>Nume</th>
-                            <th>Prenume</th>
+                            <th>Name</th>
+                            <th>Surname</th>
                             <th>CNP</th>
-                            <th style={{textAlign: 'center'}}>Tip Locuire</th>
+                            <th style={{textAlign: 'center'}}>Residency Type</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -64,7 +65,7 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
                         {locatari.length === 0 && (
                             <tr>
                                 <td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>
-                                    Nu există persoane înregistrate la această adresă.
+                                    No residents registered at this address.
                                 </td>
                             </tr>
                         )}
@@ -74,7 +75,7 @@ const ViewLocatariAdresa = ({ adresaId, onClose }) => {
             )}
 
             <div className="modal-footer">
-                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
+                <button className="btn-close-modal" onClick={onClose}>CLOSE</button>
             </div>
         </div>
     );

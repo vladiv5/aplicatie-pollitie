@@ -20,9 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Controller REST pentru gestionarea adreselor din baza de date
+/**
+ * REST Controller for managing Addresses.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @RestController
 @RequestMapping("/api/adrese")
@@ -40,45 +41,45 @@ public class AdresaController {
 
     // --- GETTERS ---
 
-    // Returnez toate adresele fara paginare
+    // I return all addresses without pagination for simple dropdowns or small lists.
     @GetMapping
     public List<Adresa> getAllAdrese() { return adresaRepository.getAllAdreseNative(); }
 
-    // Caut adrese dupa un termen (strada, oras, judet)
+    // I search addresses by a specific term (street, city, county) for autocomplete functionality.
     @GetMapping("/cauta")
     public List<Adresa> cautaAdrese(@RequestParam String termen) {
         if (termen == null || termen.trim().isEmpty()) return adresaRepository.getAllAdreseNative();
         return adresaRepository.cautaDupaInceput(termen);
     }
 
-    // Gasesc o adresa specifica dupa ID
+    // I retrieve a single address by its ID for detailed view or editing.
     @GetMapping("/{id}")
     public Adresa getAdresaById(@PathVariable Integer id) {
-        return adresaRepository.getAdresaByIdNative(id).orElseThrow(() -> new RuntimeException("Adresa nu exista!"));
+        return adresaRepository.getAdresaByIdNative(id).orElseThrow(() -> new RuntimeException("Address not found!"));
     }
 
-    // --- INSERT (VALIDARE MANUALA) ---
+    // --- INSERT (MANUAL VALIDATION) ---
     @PostMapping
     public ResponseEntity<?> addAdresa(@RequestBody AdresaRequest req) {
-        // Validez campurile inainte de inserare
+        // I validate all fields before attempting insertion to ensure data integrity.
         Map<String, String> errors = valideazaAdresa(req);
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
-        // Tratez campurile optionale (bloc, apartament) sa fie null daca sunt goale
+        // I handle optional fields (block, apartment) by converting empty strings to null for cleaner database storage.
         String blocFinal = (req.bloc != null && req.bloc.trim().isEmpty()) ? null : req.bloc;
         Integer apInt = (req.apartament != null && !req.apartament.trim().isEmpty()) ? Integer.parseInt(req.apartament) : null;
 
-        // 1. Inserare manuala folosind repository
+        // 1. I perform a manual insert using a custom native query repository method.
         adresaRepository.insertAdresa(
                 req.judetSauSector, req.localitate, req.strada, req.numar, blocFinal, apInt
         );
 
-        // 2. Recuperez ID-ul generat pentru a-l trimite inapoi frontend-ului
+        // 2. I retrieve the newly generated ID to send it back to the frontend immediately.
         Integer newId = adresaRepository.getLastInsertedId();
 
-        // 3. Construiesc raspunsul
+        // 3. I construct the JSON response.
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Adresa salvată cu succes!");
+        response.put("message", "Address saved successfully!");
         response.put("idAdresa", newId);
 
         return ResponseEntity.ok(response);
@@ -87,7 +88,8 @@ public class AdresaController {
     // --- UPDATE ---
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAdresa(@PathVariable Integer id, @RequestBody AdresaRequest req) {
-        adresaRepository.getAdresaByIdNative(id).orElseThrow(() -> new RuntimeException("Adresa nu exista!"));
+        // I verify the address exists before trying to update it.
+        adresaRepository.getAdresaByIdNative(id).orElseThrow(() -> new RuntimeException("Address not found!"));
 
         Map<String, String> errors = valideazaAdresa(req);
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
@@ -95,89 +97,94 @@ public class AdresaController {
         String blocFinal = (req.bloc != null && req.bloc.trim().isEmpty()) ? null : req.bloc;
         Integer apInt = (req.apartament != null && !req.apartament.trim().isEmpty()) ? Integer.parseInt(req.apartament) : null;
 
-        // Actualizare manuala
+        // Manual update execution.
         adresaRepository.updateAdresa(
                 id, req.judetSauSector, req.localitate, req.strada, req.numar, blocFinal, apInt
         );
 
-        // Returnez obiectul actualizat
+        // I return the updated object to refresh the frontend state.
         Adresa updated = adresaRepository.getAdresaByIdNative(id).orElse(null);
         return ResponseEntity.ok(updated);
     }
 
-    // --- LOGICA DE VALIDARE COMUNA ---
+    // --- SHARED VALIDATION LOGIC ---
     private Map<String, String> valideazaAdresa(AdresaRequest req) {
         Map<String, String> errors = new HashMap<>();
+        // I define strict regex patterns to prevent invalid data entry (e.g., numbers in city names).
         String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
         String litereCifreRegex = "^[a-zA-Z0-9\\s\\-]+$";
 
-        // 1. JUDET / SECTOR
+        // 1. COUNTY / SECTOR
         if (req.judetSauSector == null || req.judetSauSector.trim().isEmpty()) {
-            errors.put("judetSauSector", "Județul/Sectorul este obligatoriu!");
+            errors.put("judetSauSector", "County/Sector is mandatory!");
         } else if (!req.judetSauSector.matches(litereCifreRegex)) {
-            errors.put("judetSauSector", "Câmpul poate conține doar litere, cifre și spații.");
+            errors.put("judetSauSector", "Only letters, numbers, and spaces allowed.");
         } else if (req.judetSauSector.length() > 50) {
-            errors.put("judetSauSector", "Maxim 50 de caractere!");
+            errors.put("judetSauSector", "Max 50 chars!");
         }
 
-        // 2. LOCALITATE
+        // 2. CITY
         if (req.localitate == null || req.localitate.trim().isEmpty()) {
-            errors.put("localitate", "Localitatea este obligatorie!");
+            errors.put("localitate", "City is mandatory!");
         } else if (!req.localitate.matches(doarLitereRegex)) {
-            errors.put("localitate", "Localitatea poate conține doar litere!");
+            errors.put("localitate", "City name can only contain letters!");
         } else if (req.localitate.length() > 50) {
-            errors.put("localitate", "Maxim 50 de caractere!");
+            errors.put("localitate", "Max 50 chars!");
         }
 
-        // 3. STRADA
+        // 3. STREET
         if (req.strada == null || req.strada.trim().isEmpty()) {
-            errors.put("strada", "Strada este obligatorie!");
+            errors.put("strada", "Street is mandatory!");
         } else if (!req.strada.matches(doarLitereRegex)) {
-            errors.put("strada", "Strada poate conține doar litere!");
+            errors.put("strada", "Street name can only contain letters!");
         } else if (req.strada.length() > 100) {
-            errors.put("strada", "Maxim 100 de caractere!");
+            errors.put("strada", "Max 100 chars!");
         }
 
-        // 4. NUMAR
+        // 4. NUMBER
         if (req.numar == null || req.numar.trim().isEmpty()) {
-            errors.put("numar", "Numărul este obligatoriu!");
+            errors.put("numar", "Number is mandatory!");
         } else if (!req.numar.matches("^[a-zA-Z0-9]+$")) {
-            errors.put("numar", "Nr. poate conține doar litere și cifre.");
+            errors.put("numar", "Number allows only letters and digits.");
         } else if (req.numar.length() > 10) {
-            errors.put("numar", "Maxim 10 caractere!");
+            errors.put("numar", "Max 10 chars!");
         }
 
-        // 5. BLOC (Optional)
+        // 5. BLOCK (Optional)
         if (req.bloc != null && !req.bloc.trim().isEmpty()) {
             if (!req.bloc.matches("^[a-zA-Z0-9\\s]+$")) {
-                errors.put("bloc", "Blocul poate conține doar litere și cifre.");
+                errors.put("bloc", "Block allows only letters and digits.");
             } else if (req.bloc.length() > 10) {
-                errors.put("bloc", "Maxim 10 caractere!");
+                errors.put("bloc", "Max 10 chars!");
             }
         }
 
-        // 6. APARTAMENT (Optional)
+        // 6. APARTMENT (Optional)
         if (req.apartament != null && !req.apartament.trim().isEmpty()) {
             if (!req.apartament.matches("^\\d+$")) {
-                errors.put("apartament", "Apartamentul poate conține doar cifre.");
+                errors.put("apartament", "Apartment must be a number.");
             }
         }
 
         return errors;
     }
 
-    // --- STERGERE ---
+    // --- DELETE ---
     @DeleteMapping("/{id}")
     public String deleteAdresa(@PathVariable Integer id) {
-        // Sterg in cascada intai legaturile, apoi adresa
+        // I perform a cascading delete manually to ensure referential integrity:
+        // 1. Delete links between people and addresses.
+        // 2. Delete incident participants linked to this address context.
+        // 3. Delete incidents at this address.
+        // 4. Finally, delete the address itself.
         persoanaAdresaRepository.deleteByAdresaId(id);
         persoanaIncidentRepository.deleteParticipantiByAdresa(id);
         incidentRepository.deleteByAdresaId(id);
         adresaRepository.deleteAdresaNative(id);
-        return "Adresa și toate incidentele asociate au fost șterse!";
+        return "Address and all associated records have been deleted!";
     }
 
-    // Paginare cu sortare implicita dupa localitate
+    // I implemented pagination with a default sorting strategy (City -> County -> Street).
     @GetMapping("/lista-paginata")
     public Page<Adresa> getAdresePaginat(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         Sort sortare = Sort.by(Sort.Direction.ASC, "localitate")
@@ -186,14 +193,14 @@ public class AdresaController {
         return adresaRepository.findAllNativePaginat(PageRequest.of(page, size, sortare));
     }
 
-    // Verific daca adresa poate fi stearsa (Smart Delete)
+    // I implemented a 'Smart Delete' check to warn users before deleting an address linked to critical data.
     @GetMapping("/verifica-stergere/{id}")
     public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
         List<BlockingItem> listaTotala = new ArrayList<>();
         boolean hasRed = false;
         boolean hasOrange = false;
 
-        // Verific daca exista incidente la aceasta adresa
+        // I check for any incidents registered at this address.
         List<Incident> incidente = incidentRepository.findByAdresaId(id);
         for (Incident i : incidente) {
             String status = i.getStatus();
@@ -203,12 +210,12 @@ public class AdresaController {
             else if ("Închis".equalsIgnoreCase(status)) hasOrange = true;
         }
 
-        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Această adresă are incidente active asociate! Ștergerea ei nu este posibila!", listaTotala);
-        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Ștergere riscantă", "Această adresă are incidente inchise asociate. Ștergerea ei duce la ștergerea acestor incidente din baza de date: ", listaTotala);
-        else return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Această adresă nu este asociată niciunui incident și nu are niciun locatar. Se poate șterge fără probleme!", listaTotala);
+        if (hasRed) return new DeleteConfirmation(false, "BLOCKED", "Deletion Blocked", "This address has active incidents! Cannot delete.", listaTotala);
+        else if (hasOrange) return new DeleteConfirmation(true, "WARNING", "Risky Deletion", "This address has closed incidents. Deleting it will remove these historical records:", listaTotala);
+        else return new DeleteConfirmation(true, "SAFE", "Safe Deletion", "This address is not linked to any incidents or residents. Safe to delete.", listaTotala);
     }
 
-    // Clasa DTO simpla pentru primirea datelor din frontend
+    // Simple DTO class to capture incoming request data.
     public static class AdresaRequest {
         public String strada;
         public String numar;

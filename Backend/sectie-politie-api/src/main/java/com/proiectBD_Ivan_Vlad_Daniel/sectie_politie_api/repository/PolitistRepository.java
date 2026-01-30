@@ -14,19 +14,20 @@ import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 
-/** Interfata Repository pentru accesul la datele despre Politisti
- * Structurata pe categorii pentru prezentare: CRUD, Rapoarte, Search.
+/**
+ * Repository interface for accessing data about Police Officers.
+ * Structured by category for presentation: CRUD, Reports, Search.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Repository
 public interface PolitistRepository extends JpaRepository<Politist, Integer> {
 
     // =================================================================================
-    // 1. OPERATII CRUD NATIVE (Insert, Update, Delete)
+    // 1. NATIVE CRUD OPERATIONS (Insert, Update, Delete)
     // =================================================================================
 
-    // INSERT (Parametri Variabili)
+    // INSERT (Variable Parameters)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -41,7 +42,7 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
             @Param("telefon") String telefon
     );
 
-    // UPDATE (Parametri Variabili)
+    // UPDATE (Variable Parameters)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -62,7 +63,7 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
             @Param("telefon_serviciu") String telefon_serviciu
     );
 
-    // DELETE (Parametru Variabil: ID)
+    // DELETE (Variable Parameter: ID)
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Politisti WHERE id_politist = :id", nativeQuery = true)
@@ -70,11 +71,11 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
 
 
     // =================================================================================
-    // 2. INTEROGARI SIMPLE CU JOIN (Si Parametri Variabili)
+    // 2. SIMPLE QUERIES WITH JOIN (And Variable Parameters)
     // =================================================================================
 
-    // Top Politisti dupa valoarea amenzilor (JOIN + SUM + GROUP BY)
-    // [Parametru Variabil]: Intervalul de date (startDate, endDate)
+    // Top Officers by fine value (JOIN + SUM + GROUP BY)
+    // [Variable Parameter]: Date Range (startDate, endDate)
     @Query(value = "" +
             "SELECT p.nume, p.prenume, p.grad, p.functie, SUM(a.suma) as total_valoare " +
             "FROM politisti p " +
@@ -89,8 +90,8 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
             @Param("endDate") LocalDateTime endDate
     );
 
-    // Statistici grupate pe Grade (JOIN + COUNT + SUM)
-    // [Parametru Variabil]: Intervalul de date
+    // Statistics grouped by Rank (JOIN + COUNT + SUM)
+    // [Variable Parameter]: Date Range
     @Query(value = "" +
             "SELECT p.grad, " +
             "       COUNT(a.id_amenda) as nr_amenzi, " +
@@ -108,12 +109,12 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
 
 
     // =================================================================================
-    // 3. INTEROGARI COMPLEXE (Subcereri, Having, Functii Agregat)
+    // 3. COMPLEX QUERIES (Subqueries, Having, Aggregate Functions)
     // =================================================================================
 
-    // Agenti Severi: Politistii cu media amenzilor peste media globala a sectiei
-    // [Complexitate]: Subquery in HAVING + AVG
-    // [Parametru Variabil]: Intervalul de date
+    // Strict Agents: Officers with average fine value above the global station average.
+    // [Complexity]: Subquery in HAVING + AVG
+    // [Variable Parameter]: Date Range
     @Query(value = "" +
             "SELECT p.nume, p.prenume, p.grad, p.functie, AVG(a.suma) as medie_personala " +
             "FROM Politisti p " +
@@ -136,11 +137,11 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
 
 
     // =================================================================================
-    // 4. LIVE SEARCH & UTILITARE (Functii String, Count, Select Simple)
+    // 4. LIVE SEARCH & UTILITIES (String Functions, Count, Simple Selects)
     // =================================================================================
 
-    // Search Inteligent (CONCAT + COLLATE)
-    // [Parametru Variabil]: Termenul de cautare
+    // Intelligent Search (CONCAT + COLLATE)
+    // [Variable Parameter]: Search term
     @Query(value = "" +
             "SELECT * FROM Politisti WHERE " +
             "CONCAT(COALESCE(nume, ''), ' ', COALESCE(prenume, ''), ' ', " +
@@ -151,19 +152,19 @@ public interface PolitistRepository extends JpaRepository<Politist, Integer> {
             nativeQuery = true)
     List<Politist> cautaDupaInceput(@Param("termen") String termen);
 
-    // Activare Cont (Cautare dupa multiple criterii)
+    // Account Activation (Search by multiple criteria)
     @Query(value = "SELECT * FROM Politisti WHERE nume = :nume AND prenume = :prenume AND telefon_serviciu = :telefon", nativeQuery = true)
     Optional<Politist> findForActivation(@Param("nume") String nume, @Param("prenume") String prenume, @Param("telefon") String telefon);
 
-    // Verificare Unicitate Telefon (COUNT + Parametri Conditionali)
+    // Check Phone Uniqueness (COUNT + Conditional Parameters)
     @Query(value = "SELECT count(*) FROM Politisti WHERE telefon_serviciu = :tel AND (:idExclus IS NULL OR id_politist != :idExclus)", nativeQuery = true)
     int verificaTelefonUnic(@Param("tel") String tel, @Param("idExclus") Integer idExclus);
 
-    // Paginare Nativa
+    // Native Pagination
     @Query(value = "SELECT * FROM Politisti", countQuery = "SELECT count(*) FROM Politisti", nativeQuery = true)
     Page<Politist> findAllNative(Pageable pageable);
 
-    // Select-uri standard
+    // Standard Selects
     @Query(value = "SELECT * FROM Politisti", nativeQuery = true)
     List<Politist> toataListaPolitisti();
 

@@ -7,9 +7,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Controller pentru gestionarea participantilor la incidente (Martori, Suspecti)
+/**
+ * Controller for managing incident participants (Witnesses, Suspects).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @RestController
 @RequestMapping("/api/participanti")
@@ -23,13 +24,13 @@ public class ParticipantiController {
     @Autowired
     private PersoanaRepository persoanaRepo;
 
-    // Aduc toti participantii implicati intr-un incident specific
+    // I fetch all participants involved in a specific incident ID.
     @GetMapping("/incident/{idIncident}")
     public List<PersoanaIncident> getParticipanti(@PathVariable Integer idIncident) {
         return repo.findByIncident_IdIncident(idIncident);
     }
 
-    // Adaug un participant (ex: Martor) la un incident
+    // I link a person to an incident with a specific role (e.g., Witness).
     @PostMapping
     public PersoanaIncident addParticipant(@RequestBody ParticipantRequest req) {
         Incident incident = incidentRepo.findById(req.incidentId).orElseThrow();
@@ -44,14 +45,14 @@ public class ParticipantiController {
         return repo.save(pi);
     }
 
-    // Sterg un participant dintr-un incident
+    // I remove a participant from an incident.
     @DeleteMapping("/{idIncident}/{idPersoana}")
     public void deleteParticipant(@PathVariable Integer idIncident, @PathVariable Integer idPersoana) {
         PersoanaIncidentId id = new PersoanaIncidentId(idPersoana, idIncident);
         repo.deleteById(id);
     }
 
-    // Vad toate incidentele in care a fost implicata o persoana
+    // I retrieve all incidents a person has been involved in (Criminal Record check).
     @GetMapping("/persoana/{idPersoana}")
     public List<PersoanaIncident> getIncidentePersoana(@PathVariable Integer idPersoana) {
         return repo.findByPersoana_IdPersoana(idPersoana);

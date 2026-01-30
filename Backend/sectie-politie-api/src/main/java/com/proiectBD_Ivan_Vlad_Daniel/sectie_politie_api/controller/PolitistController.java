@@ -25,9 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Controller pentru gestionarea resursei umane (Politisti)
+/**
+ * Controller for managing Human Resources (Police Officers).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @RestController
 @RequestMapping("/api/politisti")
@@ -55,7 +56,7 @@ public class PolitistController {
 
     @GetMapping("/{id}")
     public Politist getPolitistById(@PathVariable Integer id) {
-        return politistRepository.findByIdNative(id).orElseThrow(() -> new RuntimeException("Polițistul nu există!"));
+        return politistRepository.findByIdNative(id).orElseThrow(() -> new RuntimeException("Officer not found!"));
     }
 
     // --- ADD POLITIST ---
@@ -64,9 +65,10 @@ public class PolitistController {
         curataDatePolitist(p);
         Map<String, String> errors = valideazaPolitist(p);
 
+        // I ensure work phone numbers are unique.
         if (p.getTelefon_serviciu() != null && !errors.containsKey("telefon_serviciu")) {
             if (politistRepository.verificaTelefonUnic(p.getTelefon_serviciu(), null) > 0) {
-                errors.put("telefon_serviciu", "Acest număr de telefon este deja folosit!");
+                errors.put("telefon_serviciu", "This phone number is already in use!");
             }
         }
 
@@ -90,7 +92,7 @@ public class PolitistController {
 
         if (p.getTelefon_serviciu() != null && !errors.containsKey("telefon_serviciu")) {
             if (politistRepository.verificaTelefonUnic(p.getTelefon_serviciu(), id) > 0) {
-                errors.put("telefon_serviciu", "Acest număr de telefon este deja folosit!");
+                errors.put("telefon_serviciu", "This phone number is already in use!");
             }
         }
 
@@ -101,40 +103,40 @@ public class PolitistController {
         );
 
         Politist updatedPolitist = politistRepository.findByIdNative(id)
-                .orElseThrow(() -> new RuntimeException("Eroare la regăsirea polițistului după update"));
+                .orElseThrow(() -> new RuntimeException("Error fetching updated officer"));
 
         return ResponseEntity.ok(updatedPolitist);
     }
 
-    // --- HELPER VALIDARE ---
+    // --- VALIDATION HELPER ---
     private Map<String, String> valideazaPolitist(Politist p) {
         Map<String, String> errors = new HashMap<>();
         String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
 
         if (p.getNume() == null || p.getNume().trim().isEmpty()) {
-            errors.put("nume", "Numele este obligatoriu!");
+            errors.put("nume", "Name required!");
         } else if (!p.getNume().matches(doarLitereRegex)) {
-            errors.put("nume", "Numele poate conține doar litere!");
+            errors.put("nume", "Name can only contain letters!");
         } else if (p.getNume().length() > 50) {
-            errors.put("nume", "Maxim 50 de caractere!");
+            errors.put("nume", "Max 50 chars!");
         }
 
         if (p.getPrenume() == null || p.getPrenume().trim().isEmpty()) {
-            errors.put("prenume", "Prenumele este obligatoriu!");
+            errors.put("prenume", "Surname required!");
         } else if (!p.getPrenume().matches(doarLitereRegex)) {
-            errors.put("prenume", "Prenumele poate conține doar litere!");
+            errors.put("prenume", "Surname can only contain letters!");
         } else if (p.getPrenume().length() > 50) {
-            errors.put("prenume", "Maxim 50 de caractere!");
+            errors.put("prenume", "Max 50 chars!");
         }
 
         if (p.getGrad() != null && !p.getGrad().trim().isEmpty()) {
             if (!p.getGrad().matches(doarLitereRegex)) {
-                errors.put("grad", "Gradul poate conține doar litere!");
+                errors.put("grad", "Rank can only contain letters!");
             }
         }
 
         if (p.getTelefon_serviciu() != null && !p.getTelefon_serviciu().matches("^07\\d{8}$")) {
-            errors.put("telefon_serviciu", "Format telefon invalid (07xxxxxxxx).");
+            errors.put("telefon_serviciu", "Invalid format (07xxxxxxxx).");
         }
 
         return errors;
@@ -146,46 +148,44 @@ public class PolitistController {
         if (p.getFunctie() != null && p.getFunctie().trim().isEmpty()) p.setFunctie(null);
     }
 
-    // --- STERGERE ---
+    // --- DELETE ---
     @DeleteMapping("/{id}")
     public String deletePolitist(@PathVariable Integer id) {
         Politist p = politistRepository.findByIdNative(id).orElse(null);
-        String numeComplet = (p != null) ? p.getNume() + " " + p.getPrenume() : "Polițistul";
+        String numeComplet = (p != null) ? p.getNume() + " " + p.getPrenume() : "Officer";
 
+        // I clean up all work records associated with the officer before deleting their profile.
         persoanaIncidentRepository.stergeParticipantiDupaPolitist(id);
         incidentRepository.stergeIncidenteDupaPolitist(id);
         amendaRepository.stergeAmenziDupaPolitist(id);
         politistRepository.stergePolitistManual(id);
 
-        return "Succes: " + numeComplet + " a fost șters definitiv din sistem!";
+        return "Success: " + numeComplet + " was deleted permanently!";
     }
 
-    // --- VERIFICARE STERGERE (LOGICA SMART DELETE REVIZUITĂ) ---
+    // --- DELETE VERIFICATION (SMART DELETE LOGIC) ---
     @GetMapping("/verifica-stergere/{id}")
     public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
         List<BlockingItem> listaTotala = new ArrayList<>();
-        boolean hasRed = false;    // Blochează ștergerea (Active/Neplătite)
-        boolean hasOrange = false; // Avertizează (Închise/Plătite) -> Arhivatele vor fi ignorate (Verde)
+        boolean hasRed = false;    // Blocks deletion (Active cases/Unpaid fines)
+        boolean hasOrange = false; // Warns (Closed cases) -> Archived ones are ignored (Green)
 
-        // 1. Verificăm Amenzile
+        // 1. Check Fines
         List<Amenda> toateAmenzile = amendaRepository.findAllNativeByPolitist(id);
         for (Amenda a : toateAmenzile) {
             String status = a.getStarePlata();
             String desc = status + " - " + a.getSuma() + " RON";
 
-            // Adaug în listă doar ca info
-            listaTotala.add(new BlockingItem("Amendă", a.getIdAmenda(), desc));
+            listaTotala.add(new BlockingItem("Fine", a.getIdAmenda(), desc));
 
-            // Logica de decizie
             if ("Neplatita".equalsIgnoreCase(status)) {
                 hasRed = true;
             } else if ("Platita".equalsIgnoreCase(status)) {
                 hasOrange = true;
             }
-            // "Anulata" este ignorată -> Rămâne Verde (Safe)
         }
 
-        // 2. Verificăm Incidentele
+        // 2. Check Incidents
         List<Incident> toateIncidentele = incidentRepository.findAllNativeByPolitist(id);
         for (Incident i : toateIncidentele) {
             String status = i.getStatus();
@@ -193,39 +193,36 @@ public class PolitistController {
 
             listaTotala.add(new BlockingItem("Incident", i.getIdIncident(), desc));
 
-            // Logica de decizie
             if ("Activ".equalsIgnoreCase(status)) {
                 hasRed = true;
             } else if ("Închis".equalsIgnoreCase(status)) {
                 hasOrange = true;
             }
-            // "Arhivat" este ignorat -> Rămâne Verde (Safe)
         }
 
-        // 3. Returnăm rezultatul pe baza priorității (Roșu > Portocaliu > Verde)
+        // 3. Decide Severity
         if (hasRed) {
             return new DeleteConfirmation(
                     false,
                     "BLOCKED",
-                    "Ștergere Blocată",
-                    "Polițistul are elemente ACTIVE (cazuri în lucru sau amenzi neplătite). Rezolvați-le înainte de ștergere!",
+                    "Deletion Blocked",
+                    "Officer has ACTIVE items (open cases or unpaid fines). Resolve them first!",
                     listaTotala
             );
         } else if (hasOrange) {
             return new DeleteConfirmation(
                     true,
                     "WARNING",
-                    "Atenție - Ștergere Istoric",
-                    "Polițistul nu mai are cazuri active, dar există un istoric (dosare închise/amenzi plătite). Ștergerea este permisă, dar ireversibilă.",
+                    "Warning - History Deletion",
+                    "Officer has closed/paid history. Deletion allowed but irreversible.",
                     listaTotala
             );
         } else {
-            // Aici ajungem dacă lista e goală SAU dacă are doar "Arhivat" / "Anulata"
             return new DeleteConfirmation(
                     true,
                     "SAFE",
-                    "Ștergere Sigură",
-                    "Nu există date critice asociate. Dosarele arhivate sau anulate vor fi șterse automat.",
+                    "Safe Deletion",
+                    "No critical data found. Safe to delete.",
                     listaTotala
             );
         }
@@ -237,14 +234,14 @@ public class PolitistController {
         return politistRepository.findAllNative(PageRequest.of(page, size, sortare));
     }
 
-    // Aduc dosarul complet al politistului (incidente + amenzi)
+    // I fetch the officer's full file (incidents + fines issued).
     @GetMapping("/{id}/dosar-personal")
     public ResponseEntity<?> getDosarPersonal(@PathVariable Integer id) {
         if (id == -1) {
             return ResponseEntity.ok(Map.of("incidente", new ArrayList<>(), "amenzi", new ArrayList<>()));
         }
 
-        politistRepository.findByIdNative(id).orElseThrow(() -> new RuntimeException("Polițistul nu există!"));
+        politistRepository.findByIdNative(id).orElseThrow(() -> new RuntimeException("Officer not found!"));
 
         List<Incident> incidente = incidentRepository.findAllNativeByPolitist(id);
         List<Amenda> amenzi = amendaRepository.findAllNativeByPolitist(id);

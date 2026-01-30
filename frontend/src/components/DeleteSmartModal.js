@@ -1,8 +1,9 @@
-/** Componenta Critica pentru sistemul de Stergere Inteligenta
- * Analizeaza dependintele (Amenzi, Incidente) si decide daca permite stergerea
- * Implementeaza logica 'Bumerang' pentru navigare rapida catre elementele blocante
+/**
+ * Critical Component for the "Smart Delete" system.
+ * It analyzes dependencies (Fines, Incidents) and decides if deletion is safe.
+ * I implemented 'Boomerang' logic here to allow quick navigation to blocking items.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -13,20 +14,20 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
 
     if (!isOpen || !data) return null;
 
-    // Definesc culorile vizuale in functie de severitatea primita din Backend
-    let statusColor = '#10b981'; // Verde (SAFE)
+    // I determine the visual theme based on severity level received from Backend.
+    let statusColor = '#10b981'; // Green (SAFE)
     let iconClass = 'fa fa-check-circle';
 
     if (data.severitate === 'WARNING') {
-        statusColor = '#f59e0b'; // Portocaliu (Exista istoric, dar se poate sterge)
+        statusColor = '#f59e0b'; // Orange (History exists, but delete is allowed)
         iconClass = 'fa fa-exclamation-triangle';
     } else if (data.severitate === 'BLOCKED') {
-        statusColor = '#ef4444'; // Rosu (Interzis stergerea)
+        statusColor = '#ef4444'; // Red (Deletion forbidden)
         iconClass = 'fa fa-ban';
     }
 
-    // Functie pentru navigarea la elementul care blocheaza stergerea
-    // Salvez in SessionStorage ruta curenta pentru a ma putea intoarce automat (Bumerang)
+    // I navigate to the blocking item so the user can resolve it.
+    // I save the current route in SessionStorage to enable auto-return (Boomerang effect).
     const handleJump = (type, itemId) => {
         if (currentPolitistId) {
             const boomerangData = {
@@ -47,7 +48,7 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
         <div className="modal-overlay">
             <div className="modal-content modal-content-auto" style={{ maxWidth: '600px', width: '90%' }}>
 
-                {/* Header cu indicator de severitate */}
+                {/* Header with severity indicator */}
                 <div className="modal-header delete-header">
                     <div className="delete-title" style={{ color: statusColor }}>
                         <i className={`${iconClass} delete-icon`}></i>
@@ -59,7 +60,7 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                 <div className="delete-body">
                     <p className="delete-message">{data.mesaj}</p>
 
-                    {/* Daca exista dependente, le afisez intr-un tabel mic */}
+                    {/* If dependencies exist, I display them in a scrollable list */}
                     {data.elementeBlocante && data.elementeBlocante.length > 0 && (
                         <div className="blocking-list-container">
                             <h4 className="blocking-title">
@@ -79,7 +80,7 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                                     <tbody>
                                     {data.elementeBlocante.map((item, idx) => {
                                         let detailClass = 'text-success-custom';
-                                        // Colorez textul in functie de gravitatea statusului
+                                        // I color-code the text based on status severity
                                         if (item.descriere.includes('Activ') || item.descriere.includes('Neplatita')) {
                                             detailClass = 'text-danger-custom';
                                         } else if (item.descriere.includes('Închis') || item.descriere.includes('Platita')) {
@@ -114,7 +115,7 @@ const DeleteSmartModal = ({ isOpen, onClose, onConfirm, data, currentPolitistId,
                         {data.severitate === 'BLOCKED' ? 'Am înțeles' : 'Anulați'}
                     </button>
 
-                    {/* Butonul de stergere apare DOAR daca nu este BLOCKED */}
+                    {/* I only show the delete confirmation button if action is NOT blocked */}
                     {data.severitate !== 'BLOCKED' && (
                         <button className="btn-delete-confirm" onClick={onConfirm}>
                             <i className="fa-solid fa-trash-can" style={{marginRight:'8px'}}></i>

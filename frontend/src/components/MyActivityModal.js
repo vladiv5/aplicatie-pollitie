@@ -1,6 +1,7 @@
-/** Modalul pentru vizualizarea dosarului personal al unui politist
+/**
+ * Modal component for viewing an officer's personal file (Incidents + Fines).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -12,16 +13,18 @@ import Modal from './Modal';
 import './styles/Home.css'
 
 const MyActivityModal = ({ userId, onClose }) => {
+    // I initialize the data structure for the dashboard stats.
     const [data, setData] = useState({
         incidente: [], amenzi: [], totalAmenziValoare: 0, totalIncidente: 0, totalAmenziCount: 0
     });
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('incidente');
 
-    // Stari pentru editarea rapida din dosar
+    // States for handling quick edits directly from the file view.
     const [editIncidentId, setEditIncidentId] = useState(null);
     const [editAmendaId, setEditAmendaId] = useState(null);
 
+    // I use useCallback to memorize the data fetching function.
     const loadData = useCallback(() => {
         const token = localStorage.getItem('token');
         if (!userId) return;
@@ -44,10 +47,11 @@ const MyActivityModal = ({ userId, onClose }) => {
         loadData();
     }, [loadData]);
 
+    // I refresh the dashboard data after a successful edit.
     const handleEditSuccess = () => {
         setEditIncidentId(null);
         setEditAmendaId(null);
-        loadData(); // Reincarcam datele dupa editare
+        loadData();
     };
 
     const formatDate = (dateString) => {
@@ -59,7 +63,7 @@ const MyActivityModal = ({ userId, onClose }) => {
 
     return (
         <div className="my-activity-modal-container">
-            {/* Dashboard Mini - Statistici */}
+            {/* Mini Dashboard - Statistics */}
             <div className="dosar-stats-container">
                 <div className="stat-box">
                     <h4 className="stat-value">{data.totalIncidente}</h4>
@@ -77,7 +81,7 @@ const MyActivityModal = ({ userId, onClose }) => {
                 </div>
             </div>
 
-            {/* Tab-uri navigare */}
+            {/* Navigation Tabs */}
             <div className="modal-tabs">
                 <button className={`tab-btn ${activeTab === 'incidente' ? 'active' : ''}`} onClick={() => setActiveTab('incidente')}>
                     <i className="fa-solid fa-folder"></i> Incidente ({data.totalIncidente})
@@ -87,7 +91,7 @@ const MyActivityModal = ({ userId, onClose }) => {
                 </button>
             </div>
 
-            {/* Continut Tab */}
+            {/* Tab Content Area */}
             <div className="table-responsive" style={{ borderTop: 'none', background: 'white', minHeight: '350px' }}>
                 {loading ? (
                     <div className="loading-container"><div className="spinner"></div><p>Se încarcă datele operative...</p></div>
@@ -139,7 +143,7 @@ const MyActivityModal = ({ userId, onClose }) => {
                 )}
             </div>
 
-            {/* Modale de editare nested */}
+            {/* Nested Edit Modals */}
             <Modal isOpen={!!editIncidentId} onClose={() => setEditIncidentId(null)} title="Editați Incident Operativ">
                 {editIncidentId && <EditIncident id={editIncidentId} onSaveSuccess={handleEditSuccess} onCancel={() => setEditIncidentId(null)} />}
             </Modal>

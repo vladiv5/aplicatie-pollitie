@@ -1,7 +1,8 @@
-/** Componenta Card Paginat pentru Dashboard
- * Afiseaza liste mici (Top Politisti, Zone Critice) cu navigare interna
+/**
+ * Component for Dashboard Paginated Cards.
+ * Displays small lists (Top Officers, Critical Zones) with internal navigation.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 
@@ -11,10 +12,11 @@ const PaginatedCard = ({ title, icon, data, renderItem, itemsPerPage = 5, descri
     const totalPages = Math.ceil(data.length / itemsPerPage);
     const safeTotalPages = totalPages > 0 ? totalPages : 1;
 
+    // I calculate the slice of data to display for the current page.
     const startIndex = (currentPage - 1) * itemsPerPage;
     const currentData = data.slice(startIndex, startIndex + itemsPerPage);
 
-    // Navigare circulara (Infinite Loop)
+    // I implemented circular navigation (Infinite Loop) for better UX.
     const handlePrev = () => {
         if (currentPage > 1) setCurrentPage(prev => prev - 1);
         else setCurrentPage(safeTotalPages);
@@ -43,7 +45,7 @@ const PaginatedCard = ({ title, icon, data, renderItem, itemsPerPage = 5, descri
                     ) : (
                         <tr><td colSpan="2" style={{ textAlign: 'center', color: '#aaa' }}>Nu există date.</td></tr>
                     )}
-                    {/* Umplere spatiu gol pentru a mentine inaltimea constanta */}
+                    {/* I fill empty space with invisible rows to maintain constant card height */}
                     {Array.from({ length: Math.max(0, itemsPerPage - currentData.length) }).map((_, idx) => (
                         <tr key={`empty-${idx}`} className="st-empty-row"><td>&nbsp;</td><td>&nbsp;</td></tr>
                     ))}

@@ -1,6 +1,7 @@
-/** Componenta principala pentru afisarea si gestionarea tabelului de amenzi
+/**
+ * Component for displaying and managing the Fines registry.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -23,6 +24,7 @@ const AmenziList = ({
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
+    // I fetch data from the API, supporting sorting and filtering.
     const loadAmenzi = (page, term = '') => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
@@ -43,12 +45,13 @@ const AmenziList = ({
                 setCurrentPage(page);
                 return res.data;
             })
-            .catch(err => console.error("Eroare incarcare amenzi:", err))
+            .catch(err => console.error("Error loading fines:", err))
             .finally(() => {
                 setTimeout(() => setIsLoading(false), 200);
             });
     };
 
+    // I handle auto-scrolling to the highlighted item after a refresh.
     useEffect(() => {
         loadAmenzi(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
@@ -64,6 +67,7 @@ const AmenziList = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
+    // I determine which page an item is on based on default sorting (by Date).
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -79,7 +83,7 @@ const AmenziList = ({
                 loadAmenzi(targetPage, searchTerm);
             }
         } catch (err) {
-            console.error("Nu am putut calcula pagina automata:", err);
+            console.error("Could not calculate page:", err);
         }
     };
 
@@ -134,6 +138,7 @@ const AmenziList = ({
             .catch(err => toast.error("Eroare la ștergere!"));
     };
 
+    // I format the date string to a Romanian-friendly format.
     const formatDataFrumos = (isoString) => {
         if (!isoString) return '-';
         const d = new Date(isoString);

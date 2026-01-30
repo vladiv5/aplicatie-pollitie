@@ -2,32 +2,33 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities;
 
 import jakarta.persistence.*;
 
-/** Clasa de legatura intre Persoane si Adrese, incluzand tipul adresei (ex: Domiciliu)
+/**
+ * Join entity linking Persons and Addresses, including the type of address (e.g., Domicile).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Entity
 @Table(name = "Persoane_Adrese")
 public class PersoanaAdresa {
 
-    // Am folosit cheia compusa definita anterior
+    // I used the composite key defined previously.
     @EmbeddedId
     private PersoanaAdresaId id;
 
     @ManyToOne
-    @MapsId("idPersoana") // Am mapat partea de ID persoana la entitatea Persoana
+    @MapsId("idPersoana") // I mapped the Person ID part to the Person entity.
     @JoinColumn(name = "id_persoana")
     private Persoana persoana;
 
     @ManyToOne
-    @MapsId("idAdresa") // Am mapat partea de ID adresa la entitatea Adresa
+    @MapsId("idAdresa") // I mapped the Address ID part to the Address entity.
     @JoinColumn(name = "id_adresa")
     private Adresa adresa;
 
     @Column(name = "tip_adresa")
     private String tipAdresa;
 
-    // --- Getters si Setters ---
+    // --- Getters and Setters ---
 
     public PersoanaAdresaId getId() { return id; }
     public void setId(PersoanaAdresaId id) { this.id = id; }

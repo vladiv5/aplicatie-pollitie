@@ -4,16 +4,17 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
-/** Clasa ajutatoare pentru definirea cheii primare compuse (id_persoana + id_adresa)
+/**
+ * Helper class for defining the composite primary key (person_id + address_id).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Embeddable
 public class PersoanaAdresaId implements Serializable {
     private Integer idPersoana;
     private Integer idAdresa;
 
-    // Constructor gol necesar pentru JPA
+    // Empty constructor required by JPA.
     public PersoanaAdresaId() {}
 
     public PersoanaAdresaId(Integer idPersoana, Integer idAdresa) {
@@ -21,7 +22,7 @@ public class PersoanaAdresaId implements Serializable {
         this.idAdresa = idAdresa;
     }
 
-    // Am implementat equals si hashCode, obligatorii pentru cheile compuse
+    // I implemented equals and hashCode, which are mandatory for composite keys.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

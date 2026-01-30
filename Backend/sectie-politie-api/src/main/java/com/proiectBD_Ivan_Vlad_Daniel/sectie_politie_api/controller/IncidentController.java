@@ -17,9 +17,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-/** Controller pentru gestionarea incidentelor
+/**
+ * Controller for managing Incidents (Cases).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @RestController
 @RequestMapping("/api/incidente")
@@ -35,43 +36,51 @@ public class IncidentController {
     // --- GET METHODS ---
     @GetMapping
     public List<Incident> getAllIncidente() {
+        // I fetch all incidents directly from the database.
         return incidentRepository.getAllIncidenteNative();
     }
 
     @GetMapping("/{id}")
     public Incident getIncidentById(@PathVariable Integer id) {
+        // I retrieve a specific incident or throw an error if not found.
         return incidentRepository.getIncidentByIdNative(id)
-                .orElseThrow(() -> new RuntimeException("Incidentul nu a fost gasit!"));
+                .orElseThrow(() -> new RuntimeException("Incident not found!"));
     }
 
     @GetMapping("/cauta")
     public List<Incident> cautaIncidente(@RequestParam String termen) {
+        // I implemented a search feature that returns all records if the search term is empty.
         if (termen == null || termen.trim().isEmpty()) {
             return incidentRepository.getAllIncidenteNative();
         }
         return incidentRepository.cautaDupaInceput(termen);
     }
 
-    // --- INSERT (VALIDARE MANUALA) ---
+    // --- INSERT (MANUAL VALIDATION) ---
     @PostMapping
     public ResponseEntity<?> createIncident(@RequestBody IncidentRequest req) {
+        // I perform validation before attempting to save to maintain data integrity.
         Map<String, String> errors = valideazaIncident(req);
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
 
+        // I sanitize the input data, converting empty strings to null.
         String locFinal = (req.descriereLocatie != null && req.descriereLocatie.trim().isEmpty()) ? null : req.descriereLocatie;
         String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
 
+        // I default to the current timestamp if no date is provided.
         LocalDateTime dataFinala = (req.dataEmitere != null) ? LocalDateTime.parse(req.dataEmitere) : LocalDateTime.now();
 
+        // I call the custom insert method in the repository.
         incidentRepository.insertIncident(
                 req.tipIncident, dataFinala, locFinal, req.descriereIncident,
                 req.idPolitist, req.idAdresa, statusDeSalvat
         );
 
+        // I retrieve the generated ID to return it to the client.
         Integer newId = incidentRepository.getLastInsertedId();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Incident creat cu succes!");
+        response.put("message", "Incident created successfully!");
         response.put("idIncident", newId);
 
         return ResponseEntity.ok(response);
@@ -80,8 +89,9 @@ public class IncidentController {
     // --- UPDATE ---
     @PutMapping("/{id}")
     public ResponseEntity<?> updateIncident(@PathVariable Integer id, @RequestBody IncidentRequest req) {
+        // I check existence before updating.
         incidentRepository.getIncidentByIdNative(id)
-                .orElseThrow(() -> new RuntimeException("Incidentul nu exista!"));
+                .orElseThrow(() -> new RuntimeException("Incident does not exist!"));
 
         Map<String, String> errors = valideazaIncident(req);
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
@@ -90,6 +100,7 @@ public class IncidentController {
         String statusDeSalvat = (req.status != null && !req.status.trim().isEmpty()) ? req.status : "Activ";
         LocalDateTime dataFinala = LocalDateTime.parse(req.dataEmitere);
 
+        // I execute the update query.
         incidentRepository.updateIncident(
                 id, req.tipIncident, dataFinala, locFinal, req.descriereIncident,
                 req.idPolitist, req.idAdresa, statusDeSalvat
@@ -99,76 +110,78 @@ public class IncidentController {
         return ResponseEntity.ok(updated);
     }
 
-    // --- HELPER VALIDARE ---
+    // --- VALIDATION HELPER ---
     private Map<String, String> valideazaIncident(IncidentRequest req) {
         Map<String, String> errors = new HashMap<>();
         String doarLitereRegex = "^[a-zA-ZăâîșțĂÂÎȘȚ\\s\\-]+$";
 
-        // 1. Tip Incident
+        // 1. Incident Type
         if (req.tipIncident == null || req.tipIncident.trim().isEmpty()) {
-            errors.put("tipIncident", "Tipul incidentului este obligatoriu!");
+            errors.put("tipIncident", "Type is mandatory!");
         } else if (!req.tipIncident.matches(doarLitereRegex)) {
-            errors.put("tipIncident", "Tipul incidentului poate conține doar litere!");
+            errors.put("tipIncident", "Type can only contain letters!");
         } else if (req.tipIncident.length() > 100) {
-            errors.put("tipIncident", "Maxim 100 de caractere!");
+            errors.put("tipIncident", "Max 100 chars!");
         }
 
-        // 2. Descriere
+        // 2. Description
         if (req.descriereIncident == null || req.descriereIncident.trim().isEmpty()) {
-            errors.put("descriereIncident", "Descrierea incidentului este obligatorie!");
+            errors.put("descriereIncident", "Description is mandatory!");
         }
 
-        // 3. Locatie
+        // 3. Location
         if (req.descriereLocatie != null && req.descriereLocatie.length() > 255) {
-            errors.put("descriereLocatie", "Maxim 255 de caractere!");
+            errors.put("descriereLocatie", "Max 255 chars!");
         }
 
-        // 4. Data
+        // 4. Date
         try {
             if (req.dataEmitere == null || req.dataEmitere.trim().isEmpty()) {
-                errors.put("dataEmitere", "Data și ora sunt obligatorii!");
+                errors.put("dataEmitere", "Date and time are mandatory!");
             } else {
                 LocalDateTime data = LocalDateTime.parse(req.dataEmitere);
                 if (!isDataValida(data)) {
-                    errors.put("dataEmitere", "Incidentul este mai vechi de 15 ani sau din viitor!");
+                    errors.put("dataEmitere", "Date is either too old (>15 years) or in the future!");
                 }
             }
         } catch (Exception e) {
-            errors.put("dataEmitere", "Format dată invalid!");
+            errors.put("dataEmitere", "Invalid date format!");
         }
 
         return errors;
     }
 
-    // --- STERGERE ---
+    // --- DELETE ---
     @DeleteMapping("/{id}")
     public String deleteIncident(@PathVariable Integer id) {
+        // I manually delete associated participants first to maintain referential integrity.
         persoanaIncidentRepository.deleteByIncidentId(id);
         incidentRepository.deleteIncidentNative(id);
-        return "Incidentul a fost șters cu succes!";
+        return "Incident deleted successfully!";
     }
 
-    // --- PAGINARE ---
+    // --- PAGINATION ---
     @GetMapping("/lista-paginata")
     public Page<Incident> getIncidentePaginat(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "data_emitere"));
         return incidentRepository.findAllNativePaginat(pageable);
     }
 
-    // --- VERIFICARE STERGERE ---
+    // --- DELETE VERIFICATION (SMART DELETE) ---
     @GetMapping("/verifica-stergere/{id}")
     public DeleteConfirmation verificaStergere(@PathVariable Integer id) {
         Incident incident = incidentRepository.getIncidentByIdNative(id)
-                .orElseThrow(() -> new RuntimeException("Incidentul nu există!"));
+                .orElseThrow(() -> new RuntimeException("Incident does not exist!"));
 
         String status = incident.getStatus();
 
+        // I prevent deletion of active cases to comply with procedure.
         if ("Activ".equalsIgnoreCase(status)) {
-            return new DeleteConfirmation(false, "BLOCKED", "Ștergere Blocată", "Acest incident este încă în stadiul 'Activ'. Nu puteți șterge un dosar aflat în lucru.", null);
+            return new DeleteConfirmation(false, "BLOCKED", "Deletion Blocked", "This incident is ACTIVE. Cannot delete an open case.", null);
         } else if ("Închis".equalsIgnoreCase(status)) {
-            return new DeleteConfirmation(true, "WARNING", "Atenție - Ștergere Dosar", "Incidentul este marcat ca 'Închis'. Ștergerea lui este permanentă.", null);
+            return new DeleteConfirmation(true, "WARNING", "Warning - Deleting Case File", "This incident is CLOSED. Deletion is permanent.", null);
         } else {
-            return new DeleteConfirmation(true, "SAFE", "Ștergere Sigură", "Incidentul este arhivat. Poate fi șters fără probleme.", null);
+            return new DeleteConfirmation(true, "SAFE", "Safe Deletion", "Incident is archived. Safe to delete.", null);
         }
     }
 

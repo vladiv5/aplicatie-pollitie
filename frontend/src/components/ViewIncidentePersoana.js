@@ -1,6 +1,7 @@
-/** Modal care afiseaza istoricul infractional al unei persoane
+/**
+ * Modal displaying a person's criminal record / incident history.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -33,7 +34,7 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
         return d.toLocaleDateString('ro-RO') + ' ' + d.toLocaleTimeString('ro-RO', {hour: '2-digit', minute:'2-digit'});
     };
 
-    // Returnez culori specifice in functie de rolul persoanei (Suspect = Rosu, Victima = Portocaliu)
+    // I return specific colors based on the person's role (Suspect = Red, Victim = Orange).
     const getCalitateStyle = (calitate) => {
         switch(calitate) {
             case 'Suspect': case 'Faptas': return { bg: 'rgba(239, 68, 68, 0.2)', col: '#fca5a5' };
@@ -48,17 +49,17 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
             {loading ? (
                 <div className="loading-container">
                     <div className="spinner"></div>
-                    <p style={{color:'#d4af37'}}>Se încarcă istoricul...</p>
+                    <p style={{color:'#d4af37'}}>Loading history...</p>
                 </div>
             ) : (
                 <div className="table-responsive">
                     <table className="styled-table compact-table">
                         <thead>
                         <tr>
-                            <th>Tip Incident</th>
-                            <th>Data</th>
-                            <th>Locație</th>
-                            <th style={{ textAlign: 'center' }}>Calitate</th>
+                            <th>Incident Type</th>
+                            <th>Date</th>
+                            <th>Location</th>
+                            <th style={{ textAlign: 'center' }}>Role</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -79,7 +80,7 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
                         }) : (
                             <tr>
                                 <td colSpan="4" style={{textAlign: 'center', padding: '30px', color: '#94a3b8', fontStyle: 'italic'}}>
-                                    Această persoană nu figurează în niciun incident.
+                                    This person is not involved in any incidents.
                                 </td>
                             </tr>
                         )}
@@ -89,7 +90,7 @@ const ViewIncidentePersoana = ({ persoanaId, onClose }) => {
             )}
 
             <div className="modal-footer">
-                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
+                <button className="btn-close-modal" onClick={onClose}>CLOSE</button>
             </div>
         </div>
     );

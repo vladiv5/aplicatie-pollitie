@@ -1,7 +1,8 @@
-/** Pagina de Activare Cont (Register)
- * Permite politistilor existenti in baza de date sa isi creeze user/parola
+/**
+ * Account Activation Page (Register).
+ * Allows existing officers in the database to create a username/password.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +25,7 @@ const RegisterPage = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        // Sterg eroarea cand utilizatorul incepe sa scrie
+        // I clear the error as soon as the user starts typing.
         if (errors[name]) setErrors({ ...errors, [name]: '' });
     };
 
@@ -38,12 +39,12 @@ const RegisterPage = () => {
         setErrors({});
 
         try {
-            // Trimit cererea de activare catre backend
+            // I send the activation request to the backend.
             await register(formData);
             toast.success("Cont activat cu succes!");
             navigate('/login');
         } catch (err) {
-            // Afisez erorile specifice venite de la server
+            // I display specific errors returned by the server.
             if (err.response && err.response.data) {
                 setErrors(err.response.data);
             }

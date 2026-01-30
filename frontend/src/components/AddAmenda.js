@@ -1,6 +1,7 @@
-/** Componenta pentru emiterea unei amenzi noi
+/**
+ * Component for issuing a new fine (Amenda).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from 'react';
 import axios from 'axios';
@@ -23,10 +24,11 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
     const handleSave = () => {
         setErrors({});
 
-        // Formatez data pentru a fi compatibila cu LocalDateTime din Java
+        // I ensure the date format is compatible with Java's LocalDateTime (ISO 8601).
         let dataFinala = formData.dataEmitere;
         if (dataFinala && dataFinala.length === 16) dataFinala += ":00";
 
+        // I parse the sum to a float before sending it to the API.
         const payload = {
             ...formData,
             dataEmitere: dataFinala,
@@ -52,6 +54,7 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
 
     const renderInput = (label, name, icon, type = 'text', placeholder = "") => {
         const hasError = errors[name];
+        // I exclude complex fields like IDs, as they are handled by LiveSearchInput.
         if (name === 'politistId' || name === 'persoanaId') return null;
 
         return (
@@ -97,6 +100,7 @@ const AddAmenda = ({ onSaveSuccess, onCancel }) => {
                 {renderInput("Data Acordării", "dataEmitere", "fa-calendar-day", "datetime-local")}
 
                 <div className="form-group-item">
+                    {/* I use my custom LiveSearchInput component to fetch and select Officers dynamically. */}
                     <LiveSearchInput
                         label="Agent Constatator"
                         apiUrl="http://localhost:8080/api/politisti/cauta"

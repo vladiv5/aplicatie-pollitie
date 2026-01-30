@@ -1,6 +1,7 @@
-/** Componenta de baza pentru ferestre modale (pop-up)
+/**
+ * Base component for modal windows (pop-ups).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React from 'react';
 import './styles/TableStyles.css';
@@ -10,7 +11,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = null }) => {
 
     return (
         <div className="modal-overlay">
-            {/* Permitem latime personalizata pentru modale mari (ex: ViewLocatari) */}
+            {/* I allow custom width for larger modals (e.g., ViewLocatari) */}
             <div
                 className="modal-content"
                 style={ maxWidth ? { maxWidth: maxWidth, width: '95%' } : {} }
@@ -20,7 +21,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = null }) => {
                     <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
-                {/* Zona scrollabila pentru continut lung */}
+                {/* Scrollable area for long content */}
                 <div className="modal-body-scroll">
                     {children}
                 </div>

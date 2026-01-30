@@ -4,9 +4,10 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
-/** Clasa ajutatoare pentru cheia primara compusa (id_persoana + id_incident)
+/**
+ * Helper class for the composite primary key (person_id + incident_id).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Embeddable
 public class PersoanaIncidentId implements Serializable {

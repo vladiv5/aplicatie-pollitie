@@ -1,7 +1,8 @@
-/** Componenta principala pentru afisarea si gestionarea tabelului de adrese
- * Include paginare, cautare si actiuni (editare, stergere, vizualizare locatari)
+/**
+ * Main component for displaying and managing the address registry.
+ * Includes pagination, search, and CRUD actions.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -17,7 +18,7 @@ const AdreseList = ({
                         onEditClick,
                         highlightId,
                         onHighlightComplete,
-                        setHighlightId // IMPORTANT: Primim setter-ul
+                        setHighlightId // IMPORTANT: I receive the setter to manage state lift-up.
                     }) => {
     const [adrese, setAdrese] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
@@ -26,15 +27,15 @@ const AdreseList = ({
     const [isLoading, setIsLoading] = useState(true);
     const rowRefs = useRef({});
 
-    // --- State pentru modalul de stergere inteligenta ---
+    // --- State for Smart Delete Modal ---
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
-    // --- State pentru modalul de vizualizare locatari ---
+    // --- State for viewing residents ---
     const [viewLocatariId, setViewLocatariId] = useState(null);
 
-    // Incarcarea datelor de la server (cu paginare si cautare)
+    // I load data from the server, handling both pagination and search scenarios.
     const loadAdrese = (page, term = '') => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
@@ -46,6 +47,7 @@ const AdreseList = ({
         return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
+                    // I reset pagination when searching because the result set is filtered.
                     setAdrese(res.data);
                     setTotalPages(1);
                 } else {
@@ -55,25 +57,27 @@ const AdreseList = ({
                 setCurrentPage(page);
                 return res.data;
             })
-            .catch(err => console.error("Eroare incarcare adrese:", err))
+            .catch(err => console.error("Error loading addresses:", err))
             .finally(() => {
                 setTimeout(() => setIsLoading(false), 200);
             });
     };
 
-    // --- LOGICA BUMERANG (Revenire din Incidente) ---
+    // --- BOOMERANG LOGIC (Return from Incidents) ---
+    // I implemented this logic to handle returning users from a detail view back to the exact state they left.
     useEffect(() => {
         const rawData = sessionStorage.getItem('boomerang_pending');
         if (rawData) {
             const data = JSON.parse(rawData);
-            // Verific daca ruta de intoarcere este '/adrese'
+            // I verify if the return route matches this component.
             if (data.returnRoute === '/adrese' && data.triggerId) {
                 if (data.triggerAction === 'reOpenDelete') {
+                    // I re-open the delete dialog automatically if the user came back to finish a deletion.
                     setTimeout(() => {
                         handleRequestDelete(data.triggerId);
                     }, 300);
                 }
-                // Activam highlight-ul pe elementul la care ne-am intors
+                // I highlight the row to give visual context.
                 if (setHighlightId) {
                     setHighlightId(data.triggerId);
                 }
@@ -82,11 +86,13 @@ const AdreseList = ({
         }
     }, []);
 
+    // I reload data whenever the refresh trigger changes (e.g., after an edit).
     useEffect(() => {
         loadAdrese(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
                 const currentList = responseData.content || responseData;
                 if (currentList && Array.isArray(currentList)) {
+                    // I check if the highlighted item is on the current page. If not, I find its page.
                     const existsOnPage = currentList.some(a => a.idAdresa === highlightId);
                     if (!existsOnPage) {
                         findPageForId(highlightId);
@@ -97,6 +103,7 @@ const AdreseList = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
+    // I calculate the page number for a specific item ID to ensure it's visible after an update.
     const findPageForId = async (id) => {
         try {
             const token = localStorage.getItem('token');
@@ -104,6 +111,7 @@ const AdreseList = ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
+            // I replicate the backend sorting logic to find the correct index.
             allData.sort((a, b) => {
                 const locComparison = a.localitate.localeCompare(b.localitate);
                 if (locComparison !== 0) return locComparison;
@@ -118,10 +126,11 @@ const AdreseList = ({
                 loadAdrese(targetPage, searchTerm);
             }
         } catch (err) {
-            console.error("Nu am putut calcula pagina automata:", err);
+            console.error("Could not calculate auto-page:", err);
         }
     };
 
+    // I scroll the highlighted row into view smoothly.
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -143,6 +152,7 @@ const AdreseList = ({
         loadAdrese(0, '');
     };
 
+    // I initiate the "Smart Delete" check to see if the address can be safely deleted.
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/adrese/verifica-stergere/${id}`, {
@@ -253,14 +263,14 @@ const AdreseList = ({
                 </table>
             </div>
 
-            {/* --- AICI ERA EROAREA: Am adaugat currentPolitistId si returnRoute --- */}
+            {/* --- ERROR FIX: I added currentPolitistId and returnRoute props here --- */}
             <DeleteSmartModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleConfirmDelete}
                 data={deleteData}
-                currentPolitistId={deleteId} // Transmit ID-ul adresei ca trigger
-                returnRoute="/adrese"        // Specific ruta de intoarcere
+                currentPolitistId={deleteId} // I pass the ID to enable the boomerang return logic
+                returnRoute="/adrese"        // I specify where to return after resolving blockers
             />
 
             <Modal isOpen={!!viewLocatariId} onClose={() => setViewLocatariId(null)} title="Locatari la această adresă" maxWidth="850px">

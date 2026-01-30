@@ -1,7 +1,8 @@
-/** Pagina principala pentru gestionarea Amenzilor
- * Include logica "Bumerang" pentru intoarcerea din conflicte de stergere
+/**
+ * Main page for managing Fines.
+ * Includes "Boomerang" logic for returning from delete conflicts.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -21,7 +22,7 @@ const AmenziPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // 1. Verific daca am fost trimis aici pentru a rezolva un conflict (Bumerang)
+    // 1. I check if I was sent here to resolve a conflict (Boomerang effect).
     useEffect(() => {
         if (location.state && location.state.openEditId) {
             setEditId(location.state.openEditId);
@@ -29,23 +30,23 @@ const AmenziPage = () => {
         }
     }, [location]);
 
-    // Functie universala de inchidere (gestioneaza revenirea la pagina originala)
+    // Universal closing function (handles returning to the original page).
     const handleCloseOrFinish = () => {
-        // Verific daca exista o actiune in asteptare
+        // I check if there is a pending action in session storage.
         const boomerang = sessionStorage.getItem('boomerang_pending');
         if (boomerang) {
             const data = JSON.parse(boomerang);
             if (data.returnRoute) {
-                // Ma intorc la pagina care a declansat conflictul (ex: PolitistiPage)
+                // I navigate back to the page that triggered the conflict (e.g., PolitistiPage).
                 navigate(data.returnRoute);
                 return;
             }
         }
 
-        // Comportament normal
+        // Standard behavior.
         setIsEditModalOpen(false);
         setEditId(null);
-        // Curat state-ul din history pentru a nu redeschide modalul la refresh
+        // I clear the history state to prevent reopening the modal on refresh.
         window.history.replaceState({}, document.title);
     };
 
@@ -59,11 +60,11 @@ const AmenziPage = () => {
         const boomerang = sessionStorage.getItem('boomerang_pending');
 
         if (boomerang) {
-            // Daca am rezolvat conflictul, ma intorc imediat
+            // If I resolved the conflict, I return immediately.
             const data = JSON.parse(boomerang);
             navigate(data.returnRoute);
         } else {
-            // Daca e editare normala, raman aici si dau refresh
+            // If it's a normal edit, I stay here and refresh the list.
             setRefreshTrigger(prev => prev + 1);
             setHighlightId(savedId);
             handleCloseOrFinish();
@@ -84,7 +85,7 @@ const AmenziPage = () => {
                 <AddAmenda onSaveSuccess={handleAddSuccess} onCancel={() => setIsAddModalOpen(false)} />
             </Modal>
 
-            {/* Folosesc handleCloseOrFinish pentru a asigura fluxul corect */}
+            {/* I use handleCloseOrFinish to ensure correct navigation flow. */}
             <Modal isOpen={isEditModalOpen} onClose={handleCloseOrFinish} title="Editați Amendă">
                 {editId && <EditAmenda id={editId} onSaveSuccess={handleEditSuccess} onCancel={handleCloseOrFinish} />}
             </Modal>

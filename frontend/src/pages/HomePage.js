@@ -1,7 +1,8 @@
-/** Dashboard-ul principal (Panou Operativ)
- * Afiseaza ceasul, ID-ul ofiterului si scurtaturi catre module
+/**
+ * Main Dashboard (Operational Panel).
+ * Displays the clock, officer ID card, and shortcuts to modules.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +16,7 @@ const HomePage = () => {
     const [time, setTime] = useState(new Date());
     const [isActivityOpen, setIsActivityOpen] = useState(false);
 
-    // Actualizez ceasul in timp real
+    // I update the clock in real-time.
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
@@ -26,7 +27,7 @@ const HomePage = () => {
     return (
         <div className="home-container">
 
-            {/* Header: Mesaj de bun venit si Ceas */}
+            {/* Header: Welcome message and Clock */}
             <div className="welcome-banner">
                 <div className="welcome-text">
                     <h1>Panou Operativ</h1>
@@ -39,7 +40,7 @@ const HomePage = () => {
             </div>
 
             <div className="dashboard-grid">
-                {/* ID Card Virtual (Stanga) */}
+                {/* Virtual ID Card (Left) */}
                 <div className="left-column">
                     <div className="id-card-wrapper">
                         <div className="id-card-header">
@@ -71,7 +72,7 @@ const HomePage = () => {
                     </div>
                 </div>
 
-                {/* Grid Scurtaturi (Dreapta) */}
+                {/* Shortcuts Grid (Right) */}
                 <div className="right-column">
                     <h3>Module Operative</h3>
                     <div className="shortcuts-grid">
@@ -123,7 +124,7 @@ const HomePage = () => {
                             </div>
                         </Link>
 
-                        {/* Buton special pentru Dosarul Meu */}
+                        {/* Special button for "My File" */}
                         <div className="shortcut-card" onClick={() => setIsActivityOpen(true)} style={{ cursor: 'pointer' }}>
                             <i className="shortcut-icon fa-solid fa-folder-open"></i>
                             <div className="shortcut-content">
@@ -135,7 +136,7 @@ const HomePage = () => {
                 </div>
             </div>
 
-            {/* Modal Dosar Personal */}
+            {/* Personal File Modal */}
             <Modal isOpen={isActivityOpen} onClose={() => setIsActivityOpen(false)} title={`Dosar: ${user.nume} ${user.prenume}`} maxWidth="900px">
                 <MyActivityModal userId={user.idPolitist} onClose={() => setIsActivityOpen(false)} />
             </Modal>

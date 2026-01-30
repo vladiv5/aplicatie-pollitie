@@ -1,13 +1,14 @@
 package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.dto;
 
-/** Clasa ajutatoare pentru a descrie un element care blocheaza stergerea (ex: o amenda neplatita)
+/**
+ * Helper class to describe an item blocking a delete action (e.g., an unpaid fine).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 public class BlockingItem {
-    private String tip; // "Incident" sau "Amenda"
+    private String tip; // "Incident" or "Fine"
     private Integer id;
-    private String descriere; // Ex: "Furt (Activ)" sau "Neplatita - 200 RON"
+    private String descriere; // e.g., "Theft (Active)" or "Unpaid - 200 RON"
 
     public BlockingItem(String tip, Integer id, String descriere) {
         this.tip = tip;

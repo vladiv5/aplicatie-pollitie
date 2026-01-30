@@ -15,19 +15,20 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-/** Repository pentru gestiunea amenzilor
- * Structurat pe categorii: CRUD, JOIN, Search.
+/**
+ * Repository for managing Fines.
+ * Structured by category: CRUD, JOIN, Search.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Repository
 public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
 
     // =================================================================================
-    // 1. OPERATII CRUD NATIVE (Insert, Update, Delete)
+    // 1. NATIVE CRUD OPERATIONS (Insert, Update, Delete)
     // =================================================================================
 
-    // INSERT (Parametri Variabili: Detalii Amenda)
+    // INSERT (Variable Parameters: Fine Details)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -43,7 +44,7 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
             @Param("idPersoana") Integer idPersoana
     );
 
-    // UPDATE (Parametri Variabili: ID + Date Noi)
+    // UPDATE (Variable Parameters: ID + New Data)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -66,7 +67,7 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
             @Param("idPersoana") Integer idPersoana
     );
 
-    // DELETE (Parametru Variabil: ID)
+    // DELETE (Variable Parameter: ID)
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Amenzi WHERE id_amenda = :id", nativeQuery = true)
@@ -74,11 +75,12 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
 
 
     // =================================================================================
-    // 2. INTEROGARI SIMPLE CU JOIN (Si Parametri Variabili)
+    // 2. SIMPLE QUERIES WITH JOIN (And Variable Parameters)
     // =================================================================================
 
-    // Raport "Cazier Fiscal": Istoric amenzi per CNP (JOIN Triplu: Amenzi-Persoane-Politisti)
-    // [Parametri Variabili]: CNP + Interval Data
+    // Report "Fiscal Record": Fine history per CNP (Triple JOIN: Fines-Persons-Officers)
+    // [Variable Parameters]: CNP + Date Range
+    // I join three tables to present a comprehensive history view for a specific citizen.
     @Query(value = "" +
             "SELECT a.motiv, a.suma, a.data_emitere, a.stare_plata, " +
             "       pol.nume as nume_politist, pol.prenume as prenume_politist " +
@@ -95,8 +97,8 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
             @Param("endDate") LocalDateTime endDate
     );
 
-    // Live Search Avansat (Search prin JOIN-uri)
-    // Cauta in motivul amenzii, dar si in numele persoanei sau politistului
+    // Advanced Live Search (Search via JOINs)
+    // I search in the fine reason, but also in the name of the person or officer involved.
     @Query(value = "" +
             "SELECT a.* FROM Amenzi a " +
             "LEFT JOIN Persoane p ON a.id_persoana = p.id_persoana " +
@@ -112,16 +114,16 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
 
 
     // =================================================================================
-    // 3. OPERATII DE MODIFICARE CONDITIONATE (Update cu Logica)
+    // 3. CONDITIONAL MODIFICATION OPERATIONS (Logic-Based Update)
     // =================================================================================
 
-    // Anonimizare Amenzi (Setare NULL la stergerea unui politist)
+    // Anonymization (Set NULL when deleting an officer)
     @Modifying
     @Transactional
     @Query(value = "UPDATE Amenzi SET id_politist = NULL WHERE id_politist = :idPolitist", nativeQuery = true)
     void anonimizeazaAmenziPolitist(@Param("idPolitist") Integer idPolitist);
 
-    // Transfer de responsabilitate (Update ID vechi -> ID nou)
+    // Responsibility Transfer (Update old ID -> new ID)
     @Modifying
     @Transactional
     @Query(value = "UPDATE Amenzi SET id_politist = :idNou WHERE id_politist = :idVechi", nativeQuery = true)
@@ -129,7 +131,7 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
 
 
     // =================================================================================
-    // 4. VERIFICARI SI UTILITARE (Smart Delete)
+    // 4. CHECKS AND UTILITIES (Smart Delete)
     // =================================================================================
 
     @Query(value = "SELECT * FROM Amenzi WHERE id_politist = :id AND stare_plata = 'Neplatita'", nativeQuery = true)
@@ -150,7 +152,7 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
     @Query(value = "SELECT * FROM Amenzi WHERE id_persoana = :id", nativeQuery = true)
     List<Amenda> findAllNativeByPersoana(@Param("id") Integer id);
 
-    // Stergeri in cascada
+    // Cascading deletions
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
@@ -166,7 +168,7 @@ public interface AmendaRepository extends JpaRepository<Amenda, Integer> {
     @Query(value = "DELETE FROM Amenzi WHERE id_politist = :id", nativeQuery = true)
     void stergeAmenziDupaPolitist(@Param("id") Integer id);
 
-    // Select-uri Standard
+    // Standard Selects
     @Query(value = "SELECT * FROM Amenzi", countQuery = "SELECT count(*) FROM Amenzi", nativeQuery = true)
     Page<Amenda> findAllNativePaginat(Pageable pageable);
 

@@ -5,9 +5,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-/** Clasa pentru entitatea Amenda care inregistreaza sanctiunile
+/**
+ * Entity class for Fine, recording sanctions issued.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Entity
 @Table(name = "Amenzi")
@@ -18,7 +19,7 @@ public class Amenda {
     @Column(name = "id_amenda")
     private Integer idAmenda;
 
-    // Validarile pentru motiv si suma le-am implementat direct in Controller, nu aici
+    // I handle validation logic for reason and amount in the Controller, keeping the Entity clean.
     @Column(name = "motiv")
     private String motiv;
 
@@ -28,12 +29,12 @@ public class Amenda {
     @Column(name = "stare_plata")
     private String starePlata;
 
-    // Am specificat formatul JSON pentru a fi usor de citit in frontend
+    // I specify the JSON format to ensure the date is correctly serialized for the React frontend.
     @Column(name = "data_emitere")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataEmitere;
 
-    // Aici am definit relatiile cu Politistul si Persoana amendata
+    // I establish the Many-to-One relationships with the Officer issuing the fine and the Person receiving it.
     @ManyToOne
     @JoinColumn(name = "id_politist")
     private Politist politist;
@@ -42,7 +43,7 @@ public class Amenda {
     @JoinColumn(name = "id_persoana")
     private Persoana persoana;
 
-    // --- Metode de acces ---
+    // --- Access Methods ---
 
     public Integer getIdAmenda() { return idAmenda; }
     public void setIdAmenda(Integer idAmenda) { this.idAmenda = idAmenda; }

@@ -1,7 +1,8 @@
-/** Componenta reutilizabila pentru cautare dinamica (dropdown cu sugestii)
- * Include debounce pentru performanta si encodeURIComponent pentru siguranta
+/**
+ * Reusable component for dynamic searching (dropdown with suggestions).
+ * I use debounce for performance and encodeURIComponent for security.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -13,14 +14,14 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
     const [showSuggestions, setShowSuggestions] = useState(false);
     const wrapperRef = useRef(null);
 
-    // Initializare valoare (daca suntem in modul Edit)
+    // I initialize the value (if we are in Edit mode).
     useEffect(() => {
         if (defaultValue) {
             setQuery(defaultValue);
         }
     }, [defaultValue]);
 
-    // Inchid lista de sugestii daca dau click in afara componentei
+    // I close the suggestions list if I click outside the component.
     useEffect(() => {
         function handleClickOutside(event) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -31,19 +32,19 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [wrapperRef]);
 
-    // Logică de căutare cu debounce (astept 300ms dupa ultima tasta)
+    // Search logic with debounce (I wait 300ms after the last keystroke).
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (query.length > 0 && showSuggestions) {
                 const token = localStorage.getItem('token');
-                // Codific textul pentru a preveni erori de caractere speciale (ex: /, [, %)
+                // I encode the text to prevent errors with special characters (e.g., /, [, %).
                 const safeQuery = encodeURIComponent(query);
 
                 axios.get(`${apiUrl}?termen=${safeQuery}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                     .then(res => setSuggestions(res.data))
-                    .catch(err => console.error("Eroare LiveSearch:", err));
+                    .catch(err => console.error("Error LiveSearch:", err));
             } else {
                 setSuggestions([]);
             }
@@ -52,16 +53,16 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
     }, [query, apiUrl, showSuggestions]);
 
     const handleSelect = (item) => {
-        setQuery(displayKey(item)); // Afisez textul prietenos in input
+        setQuery(displayKey(item)); // I display the friendly text in the input.
         setSuggestions([]);
         setShowSuggestions(false);
-        if (onSelect) onSelect(item); // Trimit obiectul complet catre parinte
+        if (onSelect) onSelect(item); // I pass the full object to the parent.
     };
 
     const handleClear = () => {
         setQuery('');
         setSuggestions([]);
-        if (onSelect) onSelect(null); // Resetez selectia
+        if (onSelect) onSelect(null); // I reset the selection.
     };
 
     return (
@@ -75,12 +76,12 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
                 <input
                     type="text"
                     className={`modal-input ${error ? 'input-error' : ''}`}
-                    placeholder={placeholder || "Caută..."}
+                    placeholder={placeholder || "Cauta..."}
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value);
                         setShowSuggestions(true);
-                        // Daca sterg tot textul manual, resetez selectia
+                        // If I clear the text manually, I reset the selection.
                         if (e.target.value === '') {
                             if (onSelect) onSelect(null);
                         }
@@ -89,7 +90,7 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
                     autoComplete="off"
                 />
 
-                {/* Buton X auriu */}
+                {/* Gold X Button */}
                 {query && (
                     <button type="button" className="search-clear-btn-gold" onClick={handleClear}>
                         <i className="fa-solid fa-circle-xmark"></i>
@@ -106,7 +107,7 @@ const LiveSearchInput = ({ label, apiUrl, displayKey, onSelect, defaultValue, ic
                     </ul>
                 )}
             </div>
-            {/* Mesaj de eroare din backend (daca exista) */}
+            {/* Error message from backend (if any) */}
             {error && <span className="error-text">{error}</span>}
         </div>
     );

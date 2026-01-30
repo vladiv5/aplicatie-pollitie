@@ -3,9 +3,10 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/** Clasa pentru entitatea Incident care leaga politistii de locatii si descrieri
+/**
+ * Entity class for Incident, linking officers to locations and descriptions.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Entity
 @Table(name = "Incidente")
@@ -19,7 +20,7 @@ public class Incident {
     @Column(name = "tip_incident")
     private String tipIncident;
 
-    // Am folosit LocalDateTime pentru a retine si ora exacta a incidentului
+    // I use LocalDateTime to store the precise timestamp of the incident.
     @Column(name = "data_emitere")
     private LocalDateTime dataEmitere;
 
@@ -29,7 +30,7 @@ public class Incident {
     @Column(name = "descriere_incident")
     private String descriereIncident;
 
-    // Aceste campuri sunt cheile externe catre Politist si Adresa (stocate ca ID-uri)
+    // I map these columns as foreign keys ID references for quick access.
     @Column(name = "id_politist_responsabil")
     private Integer idPolitist;
 
@@ -39,9 +40,9 @@ public class Incident {
     @Column(name = "status")
     private String status;
 
-    // --- Relatii JPA (Doar pentru citire) ---
-    // Am setat insertable=false si updatable=false pentru a nu crea conflicte cu coloanele de ID simple de mai sus
-    // Aceste obiecte ma ajuta sa aduc automat datele despre politist si adresa cand incarc incidentul
+    // --- JPA Relationships (Read-Only) ---
+    // I set insertable=false and updatable=false to avoid conflicts with the simple ID columns above.
+    // These objects help me automatically fetch related Officer and Address details when loading an incident.
 
     @ManyToOne
     @JoinColumn(name = "id_politist_responsabil", insertable = false, updatable = false)
@@ -51,7 +52,7 @@ public class Incident {
     @JoinColumn(name = "id_adresa_incident", insertable = false, updatable = false)
     private Adresa adresaIncident;
 
-    // --- Getters si Setters ---
+    // --- Getters and Setters ---
 
     public Integer getIdIncident() { return idIncident; }
     public void setIdIncident(Integer idIncident) { this.idIncident = idIncident; }

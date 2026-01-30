@@ -7,9 +7,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Controller pentru gestionarea legaturii Many-to-Many dintre Persoane si Adrese
+/**
+ * Controller for managing the Many-to-Many relationship between Persons and Addresses.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @RestController
 @RequestMapping("/api/adrese-persoane")
@@ -19,13 +20,13 @@ public class AdresePersoaneController {
     @Autowired
     private PersoanaAdresaRepository repo;
 
-    // Aduc toate adresele asociate unei persoane (Domiciliu, Resedinta)
+    // I fetch all addresses associated with a specific person (e.g., Domicile, Residence).
     @GetMapping("/persoana/{idPersoana}")
     public List<PersoanaAdresa> getAdreseForPersoana(@PathVariable Integer idPersoana) {
         return repo.findByPersoana_IdPersoana(idPersoana);
     }
 
-    // Aduc toti locatarii de la o adresa specifica
+    // I fetch all residents registered at a specific address ID.
     @GetMapping("/adresa/{idAdresa}")
     public List<PersoanaAdresa> getPersoaneAtAdresa(@PathVariable Integer idAdresa) {
         return repo.findByAdresa_IdAdresa(idAdresa);

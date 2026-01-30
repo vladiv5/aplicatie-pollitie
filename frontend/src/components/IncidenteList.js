@@ -1,6 +1,7 @@
-/** Componenta principala pentru vizualizarea si gestionarea incidentelor
+/**
+ * Main component for viewing and managing incidents.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -19,15 +20,16 @@ const IncidenteList = ({
     const [isLoading, setIsLoading] = useState(true);
     const rowRefs = useRef({});
 
-    // State pentru stergere
+    // State for delete functionality
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
+    // I fetch data from the API, supporting sorting and filtering.
     const loadIncidente = (page, term = '') => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
-        const safeTerm = encodeURIComponent(term); // Previn erori caractere speciale
+        const safeTerm = encodeURIComponent(term); // I prevent errors with special characters
 
         let url = `http://localhost:8080/api/incidente/lista-paginata?page=${page}&size=10`;
         if (term) url = `http://localhost:8080/api/incidente/cauta?termen=${safeTerm}`;
@@ -50,10 +52,11 @@ const IncidenteList = ({
             });
     };
 
+    // I handle auto-scrolling to the highlighted item after a refresh.
     useEffect(() => {
         loadIncidente(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
-                // Logica de highlight automat (sari la pagina potrivita)
+                // Auto-highlight logic (jump to the right page)
                 const currentList = responseData.content || responseData;
                 if (currentList && Array.isArray(currentList)) {
                     const existsOnPage = currentList.some(inc => inc.idIncident === highlightId);
@@ -73,7 +76,7 @@ const IncidenteList = ({
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const allData = res.data;
-            // Sortare descendenta dupa data, exact ca in backend
+            // I sort descending by date, exactly as in the backend
             allData.sort((a, b) => new Date(b.dataEmitere) - new Date(a.dataEmitere));
             const index = allData.findIndex(inc => inc.idIncident === id);
 
@@ -82,11 +85,11 @@ const IncidenteList = ({
                 loadIncidente(targetPage, searchTerm);
             }
         } catch (err) {
-            console.error("Nu am putut calcula pagina automata:", err);
+            console.error("Could not calculate auto-page:", err);
         }
     };
 
-    // Scroll si highlight vizual
+    // Scroll and visual highlight
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -97,7 +100,7 @@ const IncidenteList = ({
         }
     }, [isLoading, incidente, highlightId]);
 
-    // --- FUNCTIA CARE LIPSEA ---
+    // --- MISSING FUNCTION I ADDED ---
     const handlePageChange = (newPage) => {
         loadIncidente(newPage, searchTerm);
     };
@@ -115,7 +118,7 @@ const IncidenteList = ({
 
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
-        // Verific daca incidentul poate fi sters (Smart Delete)
+        // I verify if the incident can be deleted (Smart Delete check)
         axios.get(`http://localhost:8080/api/incidente/verifica-stergere/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })

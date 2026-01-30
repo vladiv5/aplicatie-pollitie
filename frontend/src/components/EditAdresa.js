@@ -1,6 +1,7 @@
-/** Componenta pentru modificarea unei adrese existente
+/**
+ * Component for editing an existing address.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -13,6 +14,7 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
     });
     const [errors, setErrors] = useState({});
 
+    // I fetch existing data when the component mounts.
     useEffect(() => {
         if (id) {
             axios.get(`http://localhost:8080/api/adrese/${id}`)
@@ -29,6 +31,7 @@ const EditAdresa = ({ id, onSaveSuccess, onCancel }) => {
 
     const handleSave = () => {
         setErrors({});
+        // I use PUT to update the resource.
         axios.put(`http://localhost:8080/api/adrese/${id}`, formData)
             .then((response) => {
                 toast.success("Adresă actualizată!");

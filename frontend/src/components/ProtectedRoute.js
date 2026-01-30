@@ -1,7 +1,8 @@
-/** Componenta Wrapper pentru rutele protejate
- * Verific daca exista user-ul in context; daca nu, redirectionez la Login
+/**
+ * Wrapper component for protected routes.
+ * I check if the user exists in the context; if not, I redirect to Login.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -11,11 +12,11 @@ const ProtectedRoute = () => {
     const { user } = useAuth();
 
     if (!user) {
-        // Daca nu sunt logat, ma duc inapoi la login
+        // If I am not logged in, I redirect back to the login page.
         return <Navigate to="/login" replace />;
     }
 
-    // Daca sunt logat, afisez continutul rutei copil (Outlet)
+    // If I am logged in, I render the child route content (Outlet).
     return <Outlet />;
 };
 

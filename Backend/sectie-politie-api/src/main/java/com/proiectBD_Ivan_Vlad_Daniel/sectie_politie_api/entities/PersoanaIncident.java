@@ -2,9 +2,10 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.entities;
 
 import jakarta.persistence.*;
 
-/** Clasa de legatura intre Persoane si Incidente (ex: Martor, Suspect, Victima)
+/**
+ * Join entity linking Persons and Incidents (e.g., Witness, Suspect, Victim).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Entity
 @Table(name = "Persoane_Incidente")
@@ -23,11 +24,11 @@ public class PersoanaIncident {
     @JoinColumn(name = "id_incident")
     private Incident incident;
 
-    // Calitatea persoanei in incident (ex: Martor)
+    // The role of the person in the incident (e.g., Witness).
     @Column(name = "calitate")
     private String calitate;
 
-    // --- Getters si Setters ---
+    // --- Getters and Setters ---
 
     public PersoanaIncidentId getId() { return id; }
     public void setId(PersoanaIncidentId id) { this.id = id; }

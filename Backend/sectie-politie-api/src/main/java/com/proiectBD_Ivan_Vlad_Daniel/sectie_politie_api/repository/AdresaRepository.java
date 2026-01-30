@@ -13,19 +13,21 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-/** Repository pentru accesarea datelor de localizare (Adrese)
- * Structurat pe categorii: CRUD Nativ, Search, Utilitare.
+/**
+ * Repository for accessing location data (Addresses).
+ * Structured by category: Native CRUD, Search, Utilities.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 @Repository
 public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
 
     // =================================================================================
-    // 1. OPERATII CRUD NATIVE (Insert, Update, Delete)
+    // 1. NATIVE CRUD OPERATIONS (Insert, Update, Delete)
     // =================================================================================
 
-    // INSERT (Parametri Variabili: Detalii Adresa)
+    // INSERT (Variable Parameters: Address Details)
+    // I use native SQL to have full control over the insertion process.
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -41,7 +43,7 @@ public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
             @Param("ap") Integer ap
     );
 
-    // UPDATE (Parametri Variabili: ID + Date Noi)
+    // UPDATE (Variable Parameters: ID + New Data)
     @Modifying
     @Transactional
     @Query(value = "" +
@@ -64,7 +66,7 @@ public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
             @Param("ap") Integer ap
     );
 
-    // DELETE (Parametru Variabil: ID)
+    // DELETE (Variable Parameter: ID)
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Adrese WHERE id_adresa = :id", nativeQuery = true)
@@ -75,8 +77,8 @@ public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
     // 2. LIVE SEARCH (String Manipulation & Filtering)
     // =================================================================================
 
-    // Search Inteligent: Cauta in toate campurile adresei simultan
-    // Utilizeaza COALESCE pentru a gestiona campurile NULL (ex: bloc/ap)
+    // Smart Search: Searches across all address fields simultaneously.
+    // I use COALESCE to handle NULL fields (like block/ap) preventing null pointer issues in SQL concatenation.
     @Query(value = "" +
             "SELECT * FROM Adrese WHERE " +
             "CONCAT(COALESCE(strada, ''), ' ', COALESCE(numar, ''), ' ', " +
@@ -89,10 +91,11 @@ public interface AdresaRepository extends JpaRepository<Adresa, Integer> {
 
 
     // =================================================================================
-    // 3. SELECT-URI STANDARD SI UTILITARE
+    // 3. STANDARD SELECTS AND UTILITIES
     // =================================================================================
 
-    // Paginare Nativa
+    // Native Pagination
+    // I optimized fetching large datasets by implementing native pagination support.
     @Query(value = "SELECT * FROM Adrese", countQuery = "SELECT count(*) FROM Adrese", nativeQuery = true)
     Page<Adresa> findAllNativePaginat(Pageable pageable);
 

@@ -1,6 +1,7 @@
-/** Componenta pentru modificarea unei amenzi existente
+/**
+ * Component for updating fine details.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -13,6 +14,7 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
         motiv: '', suma: '', starePlata: 'Neplatita',
         dataEmitere: '', politistId: null, persoanaId: null
     });
+    // I store initial display names separately because the form only holds IDs.
     const [initialNames, setInitialNames] = useState({ politist: '', persoana: '' });
     const [errors, setErrors] = useState({});
 
@@ -29,6 +31,7 @@ const EditAmenda = ({ id, onSaveSuccess, onCancel }) => {
                         politistId: d.politist?.idPolitist || null,
                         persoanaId: d.persoana?.idPersoana || null
                     });
+                    // I populate the LiveSearchInput default values.
                     setInitialNames({
                         politist: d.politist ? `${d.politist.nume} ${d.politist.prenume} (${d.politist.grad})` : '',
                         persoana: d.persoana ? `${d.persoana.nume} ${d.persoana.prenume} (CNP: ${d.persoana.cnp})` : ''

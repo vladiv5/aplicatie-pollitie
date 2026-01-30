@@ -1,7 +1,8 @@
-/** Componenta principala pentru gestionarea registrului de persoane
- * Include cautare, paginare si actiuni complexe (istoric, adrese)
+/**
+ * Main component for managing the registry of Persons (Citizens).
+ * Includes search, pagination, and complex actions (History, Addresses).
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -23,24 +24,24 @@ const PersoaneList = ({
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy] = useState('nume'); // Sortare implicita
+    const [sortBy] = useState('nume'); // Default sort
 
     const [isLoading, setIsLoading] = useState(true);
     const rowRefs = useRef({});
 
-    // State pentru stergere inteligenta
+    // State for Smart Delete
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteData, setDeleteData] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
 
-    // Incarc lista de persoane de la backend
+    // I load the list of persons from the backend.
     const loadPersoane = (page, term = '') => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
 
         let url = `http://localhost:8080/api/persoane/lista-paginata?page=${page}&size=10&sortBy=${sortBy}&dir=asc`;
         if (term) {
-            // Encodez termenul pentru a evita erori la caractere speciale
+            // I encode the search term to avoid issues with special characters.
             const safeTerm = encodeURIComponent(term);
             url = `http://localhost:8080/api/persoane/cauta?termen=${safeTerm}`;
         }
@@ -48,22 +49,22 @@ const PersoaneList = ({
         return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => {
                 if(term) {
-                    setPersoane(res.data); // Search returneaza lista plata
+                    setPersoane(res.data); // Search returns a flat list
                     setTotalPages(1);
                 } else {
-                    setPersoane(res.data.content); // Paginarea returneaza obiect Page
+                    setPersoane(res.data.content); // Pagination returns a Page object
                     setTotalPages(res.data.totalPages);
                 }
                 setCurrentPage(page);
                 return res.data;
             })
-            .catch(err => console.error("Eroare incarcare persoane:", err))
+            .catch(err => console.error("Error loading persons:", err))
             .finally(() => {
                 setTimeout(() => setIsLoading(false), 200);
             });
     };
 
-    // Logica "Bumerang": Daca ma intorc de la rezolvarea unui incident blocant, redeschid modalul de stergere
+    // "Boomerang" Logic: If I return from resolving a blocking incident, I re-open the delete modal.
     useEffect(() => {
         const rawData = sessionStorage.getItem('boomerang_pending');
         if (rawData) {
@@ -82,7 +83,7 @@ const PersoaneList = ({
         }
     }, []);
 
-    // Refresh si Highlight automat
+    // Refresh and Auto-Highlight
     useEffect(() => {
         loadPersoane(currentPage, searchTerm).then((responseData) => {
             if (highlightId) {
@@ -112,11 +113,11 @@ const PersoaneList = ({
                 loadPersoane(targetPage, searchTerm);
             }
         } catch (err) {
-            console.error("Nu am putut calcula pagina automata:", err);
+            console.error("Could not calculate auto-page:", err);
         }
     };
 
-    // Scroll la elementul evidentiat
+    // Scroll to highlighted element
     useEffect(() => {
         if (!isLoading && highlightId && rowRefs.current[highlightId]) {
             rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -140,7 +141,7 @@ const PersoaneList = ({
         loadPersoane(0, '');
     };
 
-    // Verificare inainte de stergere (Smart Delete)
+    // Pre-delete check (Smart Delete)
     const handleRequestDelete = (id) => {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:8080/api/persoane/verifica-stergere/${id}`, {

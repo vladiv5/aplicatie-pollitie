@@ -1,6 +1,7 @@
-/** Pagina principala pentru gestionarea Politistilor
+/**
+ * Main page for managing Police Officers.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState } from "react";
 import PolitistiList from '../components/PolitistiList';
@@ -9,12 +10,12 @@ import EditPolitist from "../components/EditPolitist";
 import Modal from "../components/Modal";
 
 const PolitistiPage = () => {
-    // --- State Modale ---
+    // --- Modal State ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editId, setEditId] = useState(null);
 
-    // --- State Refresh & Highlight ---
+    // --- Refresh & Highlight State ---
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [highlightId, setHighlightId] = useState(null);
 
@@ -40,7 +41,7 @@ const PolitistiPage = () => {
 
                 highlightId={highlightId}
                 onHighlightComplete={() => setHighlightId(null)}
-                // IMPORTANT: Trimit setter-ul pentru Bumerang (revenire dupa rezolvare dosare)
+                // IMPORTANT: I pass the setter to handle "Boomerang" return after resolving case files.
                 setHighlightId={setHighlightId}
             />
 

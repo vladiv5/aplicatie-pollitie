@@ -1,6 +1,7 @@
-/** Componenta Read-Only pentru vizualizarea detaliilor unui incident
+/**
+ * Read-Only Component for viewing incident details.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React from 'react';
 import './styles/Forms.css';
@@ -17,7 +18,7 @@ const ViewIncident = ({ incident, onClose }) => {
         });
     };
 
-    // Stil pentru campuri inactive (Read-Only)
+    // Style for inactive fields (Read-Only)
     const readOnlyFieldStyle = {
         background: '#f8fafc',
         border: '1px solid #e2e8f0',
@@ -37,34 +38,34 @@ const ViewIncident = ({ incident, onClose }) => {
         <div style={{ padding: '10px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                 <div>
-                    <span style={labelStyle}>Tip Incident</span>
+                    <span style={labelStyle}>Incident Type</span>
                     <div style={readOnlyFieldStyle}>{incident.tipIncident}</div>
                 </div>
                 <div>
-                    <span style={labelStyle}>Data și Ora</span>
+                    <span style={labelStyle}>Date and Time</span>
                     <div style={readOnlyFieldStyle}>{formatData(incident.dataEmitere)}</div>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                 <div>
-                    <span style={labelStyle}>Stare</span>
+                    <span style={labelStyle}>Status</span>
                     <div style={{...readOnlyFieldStyle, color: incident.status === 'Activ' ? '#166534' : '#475569', fontWeight: 'bold'}}>
                         {incident.status || 'Activ'}
                     </div>
                 </div>
                 <div>
-                    <span style={labelStyle}>Polițist Responsabil</span>
+                    <span style={labelStyle}>Responsible Officer</span>
                     <div style={readOnlyFieldStyle}>
                         {incident.politistResponsabil
                             ? `${incident.politistResponsabil.nume} ${incident.politistResponsabil.prenume}`
-                            : 'Nealocat'}
+                            : 'Unassigned'}
                     </div>
                 </div>
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-                <span style={labelStyle}>Adresă & Locație</span>
+                <span style={labelStyle}>Address & Location</span>
                 <div style={readOnlyFieldStyle}>
                     {incident.adresaIncident
                         ? `${incident.adresaIncident.strada}, Nr. ${incident.adresaIncident.numar}, ${incident.adresaIncident.localitate}`
@@ -74,14 +75,14 @@ const ViewIncident = ({ incident, onClose }) => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-                <span style={labelStyle}>Descriere Detaliată</span>
+                <span style={labelStyle}>Detailed Description</span>
                 <div style={{ ...readOnlyFieldStyle, minHeight: '80px', whiteSpace: 'pre-wrap' }}>
-                    {incident.descriereIncident || 'Fără descriere.'}
+                    {incident.descriereIncident || 'No description.'}
                 </div>
             </div>
 
             <div className="modal-footer">
-                <button className="btn-close-modal" onClick={onClose}>ÎNCHIDEȚI</button>
+                <button className="btn-close-modal" onClick={onClose}>CLOSE</button>
             </div>
         </div>
     );

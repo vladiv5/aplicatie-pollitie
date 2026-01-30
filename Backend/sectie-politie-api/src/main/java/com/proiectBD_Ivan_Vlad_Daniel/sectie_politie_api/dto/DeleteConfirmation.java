@@ -2,17 +2,18 @@ package com.proiectBD_Ivan_Vlad_Daniel.sectie_politie_api.dto;
 
 import java.util.List;
 
-/** Obiect complex trimis catre frontend pentru a decide culoarea si mesajul modalului de stergere
+/**
+ * Complex object sent to frontend to determine the color and message of the Delete Modal.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 public class DeleteConfirmation {
     private boolean permisiuneStergere;
-    // Severitatea determina culoarea modalului: SAFE (Verde), WARNING (Portocaliu), BLOCKED (Rosu)
+    // Severity determines modal color: SAFE (Green), WARNING (Orange), BLOCKED (Red)
     private String severitate;
     private String titlu;
     private String mesaj;
-    // Lista detaliata cu motivele pentru care stergerea este periculoasa sau blocata
+    // Detailed list of reasons why deletion is risky or blocked
     private List<BlockingItem> elementeBlocante;
 
     public DeleteConfirmation(boolean permisiuneStergere, String severitate, String titlu, String mesaj, List<BlockingItem> elementeBlocante) {

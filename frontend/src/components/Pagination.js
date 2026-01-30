@@ -1,7 +1,8 @@
-/** Componenta de Paginare pentru tabelele principale
- * Include navigare pagina cu pagina si "Go To Page"
+/**
+ * Reusable Pagination Component for main tables.
+ * Includes page-by-page navigation and "Go To Page" input.
  * @author Ivan Vlad-Daniel
- * @version 11 ianuarie 2026
+ * @version January 11, 2026
  */
 import React, { useState, useEffect } from 'react';
 import toast from "react-hot-toast";
@@ -9,12 +10,14 @@ import toast from "react-hot-toast";
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     const [inputPage, setInputPage] = useState('');
 
+    // I update the input field when the current page changes externally.
     useEffect(() => {
         setInputPage(currentPage + 1);
     }, [currentPage]);
 
     const handleInputChange = (e) => setInputPage(e.target.value);
 
+    // I validate the manual page entry before triggering a change.
     const handleGoToPage = () => {
         const pageNumber = parseInt(inputPage, 10);
         if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages) {
