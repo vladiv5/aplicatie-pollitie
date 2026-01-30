@@ -2,67 +2,67 @@ USE SectiePolitieDB;
 GO
 
 INSERT INTO Adrese (strada, numar, bloc, apartament, localitate, judet_sau_sector) VALUES
-('Bd. Unirii', '10', 'Z3', 12, 'Bucuresti', 'Sector 3'), -- ID 1
-('Str. Mihai Viteazu', '22A', NULL, NULL, 'Ploiesti', 'Prahova'), -- ID 2
-('Aleea Trandafirilor', '5', 'T1', 30, 'Bucuresti', 'Sector 6'), -- ID 3
-('Calea Victoriei', '110', NULL, NULL, 'Bucuresti', 'Sector 1'), -- ID 4
-('Str. Libertatii', '1', NULL, NULL, 'Cluj-Napoca', 'Cluj'), -- ID 5
-('Bd. Independentei', '50', 'A5', 2, 'Iasi', 'Iasi'), -- ID 6
-('Str. Avram Iancu', '150', NULL, NULL, 'Cluj-Napoca', 'Cluj'), -- ID 7
-('Bd. Dacia', '33', 'D2', 17, 'Bucuresti', 'Sector 2'), -- ID 8
-('Splaiul Independentei', '290', 'R1', 101, 'Bucuresti', 'Sector 6'), -- ID 9
-('Str. Republicii', '8', NULL, NULL, 'Brasov', 'Brasov'), -- ID 10
-('Bd. Carol I', '25', NULL, NULL, 'Craiova', 'Dolj'), -- ID 11
-('Str. Baba Novac', '14', 'G1', 8, 'Bucuresti', 'Sector 3'), -- ID 12
-('Str. Napoca', '12', NULL, NULL, 'Cluj-Napoca', 'Cluj'), -- ID 13
-('Bd. Tomis', '300', 'T2', 5, 'Constanta', 'Constanta'), -- ID 14
-('Aleea Studentilor', '1', 'C1', 205, 'Timisoara', 'Timis'), -- ID 15
-('Piata Sfatului', '3', NULL, NULL, 'Brasov', 'Brasov'), -- ID 16
-('Str. Gh. Lazar', '9', NULL, NULL, 'Timisoara', 'Timis'), -- ID 17
-('Calea Mosilor', '220', 'M5', 15, 'Bucuresti', 'Sector 2'), -- ID 18
-('Str. Lunga', '112', NULL, NULL, 'Brasov', 'Brasov'), -- ID 19
-('Bd. Ghencea', '43B', 'C2', 44, 'Bucuresti', 'Sector 6'); -- ID 20
+('Bd. Unirii', '10', 'Z3', 12, 'Bucuresti', 'Sector 3'), 
+('Str. Mihai Viteazu', '22A', NULL, NULL, 'Ploiesti', 'Prahova'), 
+('Aleea Trandafirilor', '5', 'T1', 30, 'Bucuresti', 'Sector 6'), 
+('Calea Victoriei', '110', NULL, NULL, 'Bucuresti', 'Sector 1'), 
+('Str. Libertatii', '1', NULL, NULL, 'Cluj-Napoca', 'Cluj'), 
+('Bd. Independentei', '50', 'A5', 2, 'Iasi', 'Iasi'), 
+('Str. Avram Iancu', '150', NULL, NULL, 'Cluj-Napoca', 'Cluj'),
+('Bd. Dacia', '33', 'D2', 17, 'Bucuresti', 'Sector 2'), 
+('Splaiul Independentei', '290', 'R1', 101, 'Bucuresti', 'Sector 6'), 
+('Str. Republicii', '8', NULL, NULL, 'Brasov', 'Brasov'), 
+('Bd. Carol I', '25', NULL, NULL, 'Craiova', 'Dolj'), 
+('Str. Baba Novac', '14', 'G1', 8, 'Bucuresti', 'Sector 3'), 
+('Str. Napoca', '12', NULL, NULL, 'Cluj-Napoca', 'Cluj'), 
+('Bd. Tomis', '300', 'T2', 5, 'Constanta', 'Constanta'),
+('Aleea Studentilor', '1', 'C1', 205, 'Timisoara', 'Timis'), 
+('Piata Sfatului', '3', NULL, NULL, 'Brasov', 'Brasov'), 
+('Str. Gh. Lazar', '9', NULL, NULL, 'Timisoara', 'Timis'), 
+('Calea Mosilor', '220', 'M5', 15, 'Bucuresti', 'Sector 2'), 
+('Str. Lunga', '112', NULL, NULL, 'Brasov', 'Brasov'),
+('Bd. Ghencea', '43B', 'C2', 44, 'Bucuresti', 'Sector 6'); 
 GO
 
 INSERT INTO Politisti (nume, prenume, grad, functie, telefon_serviciu) VALUES
-('Popescu', 'Vasile', 'Comisar Sef', 'Sef Sectie', '0722100200'), -- ID 1
-('Ionescu', 'Maria', 'Agent Sef', 'Ordine Publica', '0745200300'), -- ID 2
-('Radulescu', 'Andrei', 'Subinspector', 'Politia Rutiera', '0766300400'), -- ID 3
-('Dumitru', 'Elena', 'Comisar', 'Investigatii Criminale', '0729400500'), -- ID 4
-('Constantin', 'Mihai', 'Agent', 'Ordine Publica', '0735500600'), -- ID 5
-('Barbu', 'Ion', 'Agent Principal', 'Politia Rutiera', '0788600700'), -- ID 6
-('Neagu', 'Florin', 'Inspector', 'Investigatii Criminale', '0721700800'), -- ID 7
-('Stoica', 'Roxana', 'Agent', 'Proximitate', '0744800900'), -- ID 8
-('Grigorescu', 'Dan', 'Comisar', 'Economic', '0765900100'), -- ID 9
-('Anghel', 'Catalina', 'Subinspector', 'Ordine Publica', '0733100110'), -- ID 10
-('Manea', 'Sergiu', 'Agent', 'Politia Rutiera', '0722333444'), -- ID 11
-('Craciun', 'Diana', 'Inspector', 'Investigatii Criminale', '0749555666'), -- ID 12
-('Dinu', 'George', 'Agent Sef', 'Ordine Publica', '0767777888'), -- ID 13
-('Petre', 'Marius', 'Agent', 'Proximitate', '0731222333'), -- ID 14
-('Voicu', 'Alexandru', 'Comisar', 'Investigatii Criminale', '0728999000'); -- ID 15
+('Popescu', 'Vasile', 'Comisar Sef', 'Sef Sectie', '0722100200'),
+('Ionescu', 'Maria', 'Agent Sef', 'Ordine Publica', '0745200300'), 
+('Radulescu', 'Andrei', 'Subinspector', 'Politia Rutiera', '0766300400'), 
+('Dumitru', 'Elena', 'Comisar', 'Investigatii Criminale', '0729400500'), 
+('Constantin', 'Mihai', 'Agent', 'Ordine Publica', '0735500600'),
+('Barbu', 'Ion', 'Agent Principal', 'Politia Rutiera', '0788600700'), 
+('Neagu', 'Florin', 'Inspector', 'Investigatii Criminale', '0721700800'),
+('Stoica', 'Roxana', 'Agent', 'Proximitate', '0744800900'), 
+('Grigorescu', 'Dan', 'Comisar', 'Economic', '0765900100'), 
+('Anghel', 'Catalina', 'Subinspector', 'Ordine Publica', '0733100110'), 
+('Manea', 'Sergiu', 'Agent', 'Politia Rutiera', '0722333444'),
+('Craciun', 'Diana', 'Inspector', 'Investigatii Criminale', '0749555666'), 
+('Dinu', 'George', 'Agent Sef', 'Ordine Publica', '0767777888'), 
+('Petre', 'Marius', 'Agent', 'Proximitate', '0731222333'), 
+('Voicu', 'Alexandru', 'Comisar', 'Investigatii Criminale', '0728999000'); 
 GO
 
 INSERT INTO Persoane (nume, prenume, CNP, data_nasterii, telefon) VALUES
-('Stan', 'Ana-Maria', '2900101123456', '1990-01-01', '0744111222'), -- ID 1
-('Georgescu', 'Mihai', '1880510223344', '1988-05-10', '0723111333'), -- ID 2
-('Marin', 'Alexandru', '1950720334455', '1995-07-20', '0766111444'), -- ID 3
-('Diaconu', 'Gabriela', '2850315556677', '1985-03-15', '0729111666'), -- ID 4
-('Pop', 'Traian', '1850615445566', '1985-06-15', '0740111777'), -- ID 5
-('Vasilescu', 'Cristian', '1990220667788', '1999-02-20', '0788111888'), -- ID 6
-('Tudor', 'Vlad', '1801212778899', '1980-12-12', '0765111999'), -- ID 7
-('Mocanu', 'Andreea', '2920405889900', '1992-04-05', '0722111000'), -- ID 8
-('Dobre', 'Stefan', '1750930990011', '1975-09-30', '0749112111'), -- ID 9
-('Florea', 'Laura', '2970814001122', '1997-08-14', '0730112222'), -- ID 10
-('Ciobanu', 'Robert', '1910625112233', '1991-06-25', '0722112333'), -- ID 11
-('Rusu', 'Matei', '5010310223344', '2001-03-10', '0745334455'), -- ID 12
-('Ilie', 'Simona', '6030120556677', '2003-01-20', '0766445566'), -- ID 13
-('Manole', 'Victor', '1680214667788', '1968-02-14', '0721556677'), -- ID 14
-('Oprea', 'David', '5001130778899', '2000-11-30', '0743667788'), -- ID 15
-('Dumitrescu', 'Ioana', '2770808889900', '1977-08-08', '0732778899'), -- ID 16
-('Barbu', 'Andrei', '1930412990011', '1993-04-12', '0728889900'), -- ID 17
-('Ene', 'Catalina', '2980909001122', '1998-09-09', '0769990011'), -- ID 18
-('Lazar', 'Mihnea', '1821005112233', '1982-10-05', '0727001122'), -- ID 19
-('Antonescu', 'Elena', '2860718223344', '1986-07-18', '0748112233'); -- ID 20
+('Stan', 'Ana-Maria', '2900101123456', '1990-01-01', '0744111222'), 
+('Georgescu', 'Mihai', '1880510223344', '1988-05-10', '0723111333'), 
+('Marin', 'Alexandru', '1950720334455', '1995-07-20', '0766111444'), 
+('Diaconu', 'Gabriela', '2850315556677', '1985-03-15', '0729111666'),
+('Pop', 'Traian', '1850615445566', '1985-06-15', '0740111777'), 
+('Vasilescu', 'Cristian', '1990220667788', '1999-02-20', '0788111888'),
+('Tudor', 'Vlad', '1801212778899', '1980-12-12', '0765111999'), 
+('Mocanu', 'Andreea', '2920405889900', '1992-04-05', '0722111000'), 
+('Dobre', 'Stefan', '1750930990011', '1975-09-30', '0749112111'), 
+('Florea', 'Laura', '2970814001122', '1997-08-14', '0730112222'), 
+('Ciobanu', 'Robert', '1910625112233', '1991-06-25', '0722112333'), 
+('Rusu', 'Matei', '5010310223344', '2001-03-10', '0745334455'), 
+('Ilie', 'Simona', '6030120556677', '2003-01-20', '0766445566'), 
+('Manole', 'Victor', '1680214667788', '1968-02-14', '0721556677'),
+('Oprea', 'David', '5001130778899', '2000-11-30', '0743667788'), 
+('Dumitrescu', 'Ioana', '2770808889900', '1977-08-08', '0732778899'), 
+('Barbu', 'Andrei', '1930412990011', '1993-04-12', '0728889900'), 
+('Ene', 'Catalina', '2980909001122', '1998-09-09', '0769990011'), 
+('Lazar', 'Mihnea', '1821005112233', '1982-10-05', '0727001122'), 
+('Antonescu', 'Elena', '2860718223344', '1986-07-18', '0748112233'); 
 GO
 
 INSERT INTO Incidente (tip_incident, data_emitere, descriere_locatie, descriere_incident, id_politist_responsabil, id_adresa_incident) VALUES

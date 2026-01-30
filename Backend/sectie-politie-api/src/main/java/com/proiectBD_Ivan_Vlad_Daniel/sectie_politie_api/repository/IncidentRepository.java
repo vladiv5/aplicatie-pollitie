@@ -15,72 +15,74 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 /** Repository pentru gestionarea incidentelor din sistem
+ * Contine interogarile cele mai complexe (Analiza Criminalitatii).
  * @author Ivan Vlad-Daniel
  * @version 11 ianuarie 2026
  */
 @Repository
 public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
-    // Paginare pentru lista principala de incidente
-    @Query(value = "SELECT * FROM Incidente", countQuery = "SELECT count(*) FROM Incidente", nativeQuery = true)
-    Page<Incident> findAllNativePaginat(Pageable pageable);
+    // =================================================================================
+    // 1. OPERATII CRUD NATIVE (Insert, Update, Delete)
+    // =================================================================================
 
-    @Query(value = "SELECT * FROM Incidente", nativeQuery = true)
-    List<Incident> getAllIncidenteNative();
-
-    // Gaseste un incident specific dupa ID
-    @Query(value = "SELECT * FROM Incidente WHERE id_incident = :id", nativeQuery = true)
-    Optional<Incident> getIncidentByIdNative(@Param("id") Integer id);
-
-    // Inserare incident nou in baza de date
+    // INSERT (Parametri Variabili)
     @Modifying
     @Transactional
-    @Query(value = "INSERT INTO Incidente (tip_incident, data_emitere, descriere_locatie, descriere_incident, id_politist_responsabil, id_adresa_incident, status) VALUES (:tip, :data, :locatie, :descriere, :idPolitist, :idAdresa, :status)", nativeQuery = true)
-    void insertIncident(@Param("tip") String tip, @Param("data") LocalDateTime data, @Param("locatie") String locatie, @Param("descriere") String descriere, @Param("idPolitist") Integer idPolitist, @Param("idAdresa") Integer idAdresa, @Param("status") String status);
+    @Query(value = "" +
+            "INSERT INTO Incidente (tip_incident, data_emitere, descriere_locatie, " +
+            "                       descriere_incident, id_politist_responsabil, " +
+            "                       id_adresa_incident, status) " +
+            "VALUES (:tip, :data, :locatie, :descriere, :idPolitist, :idAdresa, :status)",
+            nativeQuery = true)
+    void insertIncident(
+            @Param("tip") String tip,
+            @Param("data") LocalDateTime data,
+            @Param("locatie") String locatie,
+            @Param("descriere") String descriere,
+            @Param("idPolitist") Integer idPolitist,
+            @Param("idAdresa") Integer idAdresa,
+            @Param("status") String status
+    );
 
-    // Actualizare informatii incident existent
+    // UPDATE (Parametri Variabili)
     @Modifying
     @Transactional
-    @Query(value = "UPDATE Incidente SET tip_incident = :tip, data_emitere = :data, descriere_locatie = :locatie, descriere_incident = :descriere, id_politist_responsabil = :idPolitist, id_adresa_incident = :idAdresa, status = :status WHERE id_incident = :id", nativeQuery = true)
-    void updateIncident(@Param("id") Integer id, @Param("tip") String tip, @Param("data") LocalDateTime data, @Param("locatie") String locatie, @Param("descriere") String descriere, @Param("idPolitist") Integer idPolitist, @Param("idAdresa") Integer idAdresa, @Param("status") String status);
+    @Query(value = "" +
+            "UPDATE Incidente " +
+            "SET tip_incident = :tip, " +
+            "    data_emitere = :data, " +
+            "    descriere_locatie = :locatie, " +
+            "    descriere_incident = :descriere, " +
+            "    id_politist_responsabil = :idPolitist, " +
+            "    id_adresa_incident = :idAdresa, " +
+            "    status = :status " +
+            "WHERE id_incident = :id",
+            nativeQuery = true)
+    void updateIncident(
+            @Param("id") Integer id,
+            @Param("tip") String tip,
+            @Param("data") LocalDateTime data,
+            @Param("locatie") String locatie,
+            @Param("descriere") String descriere,
+            @Param("idPolitist") Integer idPolitist,
+            @Param("idAdresa") Integer idAdresa,
+            @Param("status") String status
+    );
 
-    // Stergere fizica a unui incident
+    // DELETE (Parametru Variabil: ID)
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM Incidente WHERE id_incident = :id", nativeQuery = true)
     void deleteIncidentNative(@Param("id") Integer id);
 
-    // =====================================================================
-    // === SEARCH ULTIMATE (Latin1_General_100_CI_AI) ===
-    // =====================================================================
-    // Cautare avansata care include si numele politistului in filtrare
-    // Am eliminat % de la inceput pentru a cauta doar prefixul (ex: 'fur' -> 'furt')
-    @Query(value = "SELECT i.* FROM Incidente i " +
-            "LEFT JOIN Politisti p ON i.id_politist_responsabil = p.id_politist " +
-            "WHERE " +
-            "CONCAT(COALESCE(i.tip_incident, ''), ' ', COALESCE(i.descriere_locatie, ''), ' ', COALESCE(i.descriere_incident, ''), ' ', COALESCE(p.nume, ''), ' ', COALESCE(p.prenume, '')) " +
-            "COLLATE Latin1_General_100_CI_AI " +
-            "LIKE CONCAT(:termen, '%')", nativeQuery = true)
-    List<Incident> cautaDupaInceput(@Param("termen") String termen);
 
-    // --- RAPOARTE ---
+    // =================================================================================
+    // 2. INTEROGARI SIMPLE CU JOIN (Si Parametri Variabili)
+    // =================================================================================
 
-    // 1. Top străzi periculoase (Cele mai multe incidente)
-    @Query(value = "" +
-            "SELECT adr.strada, adr.localitate, COUNT(i.id_incident) as nr_incidente " +
-            "FROM adrese adr " +
-            "JOIN incidente i ON adr.id_adresa = i.id_adresa_incident " +
-            "WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) " +
-            "  AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
-            "GROUP BY adr.strada, adr.localitate " +
-            "ORDER BY nr_incidente DESC",
-            nativeQuery = true)
-    List<Map<String, Object>> getTopStraziIncidente(
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
-    );
-
-    // 2. Dosar Polițist: Lista de incidente instrumentate (Istoric)
+    // Raport "Dosar Politist": Istoricul cazurilor lucrate (JOIN Incidente-Politisti-Adrese)
+    // [Parametri Variabili]: ID Politist + Interval Data
     @Query(value = "" +
             "SELECT i.tip_incident, i.data_emitere, i.descriere_locatie, adr.strada " +
             "FROM incidente i " +
@@ -96,24 +98,27 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             @Param("endDate") LocalDateTime endDate
     );
 
-    // 3. Zone Sigure (Străzi fără incidente în perioada selectată)
+    // Live Search: Cauta in Incidente SI in numele Politistului (LEFT JOIN)
+    // [Parametru Variabil]: Termenul de cautare
     @Query(value = "" +
-            "SELECT a.strada, a.localitate " +
-            "FROM Adrese a " +
-            "LEFT JOIN Incidente i ON a.id_adresa = i.id_adresa_incident " +
-            "      AND (:startDate IS NULL OR i.data_emitere >= :startDate) " +
-            "      AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
-            "GROUP BY a.strada, a.localitate " +
-            "HAVING COUNT(i.id_incident) = 0 " +
-            "ORDER BY a.localitate, a.strada",
+            "SELECT i.* FROM Incidente i " +
+            "LEFT JOIN Politisti p ON i.id_politist_responsabil = p.id_politist " +
+            "WHERE " +
+            "CONCAT(COALESCE(i.tip_incident, ''), ' ', COALESCE(i.descriere_locatie, ''), ' ', " +
+            "       COALESCE(i.descriere_incident, ''), ' ', COALESCE(p.nume, ''), ' ', " +
+            "       COALESCE(p.prenume, '')) " +
+            "COLLATE Latin1_General_100_CI_AI " +
+            "LIKE CONCAT(:termen, '%')",
             nativeQuery = true)
-    List<Map<String, Object>> getZoneSigure(
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
-    );
+    List<Incident> cautaDupaInceput(@Param("termen") String termen);
 
-    // 4. Zile Critice (Zile cu activitate infracțională peste medie)
-    // Utilizează Subquery pentru calculul mediei dinamice
+
+    // =================================================================================
+    // 3. INTEROGARI COMPLEXE (Subcereri, Having, Functii Agregat, LEFT JOIN)
+    // =================================================================================
+
+    // Raport "Zile Critice": Zile cu criminalitate peste media zilnica globala
+    // [Complexitate]: Subquery in HAVING + AVG + GROUP BY DATE()
     @Query(value = "" +
             "SELECT CAST(i.data_emitere AS DATE) as ziua, COUNT(*) as nr_incidente " +
             "FROM Incidente i " +
@@ -136,20 +141,74 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
             @Param("endDate") LocalDateTime endDate
     );
 
-    // --- ALTE METODE AJUTATOARE ---
-    @Query(value = "SELECT COUNT(*) FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
-    int countIncidenteByPolitist(@Param("id") Integer id);
+    // Raport "Top Strazi Periculoase": Agregare dupa locatie
+    // [Complexitate]: JOIN + GROUP BY + COUNT + ORDER BY
+    @Query(value = "" +
+            "SELECT adr.strada, adr.localitate, COUNT(i.id_incident) as nr_incidente " +
+            "FROM adrese adr " +
+            "JOIN incidente i ON adr.id_adresa = i.id_adresa_incident " +
+            "WHERE (:startDate IS NULL OR i.data_emitere >= :startDate) " +
+            "  AND (:endDate IS NULL OR i.data_emitere <= :endDate) " +
+            "GROUP BY adr.strada, adr.localitate " +
+            "ORDER BY nr_incidente DESC",
+            nativeQuery = true)
+    List<Map<String, Object>> getTopStraziIncidente(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
+    // 3. Zone Sigure (Complexă cu Subcerere)
+    // Cerinta: Strazi unde nu s-au inregistrat incidente
+    // Implementare: Selectam strazile a caror ID nu se afla in lista ID-urilor cu incidente (Subquery)
+    @Query(value = "" +
+            "SELECT a.strada, a.localitate " +
+            "FROM Adrese a " +
+            "WHERE a.id_adresa NOT IN (" +
+            "    SELECT i.id_adresa_incident " +
+            "    FROM Incidente i " +
+            "    WHERE i.id_adresa_incident IS NOT NULL " +
+            "      AND (:startDate IS NULL OR i.data_emitere >= :startDate) " +
+            "      AND (:endDate IS NULL OR i.data_emitere <= :endDate)" +
+            ") " +
+            "GROUP BY a.strada, a.localitate " +
+            "ORDER BY a.localitate, a.strada",
+            nativeQuery = true)
+    List<Map<String, Object>> getZoneSigure(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
+    // =================================================================================
+    // 4. UTILITARE & DEPENDENTE (Smart Delete, Paginare)
+    // =================================================================================
+
+    // Paginare Nativa
+    @Query(value = "SELECT * FROM Incidente", countQuery = "SELECT count(*) FROM Incidente", nativeQuery = true)
+    Page<Incident> findAllNativePaginat(Pageable pageable);
+
+    @Query(value = "SELECT * FROM Incidente WHERE id_incident = :id", nativeQuery = true)
+    Optional<Incident> getIncidentByIdNative(@Param("id") Integer id);
+
+    @Query(value = "SELECT * FROM Incidente", nativeQuery = true)
+    List<Incident> getAllIncidenteNative();
+
+    // Verificari pentru Smart Delete (Politist)
+    @Query(value = "SELECT * FROM Incidente WHERE id_politist_responsabil = :id AND status = 'Activ'", nativeQuery = true)
+    List<Incident> findActiveIncidentsByPolitist(@Param("id") Integer id);
+
+    @Query(value = "SELECT * FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
+    List<Incident> findAllNativeByPolitist(@Param("id") Integer id);
+
+    // Istoric Persoana (Incidente in care e implicata)
+    @Query(value = "SELECT i.* FROM Incidente i JOIN Persoane_Incidente pi ON i.id_incident = pi.id_incident WHERE pi.id_persoana = :idPersoana", nativeQuery = true)
+    List<Incident> findIncidenteByPersoana(@Param("idPersoana") Integer idPersoana);
+
+    // Stergeri in cascada
     @Modifying
     @Transactional
     @Query(value = "UPDATE Incidente SET id_politist_responsabil = :idNou WHERE id_politist_responsabil = :idVechi", nativeQuery = true)
     void mutaIncidentePeAltPolitist(@Param("idVechi") Integer idVechi, @Param("idNou") Integer idNou);
-
-    @Query(value = "SELECT * FROM Incidente WHERE id_politist_responsabil = :id AND status = 'Activ'", nativeQuery = true)
-    List<Incident> findActiveIncidentsByPolitist(@Param("id") Integer id);
-
-    @Query(value = "SELECT COUNT(*) FROM Incidente WHERE id_politist_responsabil = :id AND status = 'Închis'", nativeQuery = true)
-    int countClosedIncidentsByPolitist(@Param("id") Integer id);
 
     @Modifying
     @Transactional
@@ -158,22 +217,23 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
     @Modifying
     @Transactional
-    @Query(value = "DELETE FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
-    void stergeIncidenteDupaPolitist(@Param("id") Integer id);
+    @Query(value = "DELETE FROM Incidente WHERE id_adresa_incident = :idAdresa", nativeQuery = true)
+    void deleteByAdresaId(@Param("idAdresa") Integer idAdresa);
 
-    @Query(value = "SELECT * FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
-    List<Incident> findAllNativeByPolitist(@Param("id") Integer id);
+    // Alte utilitare (Count, GetLastId)
+    @Query(value = "SELECT COUNT(*) FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
+    int countIncidenteByPolitist(@Param("id") Integer id);
 
-    @Query(value = "SELECT i.* FROM Incidente i JOIN Persoane_Incidente pi ON i.id_incident = pi.id_incident WHERE pi.id_persoana = :idPersoana", nativeQuery = true)
-    List<Incident> findIncidenteByPersoana(@Param("idPersoana") Integer idPersoana);
-
-    @Query(value = "SELECT * FROM Incidente WHERE id_adresa_incident = :idAdresa", nativeQuery = true)
-    List<Incident> findByAdresaId(@Param("idAdresa") Integer idAdresa);
+    @Query(value = "SELECT COUNT(*) FROM Incidente WHERE id_politist_responsabil = :id AND status = 'Închis'", nativeQuery = true)
+    int countClosedIncidentsByPolitist(@Param("id") Integer id);
 
     @Modifying
     @Transactional
-    @Query(value = "DELETE FROM Incidente WHERE id_adresa_incident = :idAdresa", nativeQuery = true)
-    void deleteByAdresaId(@Param("idAdresa") Integer idAdresa);
+    @Query(value = "DELETE FROM Incidente WHERE id_politist_responsabil = :id", nativeQuery = true)
+    void stergeIncidenteDupaPolitist(@Param("id") Integer id);
+
+    @Query(value = "SELECT * FROM Incidente WHERE id_adresa_incident = :idAdresa", nativeQuery = true)
+    List<Incident> findByAdresaId(@Param("idAdresa") Integer idAdresa);
 
     @Query(value = "SELECT MAX(id_incident) FROM Incidente", nativeQuery = true)
     Integer getLastInsertedId();

@@ -1,0 +1,50 @@
+/* Stilul de bază */
+.toast-base {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    background: #fff;
+    /* ToastBar adaugă padding automat, dar putem ajusta dacă e nevoie */
+    padding: 8px 12px !important;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    /* Important: ToastBar foloseste display:flex, ne asiguram ca e aliniat */
+    display: flex;
+    align-items: center;
+    min-width: 320px;
+    border: 1px solid rgba(0,0,0,0.05);
+    cursor: default; /* Cursor normal pe toast */
+}
+
+/* Stilurile specifice (Verde/Rosu/Albastru) */
+.toast-success { border-left: 6px solid #28a745; }
+.toast-error { border-left: 6px solid #dc3545; }
+.toast-loading { border-left: 6px solid #1a3c6e; }
+
+/* Butonul de închidere (X) */
+.toast-close-btn {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-left: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-close-btn:hover {
+    color: #333;
+    background-color: #f0f0f0;
+}
+
+/* Asigură-te că containerul intern al librăriei umple spațiul */
+.go3958317564 {
+    width: 100%;
+}

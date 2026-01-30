@@ -1,0 +1,180 @@
+/* src/components/styles/Forms.css */
+
+/* =========================================
+   TACTICAL FORM STYLES (Global for Modals)
+   ========================================= */
+
+/* 1. LAYOUT & SPACING */
+.form-group {
+    padding: 10px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Spațiu între câmpuri */
+}
+
+/* 2. LABELS (Etichete) */
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--royal-navy-dark, #0a2647); /* Folosim variabila sau fallback */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 3. INPUTS & SELECTS (Câmpuri) */
+.modal-input {
+    width: 100%;
+    padding: 10px 12px;
+    padding-right: 35px; /* Spațiu pentru X */
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    color: #334155;
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+    box-sizing: border-box; /* Important pentru padding */
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: var(--royal-navy-medium, #144272);
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(20, 66, 114, 0.1); /* Glow albastru fin */
+}
+
+.modal-input::placeholder {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+/* Stare de Eroare */
+.modal-input.input-error {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.error-text {
+    color: #dc3545;
+    font-size: 0.75rem;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+/* 4. CLEAR BUTTON (X) */
+.clear-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+    user-select: none;
+    line-height: 1;
+}
+
+.clear-icon:hover {
+    color: #ef4444; /* Roșu la hover */
+}
+
+/* Ajustare specială pentru textarea */
+textarea.modal-input + .clear-icon {
+    top: 15px;
+    transform: none;
+}
+
+/* 5. FOOTER & SAVE BUTTON (DESIGN NOU - TACTICAL NAVY) */
+.modal-footer {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.save-btn {
+    /* Gradient Navy (Identic cu butoanele de editare) */
+    background: linear-gradient(135deg, var(--royal-navy-medium, #144272), var(--royal-navy-dark, #0a2647));
+    color: white;
+    /* Bordură fină aurie pentru accent premium */
+    border: 1px solid var(--gold-border, #bfa05d);
+
+    padding: 10px 30px;
+    border-radius: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    /* Umbră închisă, sobră */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    /* Se luminează puțin la hover */
+    background: linear-gradient(135deg, #205295, var(--royal-navy-medium, #144272));
+
+    /* Glow auriu la hover pentru consistență cu restul temei */
+    box-shadow: 0 0 15px rgba(197, 160, 89, 0.4), 0 4px 6px rgba(0,0,0,0.2);
+    border-color: #ffd700; /* Auriu mai aprins */
+}
+
+.save-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Buton Închidere Modal (Neutru - Gri/Navy Deschis) */
+.btn-close-modal {
+    background: linear-gradient(135deg, #64748b, #475569);
+    color: white;
+    border: 1px solid #334155;
+    padding: 10px 30px;
+    border-radius: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.btn-close-modal:hover {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+/* =========================================
+   GLOBAL LABEL FIX (FOR DARK MODALS)
+   ========================================= */
+
+/* Această regulă forțează culoarea AURIE pe toate etichetele din modale,
+   inclusiv cea din LiveSearchInput ("Căutare Persoană").
+*/
+.modal-content label {
+    color: #d4af37 !important; /* Auriu */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Asigurăm că și containerul LiveSearch are textul auriu dacă e cazul */
+.live-search-container label {
+    color: #d4af37 !important;
+}

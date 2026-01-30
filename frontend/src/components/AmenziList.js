@@ -1,0 +1,221 @@
+/** Componenta principala pentru afisarea si gestionarea tabelului de amenzi
+ * @author Ivan Vlad-Daniel
+ * @version 11 ianuarie 2026
+ */
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import Pagination from './Pagination';
+import DeleteSmartModal from './DeleteSmartModal';
+import toast from 'react-hot-toast';
+
+const AmenziList = ({
+                        refreshTrigger, onAddClick, onEditClick,
+                        highlightId, onHighlightComplete
+                    }) => {
+    const [amenzi, setAmenzi] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const rowRefs = useRef({});
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteData, setDeleteData] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
+
+    const loadAmenzi = (page, term = '') => {
+        setIsLoading(true);
+        const token = localStorage.getItem('token');
+        const safeTerm = encodeURIComponent(term);
+
+        let url = `http://localhost:8080/api/amenzi/lista-paginata?page=${page}&size=10`;
+        if (term) url = `http://localhost:8080/api/amenzi/cauta?termen=${safeTerm}`;
+
+        return axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => {
+                if(term) {
+                    setAmenzi(res.data);
+                    setTotalPages(1);
+                } else {
+                    setAmenzi(res.data.content);
+                    setTotalPages(res.data.totalPages);
+                }
+                setCurrentPage(page);
+                return res.data;
+            })
+            .catch(err => console.error("Eroare incarcare amenzi:", err))
+            .finally(() => {
+                setTimeout(() => setIsLoading(false), 200);
+            });
+    };
+
+    useEffect(() => {
+        loadAmenzi(currentPage, searchTerm).then((responseData) => {
+            if (highlightId) {
+                const currentList = responseData.content || responseData;
+                if (currentList && Array.isArray(currentList)) {
+                    const existsOnPage = currentList.some(a => a.idAmenda === highlightId);
+                    if (!existsOnPage) {
+                        findPageForId(highlightId);
+                    }
+                }
+            }
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshTrigger]);
+
+    const findPageForId = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`http://localhost:8080/api/amenzi`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const allData = res.data;
+            allData.sort((a, b) => new Date(b.dataEmitere) - new Date(a.dataEmitere));
+            const index = allData.findIndex(a => a.idAmenda === id);
+
+            if (index !== -1) {
+                const targetPage = Math.floor(index / 10);
+                loadAmenzi(targetPage, searchTerm);
+            }
+        } catch (err) {
+            console.error("Nu am putut calcula pagina automata:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (!isLoading && highlightId && rowRefs.current[highlightId]) {
+            rowRefs.current[highlightId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const timer = setTimeout(() => {
+                if (onHighlightComplete) onHighlightComplete();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading, amenzi, highlightId]);
+
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setSearchTerm(val);
+        loadAmenzi(0, val);
+    };
+
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        loadAmenzi(0, '');
+    };
+
+    const handleRequestDelete = (id) => {
+        const token = localStorage.getItem('token');
+        axios.get(`http://localhost:8080/api/amenzi/verifica-stergere/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => {
+                setDeleteData(res.data);
+                setDeleteId(id);
+                setIsDeleteModalOpen(true);
+            })
+            .catch(err => {
+                toast.error("Eroare la verificarea amenzii.");
+            });
+    };
+
+    const handleConfirmDelete = () => {
+        const token = localStorage.getItem('token');
+        axios.delete(`http://localhost:8080/api/amenzi/${deleteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then((res) => {
+                loadAmenzi(currentPage, searchTerm);
+                setIsDeleteModalOpen(false);
+                setDeleteData(null);
+                setDeleteId(null);
+                toast.success("Amendă ștearsă!");
+            })
+            .catch(err => toast.error("Eroare la ștergere!"));
+    };
+
+    const formatDataFrumos = (isoString) => {
+        if (!isoString) return '-';
+        const d = new Date(isoString);
+        return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    };
+
+    return (
+        <div className="page-container">
+            <h2 className="page-title">Registru Amenzi</h2>
+
+            <div className="controls-container">
+                <div className="search-wrapper">
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Căutați după motiv, persoană sau agent..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+                    {searchTerm && (
+                        <button className="search-clear-btn" onClick={handleClearSearch}>&times;</button>
+                    )}
+                </div>
+
+                {!searchTerm && !isLoading && totalPages > 1 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={loadAmenzi}
+                    />
+                )}
+
+                <button className="add-btn-primary" onClick={onAddClick}><span>+</span> Adăugați Amendă</button>
+            </div>
+
+            <div className="table-responsive">
+                <table className="styled-table">
+                    <thead>
+                    <tr>
+                        <th>Motiv</th>
+                        <th>Suma</th>
+                        <th>Stare</th>
+                        <th>Data & Ora</th>
+                        <th>Persoana</th>
+                        <th>Agent</th>
+                        <th>Acțiuni</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {isLoading ? (
+                        <tr><td colSpan="7"><div className="loading-container"><div className="spinner"></div><span>Se încarcă datele...</span></div></td></tr>
+                    ) : (
+                        amenzi && amenzi.length > 0 ? (
+                            amenzi.map((amenda) => (
+                                <tr
+                                    key={amenda.idAmenda}
+                                    ref={(el) => (rowRefs.current[amenda.idAmenda] = el)}
+                                    className={highlightId === amenda.idAmenda ? 'flash-row' : ''}
+                                >
+                                    <td style={{fontWeight: '500'}}>{amenda.motiv}</td>
+                                    <td style={{fontWeight: '800', color: 'var(--royal-navy-dark)'}}>{amenda.suma} RON</td>
+                                    <td><span className="badge-status">{amenda.starePlata}</span></td>
+                                    <td>{formatDataFrumos(amenda.dataEmitere)}</td>
+                                    <td>{amenda.persoana ? `${amenda.persoana.nume} ${amenda.persoana.prenume}` : <span style={{color:'#999'}}>Nespecificat</span>}</td>
+                                    <td>{amenda.politist ? `${amenda.politist.nume} ${amenda.politist.prenume}` : <span style={{color:'#999'}}>Nespecificat</span>}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <button className="btn-tactical" onClick={() => onEditClick(amenda.idAmenda)}><i className="fa-solid fa-pen-to-square"></i></button>
+                                        <button className="btn-tactical-red" onClick={() => handleRequestDelete(amenda.idAmenda)}><i className="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan="7" style={{textAlign:'center', padding:'20px'}}>Nu există amenzi înregistrate.</td></tr>
+                        )
+                    )}
+                    </tbody>
+                </table>
+            </div>
+
+            <DeleteSmartModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} data={deleteData} />
+        </div>
+    );
+};
+
+export default AmenziList;
