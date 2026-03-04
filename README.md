@@ -59,7 +59,7 @@ To improve performance and usability, I implemented a live search mechanism with
 ---
 
 ## Project Structure
-
+```
 Police-Station-App/
 │
 ├── backend/sectie-politie-api/
@@ -79,7 +79,7 @@ Police-Station-App/
 │
 └── docs/
     └── Screenshots and documentation
-
+```
 ---
 
 ## Setup and Run
@@ -88,22 +88,41 @@ Police-Station-App/
 - Java JDK 17 or higher
 - Node.js and npm
 - Microsoft SQL Server (Local or Express)
+- SQL Server configured for Mixed Mode Authentication (SQL Server and Windows Authentication)
+- TCP/IP protocol enabled on port 1433 in SQL Server Configuration Manager
 
 ### Database Setup
-1. Open SQL Server Management Studio.
-2. Run `DB_INIT_SCRIPT.sql   ` to create the schema.
-
+1. Open SQL Server Management Studio (SSMS).
+2. Run the `database/DB_INIT_SCRIPT.sql` script. This exported script will automatically create the schema, populate the tables with initial data, and insert the default admin account.
 
 ### Backend
-1. Navigate to the `backend` directory.
-2. Update SQL Server credentials in `src/main/resources/application.properties`.
-3. Run the application: ./mvnw spring-boot:run
-
+1. Open a terminal and navigate to the correct backend API directory:
+```bash
+cd backend/sectie-politie-api
+```
+2. Update the SQL Server credentials (`spring.datasource.username` and `spring.datasource.password`) in `src/main/resources/application.properties` to match your local SQL Server configuration.
+3. If you are on Linux or macOS, make the Maven wrapper executable:
+```bash
+chmod +x mvnw
+```
+4. Run the application:
+```bash
+./mvnw spring-boot:run
+```
 
 ### Frontend
-1. Navigate to the `frontend` directory.
-2. Install dependencies: npm install
-3. Start the development server: npm start
+1. Open a new terminal and navigate to the frontend directory:
+```bash
+cd frontend
+```
+2. Install dependencies:
+```bash
+npm install
+```
+3. Start the development server:
+```bash
+npm start
+```
 
 The application will be available at `http://localhost:3000`.
 
@@ -122,6 +141,3 @@ The system uses a custom authentication mechanism.
 - Printable officer and citizen dossiers are generated using custom CSS print media queries.
 - Business rules are enforced primarily at the application level to keep database logic transparent and maintainable.
 - The project was designed with modularity and extensibility in mind, allowing future integration of role-based access control or audit logging.
-
-
-
